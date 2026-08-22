@@ -8,7 +8,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent.parent))
 
-from src.bootstrap import build_engine
+from src.engine.bootstrap import build_engine
 from src.engine.application.nodes.builtin.control import If, Switch
 from src.engine.domain.models.plan import Plan
 

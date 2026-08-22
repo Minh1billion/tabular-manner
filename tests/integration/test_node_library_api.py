@@ -6,7 +6,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from src.bootstrap import build_engine
+from src.engine.bootstrap import build_engine
 from src.engine.application.storage.resource_storage import ResourceStorage
 from src.engine.infrastructure.resource_storage.local_resource_storage_repository import (
     LocalResourceStorageRepository,

@@ -9,7 +9,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.seed import generate_dataframe
-from src.bootstrap import build_engine
+from src.engine.bootstrap import build_engine
 from src.engine.application.storage.resource_storage import ResourceStorage
 from src.engine.infrastructure.resource_storage.local_resource_storage_repository import (
     LocalResourceStorageRepository,
