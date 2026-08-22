@@ -1,0 +1,48 @@
+{
+  "name": "Fanout Clean Pipeline",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "fetch_internal",
+      "name": "Fetch Data",
+      "params": { "key": "raw" }
+    },
+    {
+      "id": "2",
+      "type": "select",
+      "name": "Select Columns",
+      "params": { "columns": ["customer", "amount", "quantity"] }
+    },
+    {
+      "id": "3",
+      "type": "fill_mean",
+      "name": "Fill Missing (Mean)",
+      "params": { "columns": ["amount", "quantity"] }
+    },
+    {
+      "id": "4",
+      "type": "push_internal",
+      "name": "Export Full Clean",
+      "params": { "key": "cleaned_full" }
+    },
+    {
+      "id": "5",
+      "type": "select",
+      "name": "Select Customer Only",
+      "params": { "columns": ["customer"] }
+    },
+    {
+      "id": "6",
+      "type": "push_internal",
+      "name": "Export Customer List",
+      "params": { "key": "cleaned_customers" }
+    }
+  ],
+  "connections": [
+    { "from": "1", "to": "2" },
+    { "from": "2", "to": "3" },
+    { "from": "3", "to": "4" },
+    { "from": "3", "to": "5" },
+    { "from": "5", "to": "6" }
+  ]
+}

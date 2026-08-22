@@ -1,0 +1,56 @@
+{
+  "name": "Union Pipeline",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "fetch_internal",
+      "name": "Fetch Data",
+      "params": { "key": "raw" }
+    },
+    {
+      "id": "2",
+      "type": "select",
+      "name": "Branch A Select",
+      "params": { "columns": ["customer", "amount", "quantity"] }
+    },
+    {
+      "id": "3",
+      "type": "fill_mean",
+      "name": "Branch A Fill",
+      "params": { "columns": ["amount", "quantity"] }
+    },
+    {
+      "id": "4",
+      "type": "select",
+      "name": "Branch B Select",
+      "params": { "columns": ["customer", "amount", "quantity"] }
+    },
+    {
+      "id": "5",
+      "type": "fill_mean",
+      "name": "Branch B Fill",
+      "params": { "columns": ["amount", "quantity"] }
+    },
+    {
+      "id": "6",
+      "type": "union",
+      "name": "Union Branches",
+      "params": {}
+    },
+    {
+      "id": "7",
+      "type": "push_internal",
+      "name": "Export Result",
+      "params": { "key": "cleaned_union" }
+    }
+  ],
+  "connections": [
+    { "from": "1", "to": "2" },
+    { "from": "1", "to": "4" },
+    { "from": "2", "to": "3" },
+    { "from": "4", "to": "5" },
+    { "from": "3", "to": "6" },
+    { "from": "5", "to": "6" },
+    { "from": "6", "to": "7" }
+  ]
+}

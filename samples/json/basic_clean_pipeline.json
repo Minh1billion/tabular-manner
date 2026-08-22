@@ -1,0 +1,34 @@
+{
+  "name": "Basic Clean Pipeline",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "fetch_internal",
+      "name": "Fetch Data",
+      "params": { "key": "raw" }
+    },
+    {
+      "id": "2",
+      "type": "select",
+      "name": "Select Columns",
+      "params": { "columns": ["customer", "amount", "quantity"] }
+    },
+    {
+      "id": "3",
+      "type": "fill_mean",
+      "name": "Fill Missing (Mean)",
+      "params": { "columns": ["amount", "quantity"] }
+    },
+    {
+      "id": "4",
+      "type": "push_internal",
+      "name": "Export Result",
+      "params": { "key": "cleaned" }
+    }
+  ],
+  "connections": [
+    { "from": "1", "to": "2" },
+    { "from": "2", "to": "3" },
+    { "from": "3", "to": "4" }
+  ]
+}
