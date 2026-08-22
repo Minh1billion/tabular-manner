@@ -1,6 +1,9 @@
-<img src="./logo.svg" alt="Tabular Manner logo" width="28" align="left" />
-
-# Tabular Manner
+<table>
+  <tr>
+    <td><img src="./logo.svg" alt="Tabular Manner logo" width="48" /></td>
+    <td valign="middle"><h1>Tabular Manner</h1></td>
+  </tr>
+</table>
 
 A low-code platform for designing data processing workflows using a graph-based model.
 
