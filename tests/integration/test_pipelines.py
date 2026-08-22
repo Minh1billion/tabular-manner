@@ -6,7 +6,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from src.bootstrap import build_engine
+from src.engine.bootstrap import build_engine
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 MOCKS_DIR = PROJECT_ROOT / "samples" / "json"

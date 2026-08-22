@@ -6,7 +6,7 @@ project_root = Path(__file__).resolve().parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from src.bootstrap import Engine, build_engine
+from src.engine.bootstrap import Engine, build_engine
 
 def run_mock(execution, pipeline_path: Path) -> None:
     print(f"\n{'=' * 60}")
@@ -46,6 +46,8 @@ def main() -> None:
     if not samples_dir.exists():
         print(f"No samples directory found at {samples_dir}")
         return
+    
+    
 
     pipeline_paths = sorted(samples_dir.glob("*.json"))
     if not pipeline_paths:

@@ -1,20 +1,20 @@
 from dataclasses import dataclass
 
-from .engine.api.data_resource import DataResource
-from .engine.api.execution import Execution
-from .engine.api.node_library import NodeLibrary
-from .engine.application.runtime.context_manager import ContextManager
-from .engine.application.runtime.material_buffer import MaterialBuffer
-from .engine.application.nodes.custom_node_service import LibraryService
-from .engine.application.nodes.registry import NodeRegistry
-from .engine.application.io.reader_factory import ReaderFactory
-from .engine.application.storage.resource_storage import ResourceStorage
-from .engine.application.runtime.sandbox import Sandbox
-from .engine.application.io.writer_factory import WriterFactory
-from .engine.application.ports.node_library_repository import NodeLibraryRepository
-from .engine.application.ports.resource_storage_repository import ResourceStorageRepository
-from .engine.infrastructure.node_library.local_node_library_repository import LocalNodeLibraryRepository
-from .engine.infrastructure.resource_storage.local_resource_storage_repository import LocalResourceStorageRepository
+from .api.data_resource import DataResource
+from .api.execution import Execution
+from .api.node_library import NodeLibrary
+from .application.runtime.context_manager import ContextManager
+from .application.runtime.material_buffer import MaterialBuffer
+from .application.nodes.custom_node_service import LibraryService
+from .application.nodes.registry import NodeRegistry
+from .application.io.reader_factory import ReaderFactory
+from .application.storage.resource_storage import ResourceStorage
+from .application.runtime.sandbox import Sandbox
+from .application.io.writer_factory import WriterFactory
+from .application.ports.node_library_repository import NodeLibraryRepository
+from .application.ports.resource_storage_repository import ResourceStorageRepository
+from .infrastructure.node_library.local_node_library_repository import LocalNodeLibraryRepository
+from .infrastructure.resource_storage.local_resource_storage_repository import LocalResourceStorageRepository
 
 @dataclass(frozen=True)
 class Engine:
