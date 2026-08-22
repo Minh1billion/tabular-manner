@@ -9,10 +9,14 @@ import pytest
 
 from src.engine.application.nodes.builtin.transform import (
     Cast,
+    Derive,
+    Drop,
     DropDuplicates,
     DropNulls,
     FillMean,
     FillNull,
+    Filter,
+    Limit,
     Rename,
     Select,
     Sort,
@@ -169,3 +173,72 @@ class TestCast:
     def test_rejects_non_dtype_polars_attribute(self):
         with pytest.raises(ValueError):
             Cast(name="cast", types={"a": "DataFrame"})
+
+class TestDrop:
+    def test_removes_specified_columns(self):
+        node = Drop(name="drop", columns=["b"])
+        plan = _plan({"a": [1], "b": [2]})
+
+        result, port = node.forward(plan)
+
+        assert result.handle.collect_schema().names() == ["a"]
+        assert port == "out"
+
+class TestLimit:
+    def test_keeps_only_first_n_rows(self):
+        node = Limit(name="limit", n=2)
+        plan = _plan({"a": [1, 2, 3, 4]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [1, 2]
+
+    def test_rejects_negative_n(self):
+        with pytest.raises(ValueError):
+            Limit(name="limit", n=-1)
+
+class TestFilter:
+    def test_keeps_rows_matching_expression(self):
+        node = Filter(name="filter", expression="df.a >= 2")
+        plan = _plan({"a": [1, 2, 3]})
+
+        result, port = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [2, 3]
+        assert port == "out"
+
+    def test_rejects_empty_expression(self):
+        with pytest.raises(ValueError):
+            Filter(name="filter", expression="   ")
+
+    def test_rejects_disallowed_expression(self):
+        with pytest.raises(ValueError):
+            Filter(name="filter", expression="__import__('os')")
+
+    def test_rejects_expression_not_evaluating_to_expr(self):
+        node = Filter(name="filter", expression="1 + 1")
+        plan = _plan({"a": [1, 2, 3]})
+
+        with pytest.raises(TypeError):
+            node.forward(plan)
+
+class TestDerive:
+    def test_adds_computed_column(self):
+        node = Derive(name="derive", column="doubled", expression="df.a * 2")
+        plan = _plan({"a": [1, 2, 3]})
+
+        result, port = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["doubled"].to_list() == [2, 4, 6]
+        assert port == "out"
+
+    def test_rejects_empty_column(self):
+        with pytest.raises(ValueError):
+            Derive(name="derive", column="  ", expression="df.a")
+
+    def test_rejects_disallowed_expression(self):
+        with pytest.raises(ValueError):
+            Derive(name="derive", column="x", expression="df.a.map_elements(pl.read_csv)")
