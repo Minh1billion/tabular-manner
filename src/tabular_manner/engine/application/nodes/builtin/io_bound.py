@@ -22,6 +22,8 @@ class SinkIO(Operator):
 
 @NodeRegistry.register("fetch_internal")
 class FetchInternal(SourceIO):
+    label = "Fetch (Internal)"
+    category = "io"
     required = {"key": str}
     optional = {"bucket": (str, None)}
     context = ("resource_storage",)
@@ -31,6 +33,8 @@ class FetchInternal(SourceIO):
 
 @NodeRegistry.register("fetch_csv")
 class FetchCsv(SourceIO):
+    label = "Fetch CSV"
+    category = "io"
     required = {"path": str}
     optional = {"separator": (str, ","), "has_header": (bool, True), "encoding": (str, "utf8")}
     context = ("reader_factory",)
@@ -47,6 +51,8 @@ class FetchCsv(SourceIO):
 
 @NodeRegistry.register("fetch_parquet")
 class FetchParquet(SourceIO):
+    label = "Fetch Parquet"
+    category = "io"
     required = {"path": str}
     optional = {"columns": ((list, str), None), "n_rows": (int, None)}
     context = ("reader_factory",)
@@ -62,6 +68,8 @@ class FetchParquet(SourceIO):
 
 @NodeRegistry.register("fetch_arrow")
 class FetchArrow(SourceIO):
+    label = "Fetch Arrow"
+    category = "io"
     required = {"path": str}
     context = ("reader_factory",)
 
@@ -70,6 +78,8 @@ class FetchArrow(SourceIO):
 
 @NodeRegistry.register("fetch_s3")
 class FetchS3(SourceIO):
+    label = "Fetch S3"
+    category = "io"
     required = {"bucket": str, "key": str}
     optional = {"format": (str, "parquet"), "region": (str, None), "storage_options": (dict, None)}
 
@@ -85,6 +95,8 @@ class FetchS3(SourceIO):
 
 @NodeRegistry.register("fetch_postgres")
 class FetchPostgres(SourceIO):
+    label = "Fetch Postgres"
+    category = "io"
     required = {"dsn": str, "table": str}
     optional = {
         "query": (str, None),
@@ -105,6 +117,8 @@ class FetchPostgres(SourceIO):
 
 @NodeRegistry.register("push_internal")
 class PushInternal(SinkIO):
+    label = "Export (Internal)"
+    category = "io"
     required = {"key": str}
     optional = {"bucket": (str, None)}
     context = ("resource_storage",)
@@ -114,6 +128,8 @@ class PushInternal(SinkIO):
 
 @NodeRegistry.register("push_csv")
 class PushCsv(SinkIO):
+    label = "Export CSV"
+    category = "io"
     required = {"path": str}
     optional = {"separator": (str, ","), "include_header": (bool, True)}
     context = ("writer_factory",)
@@ -130,6 +146,8 @@ class PushCsv(SinkIO):
 
 @NodeRegistry.register("push_parquet")
 class PushParquet(SinkIO):
+    label = "Export Parquet"
+    category = "io"
     required = {"path": str}
     context = ("writer_factory",)
 
@@ -138,6 +156,8 @@ class PushParquet(SinkIO):
 
 @NodeRegistry.register("push_arrow")
 class PushArrow(SinkIO):
+    label = "Export Arrow"
+    category = "io"
     required = {"path": str}
     context = ("writer_factory",)
 
@@ -146,6 +166,8 @@ class PushArrow(SinkIO):
 
 @NodeRegistry.register("push_postgres")
 class PushPostgres(SinkIO):
+    label = "Export Postgres"
+    category = "io"
     required = {"dsn": str, "table": str}
     optional = {"if_table_exists": (str, "append")}
     context = ("writer_factory",)

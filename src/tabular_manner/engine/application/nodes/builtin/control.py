@@ -31,6 +31,8 @@ class _ColumnProxy:
 
 @NodeRegistry.register("switch")
 class Switch(Control):
+    label = "Switch"
+    category = "control"
     required = {"expression": str, "cases": (list, str)}
     optional = {"default_case": (str, "default")}
 
@@ -69,6 +71,8 @@ class Switch(Control):
 
 @NodeRegistry.register("if")
 class If(Control):
+    label = "If"
+    category = "control"
     required = {"expression": str}
     ports = ("true", "false")
 

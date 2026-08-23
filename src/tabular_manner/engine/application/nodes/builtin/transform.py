@@ -22,6 +22,8 @@ class Transform(Operator):
 
 @NodeRegistry.register("select")
 class Select(Transform):
+    label = "Select Columns"
+    category = "transform"
     required = {"columns": (list, str)}
 
     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -29,6 +31,8 @@ class Select(Transform):
 
 @NodeRegistry.register("drop")
 class Drop(Transform):
+    label = "Drop Columns"
+    category = "transform"
     required = {"columns": (list, str)}
 
     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -36,6 +40,8 @@ class Drop(Transform):
 
 @NodeRegistry.register("limit")
 class Limit(Transform):
+    label = "Limit Rows"
+    category = "transform"
     required = {"n": int}
 
     def validate(self):
@@ -48,6 +54,8 @@ class Limit(Transform):
 
 @NodeRegistry.register("head")
 class Head(Transform):
+    label = "Head Rows"
+    category = "transform"
     required = {"n": int}
 
     def validate(self):
@@ -60,6 +68,8 @@ class Head(Transform):
 
 @NodeRegistry.register("tail")
 class Tail(Transform):
+    label = "Tail Rows"
+    category = "transform"
     required = {"n": int}
 
     def validate(self):
@@ -72,6 +82,8 @@ class Tail(Transform):
 
 @NodeRegistry.register("explode")
 class Explode(Transform):
+    label = "Explode Columns"
+    category = "transform"
     required = {"columns": (list, str)}
 
     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -79,6 +91,8 @@ class Explode(Transform):
 
 @NodeRegistry.register("group_by")
 class GroupBy(Transform):
+    label = "Group By"
+    category = "transform"
     required = {"by": (list, str), "aggregations": dict}
 
     _ALLOWED_AGGS = frozenset({"sum", "mean", "min", "max", "count", "median", "std", "first", "last"})
@@ -100,6 +114,8 @@ class GroupBy(Transform):
 
 @NodeRegistry.register("log")
 class Log(Transform):
+    label = "Log Transform"
+    category = "transform"
     required = {"columns": (list, str)}
     optional = {"base": (float, None)}
 
@@ -116,6 +132,8 @@ class Log(Transform):
 
 @NodeRegistry.register("zscore_normalize")
 class ZScoreNormalize(Transform):
+    label = "Z-Score Normalize"
+    category = "transform"
     required = {"columns": (list, str)}
 
     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -125,6 +143,8 @@ class ZScoreNormalize(Transform):
 
 @NodeRegistry.register("minmax_normalize")
 class MinMaxNormalize(Transform):
+    label = "Min-Max Normalize"
+    category = "transform"
     required = {"columns": (list, str)}
 
     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -135,6 +155,8 @@ class MinMaxNormalize(Transform):
 
 @NodeRegistry.register("fill_mean")
 class FillMean(Transform):
+    label = "Fill Missing (Mean)"
+    category = "transform"
     required = {"columns": (list, str)}
 
     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -144,6 +166,8 @@ class FillMean(Transform):
 
 @NodeRegistry.register("fill_null")
 class FillNull(Transform):
+    label = "Fill Missing (Value)"
+    category = "transform"
     required = {"columns": (list, str), "value": object}
 
     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -153,6 +177,8 @@ class FillNull(Transform):
 
 @NodeRegistry.register("drop_nulls")
 class DropNulls(Transform):
+    label = "Drop Null Rows"
+    category = "transform"
     optional = {"columns": ((list, str), None)}
 
     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -160,6 +186,8 @@ class DropNulls(Transform):
 
 @NodeRegistry.register("drop_duplicates")
 class DropDuplicates(Transform):
+    label = "Drop Duplicate Rows"
+    category = "transform"
     optional = {"subset": ((list, str), None), "keep": (str, "first")}
 
     def validate(self):
@@ -172,6 +200,8 @@ class DropDuplicates(Transform):
 
 @NodeRegistry.register("rename")
 class Rename(Transform):
+    label = "Rename Columns"
+    category = "transform"
     required = {"mapping": dict}
 
     def validate(self):
@@ -186,6 +216,8 @@ class Rename(Transform):
 
 @NodeRegistry.register("sort")
 class Sort(Transform):
+    label = "Sort Rows"
+    category = "transform"
     required = {"by": (list, str)}
     optional = {"descending": (bool, False)}
 
@@ -194,6 +226,8 @@ class Sort(Transform):
 
 @NodeRegistry.register("cast")
 class Cast(Transform):
+    label = "Cast Column Type"
+    category = "transform"
     required = {"types": dict}
 
     def validate(self):
@@ -232,11 +266,16 @@ class _ExpressionTransform(Transform):
 
 @NodeRegistry.register("filter")
 class Filter(_ExpressionTransform):
+    label = "Filter Rows"
+    category = "transform"
+
     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
         return lf.filter(self._compile_expr())
 
 @NodeRegistry.register("derive")
 class Derive(_ExpressionTransform):
+    label = "Derive Column"
+    category = "transform"
     required = {**_ExpressionTransform.required, "column": str}
 
     def validate(self):
