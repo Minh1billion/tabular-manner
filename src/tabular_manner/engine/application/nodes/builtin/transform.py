@@ -46,6 +46,93 @@ class Limit(Transform):
     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
         return lf.limit(self.n)
 
+@NodeRegistry.register("head")
+class Head(Transform):
+    required = {"n": int}
+
+    def validate(self):
+        super().validate()
+        if self.n < 0:
+            raise ValueError("'n' must be >= 0")
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.head(self.n)
+
+@NodeRegistry.register("tail")
+class Tail(Transform):
+    required = {"n": int}
+
+    def validate(self):
+        super().validate()
+        if self.n < 0:
+            raise ValueError("'n' must be >= 0")
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.tail(self.n)
+
+@NodeRegistry.register("explode")
+class Explode(Transform):
+    required = {"columns": (list, str)}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.explode(self.columns)
+
+@NodeRegistry.register("group_by")
+class GroupBy(Transform):
+    required = {"by": (list, str), "aggregations": dict}
+
+    _ALLOWED_AGGS = frozenset({"sum", "mean", "min", "max", "count", "median", "std", "first", "last"})
+
+    def validate(self):
+        super().validate()
+        if not self.aggregations:
+            raise ValueError("'aggregations' must not be empty")
+        for column, agg in self.aggregations.items():
+            if not isinstance(column, str) or not isinstance(agg, str):
+                raise TypeError("'aggregations' keys and values must be strings")
+            if agg not in self._ALLOWED_AGGS:
+                raise ValueError(f"Unknown aggregation '{agg}' for column '{column}'")
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.group_by(self.by).agg(
+            getattr(pl.col(c), agg)().alias(c) for c, agg in self.aggregations.items()
+        )
+
+@NodeRegistry.register("log")
+class Log(Transform):
+    required = {"columns": (list, str)}
+    optional = {"base": (float, None)}
+
+    def validate(self):
+        super().validate()
+        if self.base is not None and self.base <= 0:
+            raise ValueError("'base' must be > 0")
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(
+            pl.col(c).log(self.base) if self.base is not None else pl.col(c).log()
+            for c in self.columns
+        )
+
+@NodeRegistry.register("zscore_normalize")
+class ZScoreNormalize(Transform):
+    required = {"columns": (list, str)}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(
+            ((pl.col(c) - pl.col(c).mean()) / pl.col(c).std()).alias(c) for c in self.columns
+        )
+
+@NodeRegistry.register("minmax_normalize")
+class MinMaxNormalize(Transform):
+    required = {"columns": (list, str)}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(
+            ((pl.col(c) - pl.col(c).min()) / (pl.col(c).max() - pl.col(c).min())).alias(c)
+            for c in self.columns
+        )
+
 @NodeRegistry.register("fill_mean")
 class FillMean(Transform):
     required = {"columns": (list, str)}
