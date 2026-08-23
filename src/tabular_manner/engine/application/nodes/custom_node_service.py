@@ -94,6 +94,10 @@ class LibraryService:
             raise
         return definition
 
+    def _ensure_registered(self, definition: CustomNodeDefinition) -> None:
+        if definition.name not in self._registry.keys():
+            self._registry.register_dynamic(definition.name, _build_operator_class(definition))
+
     def register_transform(
         self, name: str, expression: str, description: str = "", bucket: str | None = None
     ) -> CustomNodeDefinition:
@@ -146,6 +150,7 @@ class LibraryService:
             raise ValueError(f"Cannot unregister built-in node type '{name}'")
 
         definition = self._repository.get(name, bucket=bucket)
+        self._ensure_registered(definition)
         self._registry.unregister_dynamic(definition.name)
         self._repository.delete(definition.name, bucket=bucket)
 
@@ -170,7 +175,10 @@ class LibraryService:
 
     def describe_nodes(self, bucket: str | None = None) -> dict:
         builtin = [self.describe_operator(self._registry.get(key)) for key in self.builtin_keys()]
-        custom = [self.describe_operator(self._registry.get(d.name)) for d in self._repository.list(bucket=bucket)]
+        custom_definitions = self._repository.list(bucket=bucket)
+        for definition in custom_definitions:
+            self._ensure_registered(definition)
+        custom = [self.describe_operator(self._registry.get(d.name)) for d in custom_definitions]
         return {"builtin": builtin, "custom": custom}
 
     def load_persisted(self, bucket: str | None = None) -> None:

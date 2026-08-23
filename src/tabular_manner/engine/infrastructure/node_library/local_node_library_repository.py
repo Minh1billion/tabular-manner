@@ -18,9 +18,14 @@ class LocalNodeLibraryRepository(NodeLibraryRepository):
         return candidate
 
     def _path(self, name: str, bucket: str | None = None) -> Path:
+        if not name or not name.strip():
+            raise ValueError("'name' must not be empty")
         bucket_dir = self._resolve_bucket_dir(bucket)
         bucket_dir.mkdir(parents=True, exist_ok=True)
-        return bucket_dir / f"{name}.json"
+        candidate = (bucket_dir / f"{name}.json").resolve()
+        if bucket_dir not in candidate.parents:
+            raise ValueError(f"Invalid name '{name}'")
+        return candidate
 
     def save(self, definition: CustomNodeDefinition, bucket: str | None = None) -> None:
         self._path(definition.name, bucket).write_text(json.dumps(asdict(definition), indent=2))

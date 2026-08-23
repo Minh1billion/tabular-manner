@@ -27,6 +27,8 @@ class S3NodeLibraryRepository(NodeLibraryRepository):
         )
 
     def _key(self, name: str, bucket: str | None = None) -> str:
+        if not name or not name.strip() or "/" in name or name in (".", ".."):
+            raise ValueError(f"Invalid name '{name}'")
         segments = [segment for segment in (self._root_prefix, bucket, f"{name}.json") if segment]
         return "/".join(segments)
 
