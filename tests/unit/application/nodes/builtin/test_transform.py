@@ -8,13 +8,20 @@ from tabular_manner.engine.application.nodes.builtin.transform import (
     Drop,
     DropDuplicates,
     DropNulls,
+    Explode,
     FillMean,
     FillNull,
     Filter,
+    GroupBy,
+    Head,
     Limit,
+    Log,
+    MinMaxNormalize,
     Rename,
     Select,
     Sort,
+    Tail,
+    ZScoreNormalize,
 )
 from tabular_manner.engine.domain.models.plan import Plan
 
@@ -192,6 +199,110 @@ class TestLimit:
     def test_rejects_negative_n(self):
         with pytest.raises(ValueError):
             Limit(name="limit", n=-1)
+
+class TestHead:
+    def test_keeps_only_first_n_rows(self):
+        node = Head(name="head", n=2)
+        plan = _plan({"a": [1, 2, 3, 4]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [1, 2]
+
+    def test_rejects_negative_n(self):
+        with pytest.raises(ValueError):
+            Head(name="head", n=-1)
+
+class TestTail:
+    def test_keeps_only_last_n_rows(self):
+        node = Tail(name="tail", n=2)
+        plan = _plan({"a": [1, 2, 3, 4]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [3, 4]
+
+    def test_rejects_negative_n(self):
+        with pytest.raises(ValueError):
+            Tail(name="tail", n=-1)
+
+class TestExplode:
+    def test_explodes_list_column_into_rows(self):
+        node = Explode(name="explode", columns=["a"])
+        plan = _plan({"a": [[1, 2], [3]], "b": ["x", "y"]})
+
+        result, port = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [1, 2, 3]
+        assert collected["b"].to_list() == ["x", "x", "y"]
+        assert port == "out"
+
+class TestGroupBy:
+    def test_aggregates_by_group(self):
+        node = GroupBy(name="grp", by=["b"], aggregations={"a": "sum"})
+        plan = _plan({"a": [1, 2, 3], "b": ["x", "y", "x"]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect().sort("b")
+
+        assert collected["b"].to_list() == ["x", "y"]
+        assert collected["a"].to_list() == [4, 2]
+
+    def test_rejects_empty_aggregations(self):
+        with pytest.raises(ValueError):
+            GroupBy(name="grp", by=["b"], aggregations={})
+
+    def test_rejects_unknown_aggregation(self):
+        with pytest.raises(ValueError):
+            GroupBy(name="grp", by=["b"], aggregations={"a": "bogus"})
+
+class TestLog:
+    def test_applies_natural_log_by_default(self):
+        node = Log(name="log", columns=["a"])
+        plan = _plan({"a": [1.0]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [0.0]
+
+    def test_applies_log_with_given_base(self):
+        node = Log(name="log", columns=["a"], base=2.0)
+        plan = _plan({"a": [8.0]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [3.0]
+
+    def test_rejects_non_positive_base(self):
+        with pytest.raises(ValueError):
+            Log(name="log", columns=["a"], base=0.0)
+
+class TestZScoreNormalize:
+    def test_centers_and_scales_column(self):
+        node = ZScoreNormalize(name="z", columns=["a"])
+        plan = _plan({"a": [1.0, 2.0, 3.0, 4.0]})
+
+        result, port = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].mean() == pytest.approx(0.0, abs=1e-9)
+        assert port == "out"
+
+class TestMinMaxNormalize:
+    def test_scales_column_to_zero_one_range(self):
+        node = MinMaxNormalize(name="mm", columns=["a"])
+        plan = _plan({"a": [1.0, 2.0, 3.0, 4.0]})
+
+        result, port = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [0.0, pytest.approx(1 / 3), pytest.approx(2 / 3), 1.0]
+        assert port == "out"
 
 class TestFilter:
     def test_keeps_rows_matching_expression(self):
