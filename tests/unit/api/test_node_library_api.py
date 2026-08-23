@@ -4,10 +4,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 
-from src.engine.api.node_library import NodeLibrary
-from src.engine.domain.models.custom_node import CustomNodeDefinition
+from tabular_manner.engine.api.node_library import NodeLibrary
+from tabular_manner.engine.domain.models.custom_node import CustomNodeDefinition
 
 def _definition(name: str = "double") -> CustomNodeDefinition:
     return CustomNodeDefinition(

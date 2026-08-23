@@ -3,7 +3,13 @@ import shutil
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+def _find_root(marker="pyproject.toml"):
+    for p in Path(__file__).resolve().parents:
+        if (p / marker).exists():
+            return p
+    raise FileNotFoundError(marker)
+
+PROJECT_ROOT = _find_root()
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 
 

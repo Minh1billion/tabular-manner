@@ -3,10 +3,9 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
 
-from src.engine.domain.models.custom_node import CustomNodeDefinition
-from src.engine.infrastructure.node_library.local_node_library_repository import (
+from tabular_manner.engine.domain.models.custom_node import CustomNodeDefinition
+from tabular_manner.engine.infrastructure.node_library.local_node_library_repository import (
     LocalNodeLibraryRepository,
 )
 

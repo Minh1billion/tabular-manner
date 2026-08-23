@@ -3,10 +3,9 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
 
-from src.engine.domain.models.operator import Operator
-from src.engine.domain.models.plan import Plan
+from tabular_manner.engine.domain.models.operator import Operator
+from tabular_manner.engine.domain.models.plan import Plan
 
 class _Simple(Operator):
     required = {"columns": (list, str)}

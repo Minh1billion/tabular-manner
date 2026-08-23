@@ -4,12 +4,11 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
 
-from src.engine.application.io.reader_factory import ReaderFactory
-from src.engine.application.io.writer_factory import WriterFactory
-from src.engine.application.ports.reader_adapter import ReaderAdapter
-from src.engine.application.ports.writer_adapter import WriterAdapter
+from tabular_manner.engine.application.io.reader_factory import ReaderFactory
+from tabular_manner.engine.application.io.writer_factory import WriterFactory
+from tabular_manner.engine.application.ports.reader_adapter import ReaderAdapter
+from tabular_manner.engine.application.ports.writer_adapter import WriterAdapter
 
 class _FakeReader(ReaderAdapter):
     def __init__(self, value: int):

@@ -5,9 +5,8 @@ from unittest.mock import MagicMock, patch
 import polars as pl
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
 
-from src.engine.infrastructure.writer.database import DatabaseWriterAdapter
+from tabular_manner.engine.infrastructure.writer.database import DatabaseWriterAdapter
 
 class TestInit:
     @pytest.mark.parametrize("mode", ["append", "replace", "fail"])

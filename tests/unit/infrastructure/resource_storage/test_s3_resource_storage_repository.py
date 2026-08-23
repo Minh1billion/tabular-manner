@@ -4,9 +4,8 @@ from pathlib import Path
 import pytest
 from botocore.stub import Stubber
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
 
-from src.engine.infrastructure.resource_storage.s3_resource_storage_repository import (
+from tabular_manner.engine.infrastructure.resource_storage.s3_resource_storage_repository import (
     S3ResourceStorageRepository,
 )
 

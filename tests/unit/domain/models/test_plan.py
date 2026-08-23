@@ -3,9 +3,8 @@ from pathlib import Path
 
 import polars as pl
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
 
-from src.engine.domain.models.plan import Plan
+from tabular_manner.engine.domain.models.plan import Plan
 
 class TestPlanCommit:
     def test_commit_replaces_handle_and_appends_history(self):

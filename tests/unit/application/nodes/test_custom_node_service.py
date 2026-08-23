@@ -4,16 +4,15 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
 
-from src.engine.application.nodes.custom_node_service import LibraryService, _build_operator_class
-from src.engine.application.nodes.registry import NodeRegistry
-from src.engine.application.runtime.sandbox import Sandbox
-from src.engine.application.storage.resource_storage import ResourceStorage
-from src.engine.domain.models.custom_node import CustomNodeDefinition
-from src.engine.domain.models.plan import Plan
-from src.engine.infrastructure.node_library.local_node_library_repository import LocalNodeLibraryRepository
-from src.engine.infrastructure.resource_storage.local_resource_storage_repository import (
+from tabular_manner.engine.application.nodes.custom_node_service import LibraryService, _build_operator_class
+from tabular_manner.engine.application.nodes.registry import NodeRegistry
+from tabular_manner.engine.application.runtime.sandbox import Sandbox
+from tabular_manner.engine.application.storage.resource_storage import ResourceStorage
+from tabular_manner.engine.domain.models.custom_node import CustomNodeDefinition
+from tabular_manner.engine.domain.models.plan import Plan
+from tabular_manner.engine.infrastructure.node_library.local_node_library_repository import LocalNodeLibraryRepository
+from tabular_manner.engine.infrastructure.resource_storage.local_resource_storage_repository import (
     LocalResourceStorageRepository,
 )
 

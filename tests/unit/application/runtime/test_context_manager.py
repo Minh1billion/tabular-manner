@@ -3,9 +3,8 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
 
-from src.engine.application.runtime.context_manager import ContextManager
+from tabular_manner.engine.application.runtime.context_manager import ContextManager
 
 class TestRegisterAndGet:
     def test_get_returns_registered_resource(self):

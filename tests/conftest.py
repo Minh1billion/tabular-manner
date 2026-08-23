@@ -4,14 +4,21 @@ from pathlib import Path
 
 import pytest
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+def _find_root(marker="pyproject.toml"):
+    for p in Path(__file__).resolve().parents:
+        if (p / marker).exists():
+            return p
+    raise FileNotFoundError(marker)
+
+PROJECT_ROOT = _find_root()
+sys.path.insert(0, str(PROJECT_ROOT))
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.seed import generate_dataframe
-from src.engine.bootstrap import build_engine
-from src.engine.application.storage.resource_storage import ResourceStorage
-from src.engine.infrastructure.resource_storage.local_resource_storage_repository import (
+from tabular_manner.engine.bootstrap import build_engine
+from tabular_manner.engine.application.storage.resource_storage import ResourceStorage
+from tabular_manner.engine.infrastructure.resource_storage.local_resource_storage_repository import (
     LocalResourceStorageRepository,
 )
 

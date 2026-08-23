@@ -6,9 +6,8 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
 
-from src.engine.application.runtime.material_buffer import MaterialBuffer
+from tabular_manner.engine.application.runtime.material_buffer import MaterialBuffer
 
 def _counting_lf(counter: dict, lock: threading.Lock, delay: float = 0.05) -> pl.LazyFrame:
     def _touch(df: pl.DataFrame) -> pl.DataFrame:

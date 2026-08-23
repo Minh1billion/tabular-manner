@@ -1,14 +1,13 @@
+from conftest import PROJECT_ROOT
 import json
 import sys
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from src.engine.bootstrap import build_engine
+from tabular_manner.engine.bootstrap import build_engine
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 MOCKS_DIR = PROJECT_ROOT / "samples" / "json"
 STORAGE_ROOT = PROJECT_ROOT / ".tm" / "resource_storage"
 

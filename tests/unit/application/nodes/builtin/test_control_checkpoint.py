@@ -1,3 +1,4 @@
+from conftest import PROJECT_ROOT
 import json
 import sys
 import threading
@@ -6,13 +7,11 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent.parent))
 
-from src.engine.bootstrap import build_engine
-from src.engine.application.nodes.builtin.control import If, Switch
-from src.engine.domain.models.plan import Plan
+from tabular_manner.engine.bootstrap import build_engine
+from tabular_manner.engine.application.nodes.builtin.control import If, Switch
+from tabular_manner.engine.domain.models.plan import Plan
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent.parent
 MOCKS_DIR = PROJECT_ROOT / "samples" / "json"
 
 def _make_switch(counter: dict, lock: threading.Lock) -> Switch:

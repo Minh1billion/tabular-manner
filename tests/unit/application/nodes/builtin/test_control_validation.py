@@ -4,10 +4,9 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent.parent))
 
-from src.engine.application.nodes.builtin.control import If, Switch
-from src.engine.domain.models.plan import Plan
+from tabular_manner.engine.application.nodes.builtin.control import If, Switch
+from tabular_manner.engine.domain.models.plan import Plan
 
 class TestSwitchValidation:
     def test_rejects_empty_expression(self):
