@@ -36,7 +36,7 @@ class Execution:
         self._sandbox = sandbox
         self._graphs: dict[str, Graph] = {}
 
-    def compile(self, spec: dict[str, Any]) -> Iterator[dict[str, Any]]:
+    def _compile(self, spec: dict[str, Any]) -> Iterator[dict[str, Any]]:
         try:
             yield _event("validating")
             Validator(self._registry, self._sandbox).validate(spec)
@@ -50,13 +50,21 @@ class Execution:
         except Exception as exc:
             yield _failure_event(exc)
 
+    def validate(self, spec: dict[str, Any]) -> Iterator[dict[str, Any]]:
+        try:
+            yield _event("validating")
+            Validator(self._registry, self._sandbox).validate(spec)
+            yield _event("valid")
+        except Exception as exc:
+            yield _failure_event(exc)
+
     def execute(self, execution_id: str | None = None, spec: dict[str, Any] | None = None) -> Iterator[dict[str, Any]]:
         try:
             if execution_id is None and spec is None:
                 raise ValueError("Either 'execution_id' or 'spec' must be provided")
 
             if execution_id is None:
-                for event in self.compile(spec):
+                for event in self._compile(spec):
                     yield event
                     if event["event"] == "failed":
                         return

@@ -27,9 +27,25 @@ def _simple_spec() -> dict:
 def _events_by_name(events):
     return {e["event"] for e in events}
 
+class TestValidate:
+    def test_valid_spec_yields_valid_event(self, engine):
+        events = list(engine.execution.validate(_simple_spec()))
+
+        assert _events_by_name(events) == {"validating", "valid"}
+
+    def test_invalid_spec_yields_failed_event(self, engine):
+        events = list(engine.execution.validate({"nodes": [], "connections": []}))
+
+        assert "failed" in _events_by_name(events)
+
+    def test_does_not_populate_graphs_cache(self, engine):
+        list(engine.execution.validate(_simple_spec()))
+
+        assert engine.execution._graphs == {}
+
 class TestCompile:
     def test_compile_yields_compiled_event(self, engine):
-        events = list(engine.execution.compile(_simple_spec()))
+        events = list(engine.execution._compile(_simple_spec()))
 
         assert "compiled" in _events_by_name(events)
         compiled = next(e for e in events if e["event"] == "compiled")
@@ -37,7 +53,7 @@ class TestCompile:
         assert compiled["data"]["node_count"] == 2
 
     def test_compile_invalid_spec_yields_failed_event(self, engine):
-        events = list(engine.execution.compile({"nodes": [], "connections": []}))
+        events = list(engine.execution._compile({"nodes": [], "connections": []}))
 
         assert "failed" in _events_by_name(events)
 
@@ -50,8 +66,8 @@ class TestExecuteWithSpec:
 
 class TestExecuteWithExecutionId:
     def test_reuses_compiled_graph(self, engine):
-        compiled_events = list(engine.execution.compile(_simple_spec()))
-        execution_id = next(e for e in compiled_events if e["event"] == "compiled")["data"]["execution_id"]
+        first_run = list(engine.execution.execute(spec=_simple_spec()))
+        execution_id = next(e for e in first_run if e["event"] == "compiled")["data"]["execution_id"]
 
         events = list(engine.execution.execute(execution_id=execution_id))
         completed = next(e for e in events if e["event"] == "completed")

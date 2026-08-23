@@ -64,6 +64,14 @@ class NodeLibrary:
         except Exception as exc:
             yield _event("failed", error=str(exc))
 
+    def describe_nodes(self) -> Iterator[dict[str, Any]]:
+        try:
+            yield _event("listing")
+            data = self._service.describe_nodes()
+            yield _event("completed", data=data)
+        except Exception as exc:
+            yield _event("failed", error=str(exc))
+
     def list_nodes(self) -> Iterator[dict[str, Any]]:
         try:
             yield _event("listing")

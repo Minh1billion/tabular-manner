@@ -123,6 +123,44 @@ class TestUnregisterTransform:
         events = list(engine.node_library.unregister_node("does_not_exist"))
         _failed(events)
 
+class TestDescribeNodes:
+    def test_describes_builtin_operator_metadata(self, engine):
+        events = list(engine.node_library.describe_nodes())
+        data = _completed(events)
+
+        select = next(d for d in data["builtin"] if d["type"] == "select")
+        assert select["required"] == {"columns": "list[str]"}
+        assert select["ports_out"] == ["out"]
+        assert select["fan_in"] is False
+        assert select["in_ports"] is None
+
+    def test_describes_fan_in_operator_metadata(self, engine):
+        events = list(engine.node_library.describe_nodes())
+        data = _completed(events)
+
+        join = next(d for d in data["builtin"] if d["type"] == "join")
+        assert join["fan_in"] is True
+        assert join["in_ports"] == ["left", "right"]
+
+    def test_describes_registered_custom_transform(self, engine):
+        list(engine.node_library.register_transform(name="double", expression="value * 2"))
+
+        events = list(engine.node_library.describe_nodes())
+        data = _completed(events)
+
+        double = next(d for d in data["custom"] if d["type"] == "double")
+        assert double["required"] == {"columns": "list[str]"}
+        assert not any(d["type"] == "double" for d in data["builtin"])
+
+    def test_unregistered_custom_transform_disappears(self, engine):
+        list(engine.node_library.register_transform(name="double", expression="value * 2"))
+        list(engine.node_library.unregister_node("double"))
+
+        events = list(engine.node_library.describe_nodes())
+        data = _completed(events)
+
+        assert not any(d["type"] == "double" for d in data["custom"])
+
 class TestGetAndListNodes:
     def test_get_returns_definition(self, engine):
         list(engine.node_library.register_transform(name="double", expression="value * 2", description="x2"))
