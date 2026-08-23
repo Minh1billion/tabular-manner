@@ -11,6 +11,7 @@ class NodeRegistry:
         def wrapper(operator_cls: type[Operator]):
             if key in cls._builtin_registry:
                 raise ValueError(f"Node type '{key}' is already registered")
+            operator_cls.registry_key = key
             cls._builtin_registry[key] = operator_cls
             return operator_cls
         return wrapper
@@ -18,6 +19,7 @@ class NodeRegistry:
     def register_dynamic(self, key: str, operator_cls: type[Operator]) -> None:
         if key in self._builtin_registry or key in self._dynamic_registry:
             raise ValueError(f"Node type '{key}' is already registered")
+        operator_cls.registry_key = key
         self._dynamic_registry[key] = operator_cls
 
     def unregister_dynamic(self, key: str) -> None:

@@ -13,6 +13,7 @@ class Operator(ABC):
     ports: ClassVar[tuple[str, ...] | None] = None
     fan_in: ClassVar[bool] = False
     in_ports: ClassVar[tuple[str, ...] | None] = None
+    registry_key: ClassVar[str | None] = None
 
     def valid_ports(self) -> tuple[str, ...]:
         return self.ports if self.ports is not None else (self.default_port,)
