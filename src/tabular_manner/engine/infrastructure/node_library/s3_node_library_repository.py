@@ -26,34 +26,40 @@ class S3NodeLibraryRepository(NodeLibraryRepository):
             path_style=path_style,
         )
 
-    def _key(self, name: str) -> str:
-        return f"{self._root_prefix}/{name}.json" if self._root_prefix else f"{name}.json"
+    def _key(self, name: str, bucket: str | None = None) -> str:
+        segments = [segment for segment in (self._root_prefix, bucket, f"{name}.json") if segment]
+        return "/".join(segments)
 
-    def save(self, definition: CustomNodeDefinition) -> None:
+    def _prefix(self, bucket: str | None = None) -> str:
+        segments = [segment for segment in (self._root_prefix, bucket) if segment]
+        prefix = "/".join(segments)
+        return f"{prefix}/" if prefix else ""
+
+    def save(self, definition: CustomNodeDefinition, bucket: str | None = None) -> None:
         self._client.put_object(
             Bucket=self._bucket_name,
-            Key=self._key(definition.name),
+            Key=self._key(definition.name, bucket),
             Body=json.dumps(asdict(definition), indent=2).encode("utf-8"),
             ContentType="application/json",
         )
 
-    def get(self, name: str) -> CustomNodeDefinition:
+    def get(self, name: str, bucket: str | None = None) -> CustomNodeDefinition:
         try:
-            response = self._client.get_object(Bucket=self._bucket_name, Key=self._key(name))
+            response = self._client.get_object(Bucket=self._bucket_name, Key=self._key(name, bucket))
         except self._client.exceptions.NoSuchKey as exc:
             raise KeyError(f"No custom transform found under name '{name}'") from exc
         return CustomNodeDefinition(**json.loads(response["Body"].read()))
 
-    def delete(self, name: str) -> None:
-        key = self._key(name)
+    def delete(self, name: str, bucket: str | None = None) -> None:
+        key = self._key(name, bucket)
         try:
             self._client.head_object(Bucket=self._bucket_name, Key=key)
         except self._client.exceptions.ClientError as exc:
             raise KeyError(f"No custom transform found under name '{name}'") from exc
         self._client.delete_object(Bucket=self._bucket_name, Key=key)
 
-    def list(self) -> list[CustomNodeDefinition]:
-        prefix = f"{self._root_prefix}/" if self._root_prefix else ""
+    def list(self, bucket: str | None = None) -> list[CustomNodeDefinition]:
+        prefix = self._prefix(bucket)
         paginator = self._client.get_paginator("list_objects_v2")
         definitions = []
         for page in paginator.paginate(Bucket=self._bucket_name, Prefix=prefix):

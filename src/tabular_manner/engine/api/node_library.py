@@ -23,10 +23,14 @@ class NodeLibrary:
     def __init__(self, service: LibraryService):
         self._service = service
 
-    def register_transform(self, name: str, expression: str, description: str = "") -> Iterator[dict[str, Any]]:
+    def register_transform(
+        self, name: str, expression: str, description: str = "", bucket: str | None = None
+    ) -> Iterator[dict[str, Any]]:
         try:
             yield _event("validating", node_name=name)
-            definition = self._service.register_transform(name=name, expression=expression, description=description)
+            definition = self._service.register_transform(
+                name=name, expression=expression, description=description, bucket=bucket
+            )
             yield _event("completed", data=_serialize(definition))
         except Exception as exc:
             yield _event("failed", error=str(exc))
@@ -38,44 +42,46 @@ class NodeLibrary:
         method: str,
         description: str = "",
         handle_param: str | None = None,
+        bucket: str | None = None,
     ) -> Iterator[dict[str, Any]]:
         try:
             yield _event("validating", node_name=name)
             definition = self._service.register_action(
-                name=name, service=service, method=method, description=description, handle_param=handle_param,
+                name=name, service=service, method=method, description=description,
+                handle_param=handle_param, bucket=bucket,
             )
             yield _event("completed", data=_serialize(definition))
         except Exception as exc:
             yield _event("failed", error=str(exc))
 
-    def unregister_node(self, name: str) -> Iterator[dict[str, Any]]:
+    def unregister_node(self, name: str, bucket: str | None = None) -> Iterator[dict[str, Any]]:
         try:
             yield _event("unregistering", node_name=name)
-            self._service.unregister_transform(name)
+            self._service.unregister_transform(name, bucket=bucket)
             yield _event("completed", data={"name": name})
         except Exception as exc:
             yield _event("failed", error=str(exc))
 
-    def get_node(self, name: str) -> Iterator[dict[str, Any]]:
+    def get_node(self, name: str, bucket: str | None = None) -> Iterator[dict[str, Any]]:
         try:
             yield _event("loading", node_name=name)
-            definition = self._service.get_transform(name)
+            definition = self._service.get_transform(name, bucket=bucket)
             yield _event("completed", data=_serialize(definition))
         except Exception as exc:
             yield _event("failed", error=str(exc))
 
-    def describe_nodes(self) -> Iterator[dict[str, Any]]:
+    def describe_nodes(self, bucket: str | None = None) -> Iterator[dict[str, Any]]:
         try:
             yield _event("listing")
-            data = self._service.describe_nodes()
+            data = self._service.describe_nodes(bucket=bucket)
             yield _event("completed", data=data)
         except Exception as exc:
             yield _event("failed", error=str(exc))
 
-    def list_nodes(self) -> Iterator[dict[str, Any]]:
+    def list_nodes(self, bucket: str | None = None) -> Iterator[dict[str, Any]]:
         try:
             yield _event("listing")
-            custom = [_serialize(definition) for definition in self._service.list_transforms()]
+            custom = [_serialize(definition) for definition in self._service.list_transforms(bucket=bucket)]
             builtin = self._service.builtin_keys()
             yield _event("completed", data={"builtin": builtin, "custom": custom})
         except Exception as exc:

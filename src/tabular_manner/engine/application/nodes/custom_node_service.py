@@ -85,16 +85,18 @@ class LibraryService:
         if name in self._registry.keys():
             raise ValueError(f"Node type '{name}' is already registered")
 
-    def _persist_and_register(self, definition: CustomNodeDefinition) -> CustomNodeDefinition:
-        self._repository.save(definition)
+    def _persist_and_register(self, definition: CustomNodeDefinition, bucket: str | None = None) -> CustomNodeDefinition:
+        self._repository.save(definition, bucket=bucket)
         try:
             self._registry.register_dynamic(definition.name, _build_operator_class(definition))
         except Exception:
-            self._repository.delete(definition.name)
+            self._repository.delete(definition.name, bucket=bucket)
             raise
         return definition
 
-    def register_transform(self, name: str, expression: str, description: str = "") -> CustomNodeDefinition:
+    def register_transform(
+        self, name: str, expression: str, description: str = "", bucket: str | None = None
+    ) -> CustomNodeDefinition:
         self._validate_name(name)
         if not expression or not expression.strip():
             raise ValueError("'expression' must not be empty")
@@ -111,7 +113,7 @@ class LibraryService:
             created_at=datetime.now(timezone.utc).isoformat(),
             expression=expression,
         )
-        return self._persist_and_register(definition)
+        return self._persist_and_register(definition, bucket=bucket)
 
     def register_action(
         self,
@@ -120,6 +122,7 @@ class LibraryService:
         method: str,
         description: str = "",
         handle_param: str | None = None,
+        bucket: str | None = None,
     ) -> CustomNodeDefinition:
         self._validate_name(name)
 
@@ -136,21 +139,21 @@ class LibraryService:
             method=method,
             handle_param=handle_param,
         )
-        return self._persist_and_register(definition)
+        return self._persist_and_register(definition, bucket=bucket)
 
-    def unregister_transform(self, name: str) -> None:
+    def unregister_transform(self, name: str, bucket: str | None = None) -> None:
         if self._registry.is_builtin(name):
             raise ValueError(f"Cannot unregister built-in node type '{name}'")
 
-        definition = self._repository.get(name)
+        definition = self._repository.get(name, bucket=bucket)
         self._registry.unregister_dynamic(definition.name)
-        self._repository.delete(definition.name)
+        self._repository.delete(definition.name, bucket=bucket)
 
-    def get_transform(self, name: str) -> CustomNodeDefinition:
-        return self._repository.get(name)
+    def get_transform(self, name: str, bucket: str | None = None) -> CustomNodeDefinition:
+        return self._repository.get(name, bucket=bucket)
 
-    def list_transforms(self) -> list[CustomNodeDefinition]:
-        return self._repository.list()
+    def list_transforms(self, bucket: str | None = None) -> list[CustomNodeDefinition]:
+        return self._repository.list(bucket=bucket)
 
     def builtin_keys(self) -> list[str]:
         return sorted(key for key in self._registry.keys() if self._registry.is_builtin(key))
@@ -165,13 +168,13 @@ class LibraryService:
             "in_ports": list(operator_cls.in_ports) if operator_cls.in_ports is not None else None,
         }
 
-    def describe_nodes(self) -> dict:
+    def describe_nodes(self, bucket: str | None = None) -> dict:
         builtin = [self.describe_operator(self._registry.get(key)) for key in self.builtin_keys()]
-        custom = [self.describe_operator(self._registry.get(d.name)) for d in self._repository.list()]
+        custom = [self.describe_operator(self._registry.get(d.name)) for d in self._repository.list(bucket=bucket)]
         return {"builtin": builtin, "custom": custom}
 
-    def load_persisted(self) -> None:
-        for definition in self._repository.list():
+    def load_persisted(self, bucket: str | None = None) -> None:
+        for definition in self._repository.list(bucket=bucket):
             if definition.name in self._registry.keys():
                 continue
             self._registry.register_dynamic(definition.name, _build_operator_class(definition))

@@ -7,29 +7,41 @@ from ...domain.models.custom_node import CustomNodeDefinition
 
 class LocalNodeLibraryRepository(NodeLibraryRepository):
     def __init__(self, root: str = ".tm/node_library"):
-        self._root = Path(root)
+        self._root = Path(root).resolve()
         self._root.mkdir(parents=True, exist_ok=True)
 
-    def _path(self, name: str) -> Path:
-        return self._root / f"{name}.json"
+    def _resolve_bucket_dir(self, bucket: str | None = None) -> Path:
+        bucket_name = bucket or "default"
+        candidate = (self._root / bucket_name).resolve()
+        if candidate != self._root and self._root not in candidate.parents:
+            raise ValueError(f"Invalid bucket name '{bucket}'")
+        return candidate
 
-    def save(self, definition: CustomNodeDefinition) -> None:
-        self._path(definition.name).write_text(json.dumps(asdict(definition), indent=2))
+    def _path(self, name: str, bucket: str | None = None) -> Path:
+        bucket_dir = self._resolve_bucket_dir(bucket)
+        bucket_dir.mkdir(parents=True, exist_ok=True)
+        return bucket_dir / f"{name}.json"
 
-    def get(self, name: str) -> CustomNodeDefinition:
-        path = self._path(name)
+    def save(self, definition: CustomNodeDefinition, bucket: str | None = None) -> None:
+        self._path(definition.name, bucket).write_text(json.dumps(asdict(definition), indent=2))
+
+    def get(self, name: str, bucket: str | None = None) -> CustomNodeDefinition:
+        path = self._path(name, bucket)
         if not path.exists():
             raise KeyError(f"No custom transform found under name '{name}'")
         return CustomNodeDefinition(**json.loads(path.read_text()))
 
-    def delete(self, name: str) -> None:
-        path = self._path(name)
+    def delete(self, name: str, bucket: str | None = None) -> None:
+        path = self._path(name, bucket)
         if not path.exists():
             raise KeyError(f"No custom transform found under name '{name}'")
         path.unlink()
 
-    def list(self) -> list[CustomNodeDefinition]:
+    def list(self, bucket: str | None = None) -> list[CustomNodeDefinition]:
+        bucket_dir = self._resolve_bucket_dir(bucket)
+        if not bucket_dir.exists():
+            return []
         return [
             CustomNodeDefinition(**json.loads(path.read_text()))
-            for path in sorted(self._root.glob("*.json"))
+            for path in sorted(bucket_dir.glob("*.json"))
         ]
