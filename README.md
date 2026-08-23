@@ -67,3 +67,7 @@ for event in engine.execution.execute(spec=spec):
 ```
 
 More graph patterns (branching, joins, `switch`/`if` control nodes) are available under `samples/json/`.
+
+## Documentation
+
+Full API and node reference: [minh1billion.github.io/tabular-manner](https://minh1billion.github.io/tabular-manner/)
