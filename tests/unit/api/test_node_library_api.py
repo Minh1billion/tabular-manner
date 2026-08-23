@@ -1,9 +1,6 @@
-import sys
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-
 
 from tabular_manner.engine.api.node_library import NodeLibrary
 from tabular_manner.engine.domain.models.custom_node import CustomNodeDefinition

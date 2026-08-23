@@ -1,7 +1,7 @@
 from pathlib import Path
 
 def find_repo_root(marker: str = "pyproject.toml") -> Path:
-    """Walk up from this file to find the repo root (dev/scripts/tests use only)."""
+    """Walk up from this file to find the repo root."""
     for p in Path(__file__).resolve().parents:
         if (p / marker).exists():
             return p

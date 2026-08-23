@@ -1,6 +1,3 @@
-import sys
-from pathlib import Path
-
 import polars as pl
 
 from tabular_manner.engine.domain.models.plan import Plan

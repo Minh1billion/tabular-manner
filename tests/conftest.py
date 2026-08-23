@@ -3,12 +3,13 @@ import sys
 
 import pytest
 
-from tabular_manner._paths import default_storage_root, find_repo_root, samples_dir
 from tabular_manner.engine.bootstrap import build_engine
 from tabular_manner.engine.application.storage.resource_storage import ResourceStorage
 from tabular_manner.engine.infrastructure.resource_storage.local_resource_storage_repository import (
     LocalResourceStorageRepository,
 )
+
+from tests.support.paths import default_storage_root, find_repo_root, samples_dir
 
 PROJECT_ROOT = find_repo_root()
 if str(PROJECT_ROOT) not in sys.path:
@@ -23,7 +24,7 @@ _PREREQUISITE_PIPELINES = (
 
 @pytest.fixture(scope="session")
 def project_root():
-    """Repo root. Change resolution logic in tabular_manner._paths, not here."""
+    """Repo root. Change resolution logic in tests/support/paths.py, not here."""
     return PROJECT_ROOT
 
 @pytest.fixture(scope="session")
