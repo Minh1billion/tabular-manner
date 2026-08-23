@@ -25,6 +25,8 @@ class Merge(Operator):
 
 @NodeRegistry.register("union")
 class Union(Merge):
+    label = "Union"
+    category = "merge"
     optional = {"how": (str, "vertical_relaxed")}
 
     def _combine(self, lfs: list[pl.LazyFrame]) -> pl.LazyFrame:
@@ -32,6 +34,8 @@ class Union(Merge):
 
 @NodeRegistry.register("join")
 class Join(Merge):
+    label = "Join"
+    category = "merge"
     required = {"on": (list, str)}
     optional = {"how": (str, "inner")}
     in_ports = ("left", "right")

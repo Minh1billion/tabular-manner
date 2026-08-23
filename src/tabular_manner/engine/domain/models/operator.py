@@ -14,6 +14,8 @@ class Operator(ABC):
     fan_in: ClassVar[bool] = False
     in_ports: ClassVar[tuple[str, ...] | None] = None
     registry_key: ClassVar[str | None] = None
+    label: ClassVar[str | None] = None
+    category: ClassVar[str] = "custom"
 
     def valid_ports(self) -> tuple[str, ...]:
         return self.ports if self.ports is not None else (self.default_port,)
