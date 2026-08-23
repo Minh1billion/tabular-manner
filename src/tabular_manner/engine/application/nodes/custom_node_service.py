@@ -165,7 +165,7 @@ class LibraryService:
 
     def describe_operator(self, operator_cls: type[Operator]) -> dict:
         return {
-            "type": operator_cls.__name__.lower(),
+            "type": operator_cls.registry_key or operator_cls.__name__.lower(),
             "required": {k: Operator._type_name(v) for k, v in operator_cls.required.items()},
             "optional": {k: Operator._type_name(v[0]) for k, v in operator_cls.optional.items()},
             "ports_out": list(operator_cls.ports) if operator_cls.ports is not None else [operator_cls.default_port],
