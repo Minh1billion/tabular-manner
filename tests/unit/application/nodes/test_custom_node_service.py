@@ -139,3 +139,51 @@ class TestCustomActionOperator:
         assert result_plan is plan
         assert port == "out"
         assert resource_storage.list() == ["processed"]
+
+class TestDescribeOperator:
+    def test_describes_builtin_operator(self, service, registry):
+        operator_cls = registry.get("select")
+
+        description = service.describe_operator(operator_cls)
+
+        assert description["type"] == "select"
+        assert description["required"] == {"columns": "list[str]"}
+        assert description["ports_out"] == ["out"]
+        assert description["fan_in"] is False
+        assert description["in_ports"] is None
+
+    def test_describes_fan_in_operator_with_in_ports(self, service, registry):
+        operator_cls = registry.get("join")
+
+        description = service.describe_operator(operator_cls)
+
+        assert description["fan_in"] is True
+        assert description["in_ports"] == ["left", "right"]
+
+    def test_describes_custom_transform_operator(self, service):
+        definition = service.register_transform(name="double", expression="value * 2")
+        node_cls = _build_operator_class(definition)
+
+        description = service.describe_operator(node_cls)
+
+        assert description["type"] == "double"
+        assert description["required"] == {"columns": "list[str]"}
+
+class TestDescribeNodes:
+    def test_includes_builtin_and_custom(self, service):
+        service.register_transform(name="double", expression="value * 2")
+
+        data = service.describe_nodes()
+
+        builtin_types = {d["type"] for d in data["builtin"]}
+        custom_types = {d["type"] for d in data["custom"]}
+        assert "select" in builtin_types
+        assert "double" in custom_types
+
+    def test_excludes_custom_from_builtin(self, service):
+        service.register_transform(name="double", expression="value * 2")
+
+        data = service.describe_nodes()
+
+        builtin_types = {d["type"] for d in data["builtin"]}
+        assert "double" not in builtin_types

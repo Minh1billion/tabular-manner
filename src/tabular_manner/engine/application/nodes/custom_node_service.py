@@ -155,6 +155,21 @@ class LibraryService:
     def builtin_keys(self) -> list[str]:
         return sorted(key for key in self._registry.keys() if self._registry.is_builtin(key))
 
+    def describe_operator(self, operator_cls: type[Operator]) -> dict:
+        return {
+            "type": operator_cls.__name__.lower(),
+            "required": {k: Operator._type_name(v) for k, v in operator_cls.required.items()},
+            "optional": {k: Operator._type_name(v[0]) for k, v in operator_cls.optional.items()},
+            "ports_out": list(operator_cls.ports) if operator_cls.ports is not None else [operator_cls.default_port],
+            "fan_in": operator_cls.fan_in,
+            "in_ports": list(operator_cls.in_ports) if operator_cls.in_ports is not None else None,
+        }
+
+    def describe_nodes(self) -> dict:
+        builtin = [self.describe_operator(self._registry.get(key)) for key in self.builtin_keys()]
+        custom = [self.describe_operator(self._registry.get(d.name)) for d in self._repository.list()]
+        return {"builtin": builtin, "custom": custom}
+
     def load_persisted(self) -> None:
         for definition in self._repository.list():
             if definition.name in self._registry.keys():
