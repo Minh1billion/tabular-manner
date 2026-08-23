@@ -2,7 +2,7 @@
 
 # Tabular Manner
 
-An engine built for designing data processing workflows low-code platform using a graph-based model.
+An engine built for designing data and processing workflows low-code platform using a graph-based model.
 
 <p>
   <img src="https://img.shields.io/badge/Python-blue?logo=python&logoColor=white" alt="Python" />
