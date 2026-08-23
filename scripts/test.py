@@ -1,14 +1,9 @@
 import subprocess
 import sys
-from pathlib import Path
 
-def _find_root(marker="pyproject.toml"):
-    for p in Path(__file__).resolve().parents:
-        if (p / marker).exists():
-            return p
-    raise FileNotFoundError(marker)
+from tabular_manner._paths import find_repo_root
 
-project_root = _find_root()
+project_root = find_repo_root()
 
 _TARGET_FLAGS = {
     "--unit": "tests/unit",

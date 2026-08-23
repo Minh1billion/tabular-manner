@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 from botocore.stub import Stubber
 
-
 from tabular_manner.engine.domain.models.custom_node import CustomNodeDefinition
 from tabular_manner.engine.infrastructure.node_library.s3_node_library_repository import (
     S3NodeLibraryRepository,

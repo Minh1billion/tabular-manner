@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 import polars as pl
 import pytest
 
-
 from tabular_manner.engine.application.io.reader_factory import ReaderFactory
 from tabular_manner.engine.application.io.writer_factory import WriterFactory
 from tabular_manner.engine.application.nodes.builtin.io_bound import FetchPostgres, FetchS3, PushPostgres

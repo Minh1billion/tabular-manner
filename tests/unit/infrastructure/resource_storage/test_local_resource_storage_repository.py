@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pytest
 
-
 from tabular_manner.engine.infrastructure.resource_storage.local_resource_storage_repository import (
     LocalResourceStorageRepository,
 )

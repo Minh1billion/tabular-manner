@@ -1,18 +1,10 @@
 import json
-import sys
 from pathlib import Path
 
-def _find_root(marker="pyproject.toml"):
-    for p in Path(__file__).resolve().parents:
-        if (p / marker).exists():
-            return p
-    raise FileNotFoundError(marker)
-
-project_root = _find_root()
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
-
+from tabular_manner._paths import find_repo_root
 from tabular_manner.engine.bootstrap import Engine, build_engine
+
+project_root = find_repo_root()
 
 def run_mock(execution, pipeline_path: Path) -> None:
     print(f"\n{'=' * 60}")

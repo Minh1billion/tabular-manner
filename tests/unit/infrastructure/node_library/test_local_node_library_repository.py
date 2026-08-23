@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pytest
 
-
 from tabular_manner.engine.domain.models.custom_node import CustomNodeDefinition
 from tabular_manner.engine.infrastructure.node_library.local_node_library_repository import (
     LocalNodeLibraryRepository,

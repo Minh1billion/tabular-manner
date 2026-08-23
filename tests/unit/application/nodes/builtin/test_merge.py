@@ -4,7 +4,6 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-
 from tabular_manner.engine.application.nodes.builtin.merge import Join, Union
 from tabular_manner.engine.domain.models.plan import Plan
 

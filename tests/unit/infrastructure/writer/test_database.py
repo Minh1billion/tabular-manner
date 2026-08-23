@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 import polars as pl
 import pytest
 
-
 from tabular_manner.engine.infrastructure.writer.database import DatabaseWriterAdapter
 
 class TestInit:

@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pytest
 
-
 from tabular_manner.engine.domain.models.operator import Operator
 from tabular_manner.engine.domain.models.plan import Plan
 

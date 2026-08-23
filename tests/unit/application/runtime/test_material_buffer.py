@@ -6,7 +6,6 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-
 from tabular_manner.engine.application.runtime.material_buffer import MaterialBuffer
 
 def _counting_lf(counter: dict, lock: threading.Lock, delay: float = 0.05) -> pl.LazyFrame:

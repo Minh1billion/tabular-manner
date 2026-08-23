@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pytest
 
-
 from tabular_manner.engine.application.compiler.validator import Validator
 from tabular_manner.engine.application.nodes.registry import NodeRegistry
 from tabular_manner.engine.application.runtime.sandbox import Sandbox

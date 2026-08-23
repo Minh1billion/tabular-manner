@@ -4,7 +4,6 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-
 from tabular_manner.engine.application.nodes.builtin.io_bound import (
     FetchArrow,
     FetchCsv,
@@ -23,26 +22,21 @@ from tabular_manner.engine.infrastructure.resource_storage.local_resource_storag
     LocalResourceStorageRepository,
 )
 
-
 def _empty_plan() -> Plan:
     return Plan(handle=pl.LazyFrame())
-
 
 @pytest.fixture
 def reader_factory():
     return ReaderFactory()
 
-
 @pytest.fixture
 def writer_factory():
     return WriterFactory()
-
 
 @pytest.fixture
 def resource_storage(tmp_path):
     repository = LocalResourceStorageRepository(root=str(tmp_path / ".resource_storage"))
     return ResourceStorage(repository=repository)
-
 
 class TestFetchCsv:
     def test_reads_csv_file(self, tmp_path, reader_factory):

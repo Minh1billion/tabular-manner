@@ -4,7 +4,6 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-
 from tabular_manner.engine.application.compiler.graph import Graph, Node, NodeExecutionError
 from tabular_manner.engine.domain.models.operator import Operator
 from tabular_manner.engine.domain.models.plan import Plan

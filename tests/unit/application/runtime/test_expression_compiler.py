@@ -4,7 +4,6 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-
 from tabular_manner.engine.application.runtime.expression_compiler import ExpressionCompiler
 
 @pytest.fixture

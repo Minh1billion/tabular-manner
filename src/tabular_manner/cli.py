@@ -3,7 +3,9 @@ import shutil
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+from ._paths import find_repo_root
+
+PROJECT_ROOT = find_repo_root()
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 
 

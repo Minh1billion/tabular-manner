@@ -1,9 +1,6 @@
-import sys
-from pathlib import Path
-
 import polars as pl
 import pytest
-
+from pathlib import Path
 
 from tabular_manner.engine.bootstrap import build_engine
 

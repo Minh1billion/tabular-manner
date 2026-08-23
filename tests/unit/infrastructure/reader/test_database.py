@@ -5,7 +5,6 @@ from unittest.mock import patch
 import polars as pl
 import pytest
 
-
 from tabular_manner.engine.infrastructure.reader.database import DatabaseReaderAdapter
 
 class TestInit:
