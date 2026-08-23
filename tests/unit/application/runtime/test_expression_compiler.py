@@ -4,9 +4,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
-
-from src.engine.application.runtime.expression_compiler import ExpressionCompiler
+from tabular_manner.engine.application.runtime.expression_compiler import ExpressionCompiler
 
 @pytest.fixture
 def compiler():

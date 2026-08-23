@@ -4,10 +4,8 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent.parent))
-
-from src.engine.application.nodes.builtin.merge import Join, Union
-from src.engine.domain.models.plan import Plan
+from tabular_manner.engine.application.nodes.builtin.merge import Join, Union
+from tabular_manner.engine.domain.models.plan import Plan
 
 def _plan(data: dict, history=(), meta=None) -> Plan:
     return Plan(handle=pl.LazyFrame(data), history=history, meta=meta or {})

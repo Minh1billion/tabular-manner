@@ -1,8 +1,9 @@
 import subprocess
 import sys
-from pathlib import Path
 
-project_root = Path(__file__).resolve().parent.parent
+from tabular_manner._paths import find_repo_root
+
+project_root = find_repo_root()
 
 _TARGET_FLAGS = {
     "--unit": "tests/unit",

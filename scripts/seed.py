@@ -1,17 +1,13 @@
 import argparse
-import sys
-
-from pathlib import Path
-
-project_root = Path(__file__).resolve().parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
 
 import numpy as np
 import polars as pl
 
-from src.engine.application.storage.resource_storage import ResourceStorage
-from src.engine.infrastructure.resource_storage.local_resource_storage_repository import LocalResourceStorageRepository
+from tabular_manner._paths import find_repo_root
+from tabular_manner.engine.application.storage.resource_storage import ResourceStorage
+from tabular_manner.engine.infrastructure.resource_storage.local_resource_storage_repository import LocalResourceStorageRepository
+
+project_root = find_repo_root()
 
 BYTES_PER_ROW_ESTIMATE = 40  # rough estimate: customer (str) + amount (f64) + quantity (i64)
 

@@ -3,11 +3,9 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
-
-from src.engine.application.compiler.parser import Parser
-from src.engine.application.nodes.registry import NodeRegistry
-from src.engine.application.runtime.sandbox import Sandbox
+from tabular_manner.engine.application.compiler.parser import Parser
+from tabular_manner.engine.application.nodes.registry import NodeRegistry
+from tabular_manner.engine.application.runtime.sandbox import Sandbox
 
 def _spec(nodes, connections):
     return {"nodes": nodes, "connections": connections}

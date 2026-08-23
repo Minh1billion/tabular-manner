@@ -5,9 +5,7 @@ from unittest.mock import patch
 import polars as pl
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
-
-from src.engine.infrastructure.reader.database import DatabaseReaderAdapter
+from tabular_manner.engine.infrastructure.reader.database import DatabaseReaderAdapter
 
 class TestInit:
     def test_requires_table_or_query(self):

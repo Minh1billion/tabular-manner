@@ -1,34 +1,12 @@
 import json
-import sys
 import threading
-from pathlib import Path
 
 import polars as pl
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent.parent))
-
-from src.engine.bootstrap import build_engine
-from src.engine.application.nodes.builtin.control import If, Switch
-from src.engine.domain.models.plan import Plan
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent.parent
-MOCKS_DIR = PROJECT_ROOT / "samples" / "json"
-
-def _make_switch(counter: dict, lock: threading.Lock) -> Switch:
-    node = Switch(
-        name="bucket",
-        expression="pl.when(df.amount.mean() >= 150).then(pl.lit('high')).otherwise(pl.lit('low'))",
-        cases=["high", "low"],
-    )
-
-    def _touch(df: pl.DataFrame) -> pl.DataFrame:
-        with lock:
-            counter["n"] += 1
-        return df
-
-    node._touch = _touch
-    return node
+from tabular_manner._paths import samples_dir
+from tabular_manner.engine.application.nodes.builtin.control import If, Switch
+from tabular_manner.engine.domain.models.plan import Plan
 
 def _lf_with_probe(counter: dict, lock: threading.Lock) -> pl.LazyFrame:
     def _touch(df: pl.DataFrame) -> pl.DataFrame:
@@ -41,8 +19,7 @@ def _lf_with_probe(counter: dict, lock: threading.Lock) -> pl.LazyFrame:
     )
 
 class TestControlCheckpoint:
-    def test_switch_forward_commits_checkpoint_step(self):
-        engine = build_engine(storage_root=str(PROJECT_ROOT / ".tm" / "resource_storage"))
+    def test_switch_forward_commits_checkpoint_step(self, engine):
         material_buffer = engine.context_manager.get("material_buffer")
 
         node = Switch(
@@ -65,8 +42,7 @@ class TestControlCheckpoint:
             "amount": [100.0, 200.0, 300.0]
         }
 
-    def test_repeated_switch_on_same_upstream_does_not_recollect(self):
-        engine = build_engine(storage_root=str(PROJECT_ROOT / ".tm" / "resource_storage"))
+    def test_repeated_switch_on_same_upstream_does_not_recollect(self, engine):
         material_buffer = engine.context_manager.get("material_buffer")
 
         counter = {"n": 0}
@@ -90,8 +66,7 @@ class TestControlCheckpoint:
         switch_a.forward(base_plan)
         assert counter["n"] == 1
 
-    def test_if_node_checkpoints_too(self):
-        engine = build_engine(storage_root=str(PROJECT_ROOT / ".tm" / "resource_storage"))
+    def test_if_node_checkpoints_too(self, engine):
         material_buffer = engine.context_manager.get("material_buffer")
 
         node = If(name="HasRows", expression="df.amount.len() > 0")
@@ -108,10 +83,9 @@ class TestExecutionBufferLifecycle:
         "mock_name",
         ["switch_amount_bucket_pipeline.json", "switch_default_fallback_pipeline.json"],
     )
-    def test_buffer_cleared_after_successful_execution(self, mock_name):
-        engine = build_engine(storage_root=str(PROJECT_ROOT / ".tm" / "resource_storage"))
+    def test_buffer_cleared_after_successful_execution(self, engine, load_spec, mock_name):
         material_buffer = engine.context_manager.get("material_buffer")
-        spec = json.loads((MOCKS_DIR / mock_name).read_text())
+        spec = load_spec(mock_name)
 
         assert len(material_buffer) == 0
 
@@ -124,8 +98,7 @@ class TestExecutionBufferLifecycle:
         assert saw_entries_mid_run, "expected the switch checkpoint to populate the buffer mid-run"
         assert len(material_buffer) == 0, "buffer should be cleared once execution completes"
 
-    def test_buffer_cleared_on_failed_execution(self):
-        engine = build_engine(storage_root=str(PROJECT_ROOT / ".tm" / "resource_storage"))
+    def test_buffer_cleared_on_failed_execution(self, engine):
         material_buffer = engine.context_manager.get("material_buffer")
 
         bad_spec = {"nodes": [], "connections": []}  # invalid: no entry node
@@ -134,10 +107,9 @@ class TestExecutionBufferLifecycle:
 
         assert len(material_buffer) == 0
 
-    def test_no_accumulation_across_repeated_executions(self):
-        engine = build_engine(storage_root=str(PROJECT_ROOT / ".tm" / "resource_storage"))
+    def test_no_accumulation_across_repeated_executions(self, engine, load_spec):
         material_buffer = engine.context_manager.get("material_buffer")
-        spec = json.loads((MOCKS_DIR / "switch_amount_bucket_pipeline.json").read_text())
+        spec = load_spec("switch_amount_bucket_pipeline.json")
 
         for _ in range(5):
             for event in engine.execution.execute(spec=spec):
@@ -145,10 +117,8 @@ class TestExecutionBufferLifecycle:
 
         assert len(material_buffer) == 0
 
-    def test_all_mock_pipelines_still_run_successfully(self):
-        engine = build_engine(storage_root=str(PROJECT_ROOT / ".tm" / "resource_storage"))
-
-        for mock_path in sorted(MOCKS_DIR.glob("*.json")):
+    def test_all_mock_pipelines_still_run_successfully(self, engine, samples_path):
+        for mock_path in sorted(samples_path.glob("*.json")):
             spec = json.loads(mock_path.read_text())
             events = list(engine.execution.execute(spec=spec))
             failed = [e for e in events if e["event"] == "failed"]

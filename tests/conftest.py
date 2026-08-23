@@ -1,30 +1,55 @@
 import json
 import sys
-from pathlib import Path
 
 import pytest
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-from scripts.seed import generate_dataframe
-from src.engine.bootstrap import build_engine
-from src.engine.application.storage.resource_storage import ResourceStorage
-from src.engine.infrastructure.resource_storage.local_resource_storage_repository import (
+from tabular_manner._paths import default_storage_root, find_repo_root, samples_dir
+from tabular_manner.engine.bootstrap import build_engine
+from tabular_manner.engine.application.storage.resource_storage import ResourceStorage
+from tabular_manner.engine.infrastructure.resource_storage.local_resource_storage_repository import (
     LocalResourceStorageRepository,
 )
 
-SAMPLES_DIR = PROJECT_ROOT / "samples" / "json"
-STORAGE_ROOT = PROJECT_ROOT / ".tm" / "resource_storage"
+PROJECT_ROOT = find_repo_root()
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))  # only needed for `scripts.seed` below
+
+from scripts.seed import generate_dataframe
 
 _PREREQUISITE_PIPELINES = (
     "fanout_clean_pipeline.json",
     "switch_amount_bucket_pipeline.json",
 )
 
+@pytest.fixture(scope="session")
+def project_root():
+    """Repo root. Change resolution logic in tabular_manner._paths, not here."""
+    return PROJECT_ROOT
+
+@pytest.fixture(scope="session")
+def samples_path():
+    """Directory holding sample pipeline JSON files."""
+    return samples_dir()
+
+@pytest.fixture(scope="session")
+def storage_root():
+    """Default local resource-storage root shared by the whole test session."""
+    return default_storage_root()
+
+@pytest.fixture
+def engine(storage_root):
+    """A fresh Engine wired to the shared storage root. Most tests just need this."""
+    return build_engine(storage_root=str(storage_root))
+
+@pytest.fixture
+def load_spec(samples_path):
+    """load_spec("some_pipeline.json") -> parsed graph spec dict."""
+    def _load(name: str) -> dict:
+        return json.loads((samples_path / name).read_text())
+    return _load
+
 def _seed_raw() -> None:
-    repository = LocalResourceStorageRepository(root=str(STORAGE_ROOT))
+    repository = LocalResourceStorageRepository(root=str(default_storage_root()))
     resource_storage = ResourceStorage(repository=repository)
     df = generate_dataframe(n_rows=2000, null_ratio=0.1, seed=42)
     resource_storage.save("raw", df.lazy())
@@ -39,9 +64,9 @@ def seeded_resource_storage():
     """
     _seed_raw()
 
-    engine = build_engine(storage_root=str(STORAGE_ROOT))
+    engine = build_engine(storage_root=str(default_storage_root()))
     for name in _PREREQUISITE_PIPELINES:
-        spec = json.loads((SAMPLES_DIR / name).read_text())
+        spec = json.loads((samples_dir() / name).read_text())
         events = list(engine.execution.execute(spec=spec))
         failed = [e for e in events if e["event"] == "failed"]
         assert not failed, f"prerequisite pipeline '{name}' failed while seeding: {failed}"

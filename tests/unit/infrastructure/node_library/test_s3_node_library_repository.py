@@ -6,10 +6,8 @@ from pathlib import Path
 import pytest
 from botocore.stub import Stubber
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
-
-from src.engine.domain.models.custom_node import CustomNodeDefinition
-from src.engine.infrastructure.node_library.s3_node_library_repository import (
+from tabular_manner.engine.domain.models.custom_node import CustomNodeDefinition
+from tabular_manner.engine.infrastructure.node_library.s3_node_library_repository import (
     S3NodeLibraryRepository,
 )
 

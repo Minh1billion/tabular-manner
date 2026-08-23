@@ -1,23 +1,9 @@
-import json
-import sys
-from pathlib import Path
-
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from tabular_manner._paths import samples_dir
 
-from src.engine.bootstrap import build_engine
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-MOCKS_DIR = PROJECT_ROOT / "samples" / "json"
-STORAGE_ROOT = PROJECT_ROOT / ".tm" / "resource_storage"
-
-@pytest.fixture
-def engine():
-    return build_engine(storage_root=str(STORAGE_ROOT))
-
-def _run(engine, mock_name: str) -> dict:
-    spec = json.loads((MOCKS_DIR / mock_name).read_text())
+def _run(engine, load_spec, mock_name: str) -> dict:
+    spec = load_spec(mock_name)
     events = list(engine.execution.execute(spec=spec))
 
     failed = [e for e in events if e["event"] == "failed"]
@@ -32,8 +18,8 @@ def _leaves_by_node(result: dict) -> dict:
     return {leaf["node_id"]: leaf for leaf in result["leaves"]}
 
 class TestBasicCleanPipeline:
-    def test_produces_single_branch_with_all_columns(self, engine):
-        result = _run(engine, "basic_clean_pipeline.json")
+    def test_produces_single_branch_with_all_columns(self, engine, load_spec):
+        result = _run(engine, load_spec, "basic_clean_pipeline.json")
         leaves = _leaves_by_node(result)
 
         assert set(leaves) == {"4"}
@@ -45,8 +31,8 @@ class TestBasicCleanPipeline:
         ]
 
 class TestConditionalCleanPipeline:
-    def test_takes_false_branch_and_reduces_to_customer_column(self, engine):
-        result = _run(engine, "conditional_clean_pipeline.json")
+    def test_takes_false_branch_and_reduces_to_customer_column(self, engine, load_spec):
+        result = _run(engine, load_spec, "conditional_clean_pipeline.json")
         leaves = _leaves_by_node(result)
 
         assert set(leaves) == {"7"}
@@ -60,16 +46,16 @@ class TestConditionalCleanPipeline:
         ]
 
 class TestFanoutCleanPipeline:
-    def test_produces_two_independent_branches(self, engine):
-        result = _run(engine, "fanout_clean_pipeline.json")
+    def test_produces_two_independent_branches(self, engine, load_spec):
+        result = _run(engine, load_spec, "fanout_clean_pipeline.json")
         leaves = _leaves_by_node(result)
 
         assert set(leaves) == {"4", "6"}
         assert leaves["4"]["columns"] == ["customer", "amount", "quantity"]
         assert leaves["6"]["columns"] == ["customer"]
 
-    def test_both_branches_share_the_same_upstream_history(self, engine):
-        result = _run(engine, "fanout_clean_pipeline.json")
+    def test_both_branches_share_the_same_upstream_history(self, engine, load_spec):
+        result = _run(engine, load_spec, "fanout_clean_pipeline.json")
         leaves = _leaves_by_node(result)
 
         shared_prefix = ["Fetch Data", "Select Columns", "Fill Missing (Mean)"]
@@ -77,8 +63,8 @@ class TestFanoutCleanPipeline:
         assert leaves["6"]["history"] == shared_prefix + ["Select Customer Only"]
 
 class TestJoinPipeline:
-    def test_joins_customers_with_amounts_on_customer_column(self, engine):
-        result = _run(engine, "join_pipeline.json")
+    def test_joins_customers_with_amounts_on_customer_column(self, engine, load_spec):
+        result = _run(engine, load_spec, "join_pipeline.json")
         leaves = _leaves_by_node(result)
 
         assert set(leaves) == {"4"}
@@ -90,8 +76,8 @@ class TestJoinPipeline:
         ]
 
 class TestSwitchAmountBucketPipeline:
-    def test_routes_to_mid_bucket_for_this_dataset(self, engine):
-        result = _run(engine, "switch_amount_bucket_pipeline.json")
+    def test_routes_to_mid_bucket_for_this_dataset(self, engine, load_spec):
+        result = _run(engine, load_spec, "switch_amount_bucket_pipeline.json")
         leaves = _leaves_by_node(result)
 
         # dataset's mean amount is ~99.6: < 150 (not 'high') and >= 80 (so 'mid', not 'low')
@@ -106,8 +92,8 @@ class TestSwitchAmountBucketPipeline:
         ]
 
 class TestSwitchDefaultFallbackPipeline:
-    def test_falls_back_to_default_case_when_no_case_matches(self, engine):
-        result = _run(engine, "switch_default_fallback_pipeline.json")
+    def test_falls_back_to_default_case_when_no_case_matches(self, engine, load_spec):
+        result = _run(engine, load_spec, "switch_default_fallback_pipeline.json")
         leaves = _leaves_by_node(result)
 
         # mean amount ~99.6 < 500, so the expression yields 'huge', which isn't in
@@ -122,8 +108,8 @@ class TestSwitchDefaultFallbackPipeline:
         ]
 
 class TestUnionPipeline:
-    def test_unions_two_branches_from_the_same_source(self, engine):
-        result = _run(engine, "union_pipeline.json")
+    def test_unions_two_branches_from_the_same_source(self, engine, load_spec):
+        result = _run(engine, load_spec, "union_pipeline.json")
         leaves = _leaves_by_node(result)
 
         assert set(leaves) == {"7"}
@@ -139,7 +125,7 @@ class TestUnionPipeline:
         ]
 
 class TestAllMocksRunCleanly:
-    @pytest.mark.parametrize("mock_path", sorted(MOCKS_DIR.glob("*.json")), ids=lambda p: p.name)
-    def test_pipeline_completes_without_failing(self, engine, mock_path):
-        result = _run(engine, mock_path.name)
+    @pytest.mark.parametrize("mock_path", sorted(samples_dir().glob("*.json")), ids=lambda p: p.name)
+    def test_pipeline_completes_without_failing(self, engine, load_spec, mock_path):
+        result = _run(engine, load_spec, mock_path.name)
         assert len(result["leaves"]) >= 1

@@ -4,9 +4,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent.parent))
-
-from src.engine.application.nodes.builtin.io_bound import (
+from tabular_manner.engine.application.nodes.builtin.io_bound import (
     FetchArrow,
     FetchCsv,
     FetchInternal,
@@ -16,34 +14,29 @@ from src.engine.application.nodes.builtin.io_bound import (
     PushInternal,
     PushParquet,
 )
-from src.engine.application.io.reader_factory import ReaderFactory
-from src.engine.application.storage.resource_storage import ResourceStorage
-from src.engine.application.io.writer_factory import WriterFactory
-from src.engine.domain.models.plan import Plan
-from src.engine.infrastructure.resource_storage.local_resource_storage_repository import (
+from tabular_manner.engine.application.io.reader_factory import ReaderFactory
+from tabular_manner.engine.application.storage.resource_storage import ResourceStorage
+from tabular_manner.engine.application.io.writer_factory import WriterFactory
+from tabular_manner.engine.domain.models.plan import Plan
+from tabular_manner.engine.infrastructure.resource_storage.local_resource_storage_repository import (
     LocalResourceStorageRepository,
 )
 
-
 def _empty_plan() -> Plan:
     return Plan(handle=pl.LazyFrame())
-
 
 @pytest.fixture
 def reader_factory():
     return ReaderFactory()
 
-
 @pytest.fixture
 def writer_factory():
     return WriterFactory()
-
 
 @pytest.fixture
 def resource_storage(tmp_path):
     repository = LocalResourceStorageRepository(root=str(tmp_path / ".resource_storage"))
     return ResourceStorage(repository=repository)
-
 
 class TestFetchCsv:
     def test_reads_csv_file(self, tmp_path, reader_factory):
