@@ -4,7 +4,6 @@ import threading
 import polars as pl
 import pytest
 
-from tabular_manner._paths import samples_dir
 from tabular_manner.engine.application.nodes.builtin.control import If, Switch
 from tabular_manner.engine.domain.models.plan import Plan
 

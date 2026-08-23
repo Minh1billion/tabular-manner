@@ -1,6 +1,6 @@
 [project]
 name = "tabular-manner"
-version = "0.1.1"
+version = "0.1.0"
 description = "A low-code platform for designing data processing workflows using a graph-based model."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -15,7 +15,7 @@ dependencies = [
 Repository = "https://github.com/Minh1billion/tabular-manner"
 
 [project.scripts]
-tm = "tabular_manner.cli:main"
+tm = "cli:main"
 
 [dependency-groups]
 dev = [
@@ -37,4 +37,4 @@ packages = ["src/tabular_manner"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "scripts" = "scripts"
-"main.py" = "main.py"
+"cli.py" = "cli.py"

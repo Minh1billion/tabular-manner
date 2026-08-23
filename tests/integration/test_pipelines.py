@@ -1,6 +1,6 @@
 import pytest
 
-from tabular_manner._paths import samples_dir
+from tests.support.paths import samples_dir
 
 def _run(engine, load_spec, mock_name: str) -> dict:
     spec = load_spec(mock_name)

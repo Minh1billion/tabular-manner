@@ -1,13 +1,19 @@
 import argparse
+from pathlib import Path
 
 import numpy as np
 import polars as pl
 
-from tabular_manner._paths import find_repo_root
 from tabular_manner.engine.application.storage.resource_storage import ResourceStorage
 from tabular_manner.engine.infrastructure.resource_storage.local_resource_storage_repository import LocalResourceStorageRepository
 
-project_root = find_repo_root()
+def _find_repo_root(marker: str = "pyproject.toml") -> Path:
+    for p in Path(__file__).resolve().parents:
+        if (p / marker).exists():
+            return p
+    raise FileNotFoundError(marker)
+
+project_root = _find_repo_root()
 
 BYTES_PER_ROW_ESTIMATE = 40  # rough estimate: customer (str) + amount (f64) + quantity (i64)
 

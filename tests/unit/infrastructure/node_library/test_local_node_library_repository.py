@@ -1,6 +1,3 @@
-import sys
-from pathlib import Path
-
 import pytest
 
 from tabular_manner.engine.domain.models.custom_node import CustomNodeDefinition

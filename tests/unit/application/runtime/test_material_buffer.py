@@ -1,7 +1,5 @@
-import sys
 import threading
 import time
-from pathlib import Path
 
 import polars as pl
 import pytest
