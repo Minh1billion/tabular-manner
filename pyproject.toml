@@ -1,13 +1,18 @@
 [project]
 name = "tabular-manner"
-version = "0.1.0"
+version = "0.1.1"
 description = "A low-code platform for designing data processing workflows using a graph-based model."
+readme = "README.md"
 requires-python = ">=3.10"
+license = "MIT"
 dependencies = [
     "polars",
     "boto3",
     "numpy",
 ]
+
+[project.urls]
+Repository = "https://github.com/Minh1billion/tabular-manner"
 
 [project.scripts]
 tm = "tabular_manner.cli:main"
@@ -17,6 +22,7 @@ dev = [
     "pytest",
     "tqdm",
     "pathspec",
+    "twine>=7.0.0",
 ]
 
 [tool.pytest.ini_options]
