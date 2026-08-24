@@ -54,15 +54,24 @@ def _seed_raw() -> None:
     df = generate_dataframe(n_rows=2000, null_ratio=0.1, seed=42)
     resource_storage.save("raw", df.lazy())
 
+def _seed_cleaned_mid() -> None:
+    repository = LocalResourceStorageRepository(root=str(default_storage_root()))
+    resource_storage = ResourceStorage(repository=repository)
+    df = generate_dataframe(n_rows=2000, null_ratio=0.1, seed=42)
+    resource_storage.save("cleaned_mid", df.select(["customer", "amount"]).lazy())
+
 @pytest.fixture(scope="session", autouse=True)
 def seeded_resource_storage():
     """Make `.tm/resource_storage` self-sufficient before any test runs.
 
-    Seeds the "raw" resource and pre-runs the pipelines that other sample
-    pipelines depend on, so the suite passes on a completely fresh checkout
-    without requiring a prior manual `scripts/seed.py` / `scripts/mock.py` run.
+    Seeds the "raw" and "cleaned_mid" resources and pre-runs the pipelines
+    that other sample pipelines depend on, so the suite passes on a
+    completely fresh checkout without requiring a prior manual
+    `scripts/seed.py` / `scripts/mock.py` run or an untracked local `.tm`
+    artifact.
     """
     _seed_raw()
+    _seed_cleaned_mid()
 
     engine = build_engine(storage_root=str(default_storage_root()))
     for name in _PREREQUISITE_PIPELINES:
