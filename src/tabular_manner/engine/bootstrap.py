@@ -4,7 +4,6 @@ from .api.data_resource import DataResource
 from .api.execution import Execution
 from .api.node_library import NodeLibrary
 from .application.runtime.context_manager import ContextManager
-from .application.runtime.material_buffer import MaterialBuffer
 from .application.nodes.custom_node_service import LibraryService
 from .application.nodes.registry import NodeRegistry
 from .application.io.reader_factory import ReaderFactory
@@ -33,7 +32,6 @@ def build_engine(
     storage_root: str = ".tm/resource_storage",
     node_library_root: str = ".tm/node_library",
     bucket: str | None = None,
-    material_buffer_max_entries: int = 64,
 ) -> Engine:
     resource_storage_repository = resource_storage_repository or LocalResourceStorageRepository(root=storage_root)
     node_library_repository = node_library_repository or LocalNodeLibraryRepository(root=node_library_root)
@@ -41,7 +39,6 @@ def build_engine(
     writer_factory = writer_factory or WriterFactory()
 
     resource_storage = ResourceStorage(repository=resource_storage_repository, bucket=bucket)
-    material_buffer = MaterialBuffer(max_entries=material_buffer_max_entries)
 
     registry = NodeRegistry()
     sandbox = Sandbox()
@@ -53,7 +50,6 @@ def build_engine(
     context_manager.register("resource_storage", resource_storage)
     context_manager.register("reader_factory", reader_factory)
     context_manager.register("writer_factory", writer_factory)
-    context_manager.register("material_buffer", material_buffer)
 
     data_resource = DataResource(resource_storage=resource_storage, reader_factory=reader_factory)
     execution = Execution(context_manager=context_manager, registry=registry, sandbox=sandbox)

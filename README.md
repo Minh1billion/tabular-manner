@@ -66,7 +66,7 @@ for event in engine.execution.execute(spec=spec):
     print(event["event"], event.get("data", ""))
 ```
 
-More graph patterns (branching, joins, `switch`/`if` control nodes) are available under `samples/json/`.
+More graph patterns (branching, joins) are available under `samples/json/`.
 
 ## Documentation
 

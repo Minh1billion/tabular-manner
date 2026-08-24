@@ -30,21 +30,6 @@ class TestBasicCleanPipeline:
             "Fill Missing (Mean)",
         ]
 
-class TestConditionalCleanPipeline:
-    def test_takes_false_branch_and_reduces_to_customer_column(self, engine, load_spec):
-        result = _run(engine, load_spec, "conditional_clean_pipeline.json")
-        leaves = _leaves_by_node(result)
-
-        assert set(leaves) == {"7"}
-        assert leaves["7"]["columns"] == ["customer"]
-        assert leaves["7"]["history"] == [
-            "Fetch Data",
-            "Select Columns",
-            "Fill Missing (Mean)",
-            "Check Row Count:checkpoint",
-            "Select Customer Only",
-        ]
-
 class TestFanoutCleanPipeline:
     def test_produces_two_independent_branches(self, engine, load_spec):
         result = _run(engine, load_spec, "fanout_clean_pipeline.json")
@@ -73,38 +58,6 @@ class TestJoinPipeline:
             "Fetch Customers",
             "Fetch Mid",
             "Join Customers With Amounts",
-        ]
-
-class TestSwitchAmountBucketPipeline:
-    def test_routes_to_mid_bucket_for_this_dataset(self, engine, load_spec):
-        result = _run(engine, load_spec, "switch_amount_bucket_pipeline.json")
-        leaves = _leaves_by_node(result)
-
-        # dataset's mean amount is ~99.6: < 150 (not 'high') and >= 80 (so 'mid', not 'low')
-        assert set(leaves) == {"7"}
-        assert leaves["7"]["columns"] == ["customer", "amount"]
-        assert leaves["7"]["history"] == [
-            "Fetch Data",
-            "Select Columns",
-            "Fill Missing (Mean)",
-            "Bucket By Amount:checkpoint",
-            "Select Mid Columns",
-        ]
-
-class TestSwitchDefaultFallbackPipeline:
-    def test_falls_back_to_default_case_when_no_case_matches(self, engine, load_spec):
-        result = _run(engine, load_spec, "switch_default_fallback_pipeline.json")
-        leaves = _leaves_by_node(result)
-
-        # mean amount ~99.6 < 500, so the expression yields 'huge', which isn't in
-        # cases=["tiny"] -> must route to default_case="unmatched"
-        assert set(leaves) == {"6"}
-        assert leaves["6"]["columns"] == ["customer", "amount", "quantity"]
-        assert leaves["6"]["history"] == [
-            "Fetch Data",
-            "Select Columns",
-            "Fill Missing (Mean)",
-            "Bucket By Amount:checkpoint",
         ]
 
 class TestUnionPipeline:

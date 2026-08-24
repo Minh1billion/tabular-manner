@@ -85,21 +85,16 @@ class Execution:
             initial_plan = Plan(handle=pl.LazyFrame(), meta={"execution_id": execution_id})
 
             yield _event("running", total_nodes=total)
-            try:
-                for step in graph.traverse(initial_plan):
-                    yield _event("node_started", node_id=step.node_id)
+            for step in graph.traverse(initial_plan):
+                yield _event("node_started", node_id=step.node_id)
 
-                    processed += 1
-                    yield _event("node_completed", node_id=step.node_id, processed=processed, total=total)
+                processed += 1
+                yield _event("node_completed", node_id=step.node_id, processed=processed, total=total)
 
-                    if step.is_leaf:
-                        leaf = {"node_id": step.node_id, "history": list(step.plan.history), "columns": step.plan.handle.collect_schema().names()}
-                        leaves.append(leaf)
-                        yield _event("leaf_reached", **leaf)
-            finally:
-                # Drop any DataFrames this execution materialized at switch/if nodes so
-                # the MaterialBuffer doesn't accumulate memory across executions.
-                self._context_manager.get("material_buffer").clear(scope=execution_id)
+                if step.is_leaf:
+                    leaf = {"node_id": step.node_id, "history": list(step.plan.history), "columns": step.plan.handle.collect_schema().names()}
+                    leaves.append(leaf)
+                    yield _event("leaf_reached", **leaf)
 
             yield _event("completed", data={"execution_id": execution_id, "leaves": leaves})
         except Exception as exc:

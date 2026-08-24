@@ -87,7 +87,7 @@ class Explode(Transform):
     required = {"columns": (list, str)}
 
     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
-        return lf.explode(self.columns)
+        return lf.explode(self.columns, empty_as_null=True)
 
 @NodeRegistry.register("group_by")
 class GroupBy(Transform):

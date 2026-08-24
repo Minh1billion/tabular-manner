@@ -3,6 +3,13 @@ import pytest
 from tabular_manner.engine.application.compiler.validator import Validator
 from tabular_manner.engine.application.nodes.registry import NodeRegistry
 from tabular_manner.engine.application.runtime.sandbox import Sandbox
+from tabular_manner.engine.domain.models.operator import Operator
+
+class _NamedPortOperator(Operator):
+    ports = ("true", "false")
+
+    def forward(self, plan):
+        return plan, "true"
 
 def _spec(nodes, connections):
     return {"nodes": nodes, "connections": connections}
@@ -12,7 +19,9 @@ def _node(node_id, node_type="select", params=None):
 
 @pytest.fixture
 def validator():
-    return Validator(NodeRegistry(), Sandbox())
+    registry = NodeRegistry()
+    registry.register_dynamic("named_port_op", _NamedPortOperator)
+    return Validator(registry, Sandbox())
 
 class TestStructure:
     def test_missing_nodes_key_raises(self, validator):
@@ -101,7 +110,7 @@ class TestFanIn:
 class TestPorts:
     def test_invalid_port_raises(self, validator):
         spec = _spec(
-            [_node("1", "if", {"expression": "df.a.len() > 0"}), _node("2")],
+            [_node("1", "named_port_op", {}), _node("2")],
             [{"from": "1", "to": "2", "on": "maybe"}],
         )
         with pytest.raises(ValueError, match="valid ports are"):
@@ -109,7 +118,7 @@ class TestPorts:
 
     def test_valid_named_port_passes(self, validator):
         spec = _spec(
-            [_node("1", "if", {"expression": "df.a.len() > 0"}), _node("2")],
+            [_node("1", "named_port_op", {}), _node("2")],
             [{"from": "1", "to": "2", "on": "true"}],
         )
         validator.validate(spec)
