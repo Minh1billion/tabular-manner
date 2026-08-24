@@ -3,7 +3,7 @@ import sys
 
 import pytest
 
-from tabular_manner.engine.bootstrap import build_engine
+from tabular_manner.engine import build_engine
 from tabular_manner.engine.application.storage.resource_storage import ResourceStorage
 from tabular_manner.engine.infrastructure.resource_storage.local_resource_storage_repository import (
     LocalResourceStorageRepository,
