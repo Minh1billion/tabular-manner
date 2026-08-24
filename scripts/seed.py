@@ -1,11 +1,11 @@
 import argparse
+import tempfile
 from pathlib import Path
 
 import numpy as np
 import polars as pl
 
-from tabular_manner.engine.application.storage.resource_storage import ResourceStorage
-from tabular_manner.engine.infrastructure.resource_storage.local_resource_storage_repository import LocalResourceStorageRepository
+from tabular_manner.engine import build_engine
 
 def _find_repo_root(marker: str = "pyproject.toml") -> Path:
     for p in Path(__file__).resolve().parents:
@@ -71,9 +71,21 @@ def main():
     actual_size_mb = df.estimated_size("mb")
     print(f"Generated DataFrame shape={df.shape}, estimated size={actual_size_mb:.2f} MB")
 
-    repository = LocalResourceStorageRepository(root=args.root)
-    resource_storage = ResourceStorage(repository=repository)
-    resource_storage.save(args.key, df.lazy(), bucket=args.bucket)
+    engine = build_engine(storage_root=args.root)
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = str(Path(tmp_dir) / "seed.parquet")
+        df.write_parquet(tmp_path)
+
+        for event in engine.data_resource.import_source(
+            key=args.key,
+            source_kind="file",
+            source_params={"path": tmp_path, "format": "parquet"},
+            bucket=args.bucket,
+            overwrite=True,
+        ):
+            if event["event"] == "failed":
+                raise RuntimeError(event["error"])
 
     print(f"Saved to resource storage: key='{args.key}', bucket='{args.bucket or 'default'}', root='{args.root}'")
 

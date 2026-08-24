@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from tabular_manner.engine.bootstrap import Engine, build_engine
+from tabular_manner.engine import Engine, build_engine
 
 def _find_repo_root(marker: str = "pyproject.toml") -> Path:
     for p in Path(__file__).resolve().parents:

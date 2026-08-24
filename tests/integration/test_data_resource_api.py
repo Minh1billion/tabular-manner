@@ -2,7 +2,7 @@ import polars as pl
 import pytest
 from pathlib import Path
 
-from tabular_manner.engine.bootstrap import build_engine
+from tabular_manner.engine import build_engine
 
 @pytest.fixture
 def engine(tmp_path):
