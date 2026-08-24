@@ -3,6 +3,13 @@ import pytest
 from tabular_manner.engine.application.compiler.parser import Parser
 from tabular_manner.engine.application.nodes.registry import NodeRegistry
 from tabular_manner.engine.application.runtime.sandbox import Sandbox
+from tabular_manner.engine.domain.models.operator import Operator
+
+class _NamedPortOperator(Operator):
+    ports = ("true", "false")
+
+    def forward(self, plan):
+        return plan, "true"
 
 def _spec(nodes, connections):
     return {"nodes": nodes, "connections": connections}
@@ -12,7 +19,9 @@ def _node(node_id, node_type="select", params=None):
 
 @pytest.fixture
 def registry():
-    return NodeRegistry()
+    reg = NodeRegistry()
+    reg.register_dynamic("named_port_op", _NamedPortOperator)
+    return reg
 
 @pytest.fixture
 def sandbox():
@@ -55,7 +64,7 @@ class TestOutPorts:
     def test_named_port_grouped_separately(self, registry, sandbox):
         spec = _spec(
             [
-                _node("1", "if", {"expression": "df.a.len() > 0"}),
+                _node("1", "named_port_op", {}),
                 _node("2"),
                 _node("3"),
             ],

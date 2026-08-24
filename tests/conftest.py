@@ -19,7 +19,6 @@ from scripts.seed import generate_dataframe
 
 _PREREQUISITE_PIPELINES = (
     "fanout_clean_pipeline.json",
-    "switch_amount_bucket_pipeline.json",
 )
 
 @pytest.fixture(scope="session")
