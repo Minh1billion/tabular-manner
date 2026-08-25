@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Source and sink nodes - Tabular Manner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div class="shell">
+
+  <nav class="sidebar">
+    <a class="brand" href="../index.html#top">
+      <svg width="30" height="30" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="240" height="240" rx="40" fill="#F5F5EF"/>
+        <g stroke="#343A3C" stroke-width="14" stroke-linecap="round" fill="none">
+          <line x1="70" y1="42" x2="70" y2="190"/>
+          <line x1="52" y1="52" x2="52" y2="104"/>
+          <line x1="88" y1="52" x2="88" y2="104"/>
+        </g>
+        <circle cx="70" cy="42" r="16" fill="#123D2C"/>
+        <circle cx="52" cy="52" r="14" fill="#32664D"/>
+        <circle cx="88" cy="52" r="14" fill="#32664D"/>
+        <circle cx="70" cy="190" r="16" fill="#123D2C"/>
+        <path d="M 120 190 L 120 115 L 160 155 L 200 115 L 200 190" stroke="#343A3C" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="120" cy="190" r="16" fill="#123D2C"/>
+        <circle cx="120" cy="115" r="16" fill="#32664D"/>
+        <circle cx="160" cy="155" r="16" fill="#123D2C"/>
+        <circle cx="200" cy="115" r="16" fill="#32664D"/>
+        <circle cx="200" cy="190" r="16" fill="#123D2C"/>
+      </svg>
+      <span>
+        <span class="brand-text">Tabular Manner</span>
+        <span class="brand-sub">engine reference</span>
+      </span>
+    </a>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">Start</p>
+      <ul>
+        <li><a class="nav-link" href="../index.html#overview"><span class="dot"></span>Overview</a></li>
+        <li><a class="nav-link" href="../index.html#getting-started"><span class="dot"></span>Getting started</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">API reference</p>
+      <ul>
+        <li><a class="nav-link" href="../api-reference.html#api-execution"><span class="dot"></span>Execution</a></li>
+        <li><a class="nav-link" href="../api-reference.html#api-data-resource"><span class="dot"></span>DataResource</a></li>
+        <li><a class="nav-link" href="../api-reference.html#api-node-library"><span class="dot"></span>NodeLibrary</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">Default nodes</p>
+      <ul>
+        <li><a class="nav-link" href="io.html#nodes-io"><span class="dot"></span>Source and sink</a></li>
+        <li><a class="nav-link" href="transform.html#nodes-transform"><span class="dot"></span>Transform</a></li>
+        <li><a class="nav-link" href="merge.html#nodes-merge"><span class="dot"></span>Merge</a></li>
+        <li><a class="nav-link" href="control.html#nodes-control"><span class="dot"></span>Control</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">Writing a graph</p>
+      <ul>
+        <li><a class="nav-link" href="../writing-a-graph.html#graph-anatomy"><span class="dot"></span>Graph anatomy</a></li>
+        <li><a class="nav-link" href="../writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and branching</a></li>
+        <li><a class="nav-link" href="../writing-a-graph.html#graph-expressions"><span class="dot"></span>Expressions</a></li>
+        <li><a class="nav-link" href="../writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main id="io">
+    <div class="content">
+
+      <section id="nodes-io">
+        <h2>Source and sink nodes<span class="badge source">source</span><span class="badge sink">sink</span></h2>
+        <p class="section-desc">Sources start a branch by reading data in; sinks end a branch by writing data out. Both types read and write lazily.</p>
+
+        <h3><span class="mono-title">fetch_internal</span><span class="badge source">source</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>key</code></td><td class="muted">string</td><td class="muted">required</td><td>Resource key previously saved via <code>push_internal</code> or <code>import_source</code>.</td></tr>
+              <tr><td><code>bucket</code></td><td class="muted">string</td><td class="muted">none</td><td>Optional storage namespace.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">fetch_csv</span><span class="badge source">source</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>separator</code></td><td class="muted">string</td><td class="muted">","</td></tr>
+              <tr><td><code>has_header</code></td><td class="muted">bool</td><td class="muted">true</td></tr>
+              <tr><td><code>encoding</code></td><td class="muted">string</td><td class="muted">"utf8"</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">fetch_parquet</span><span class="badge source">source</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">none (all columns)</td></tr>
+              <tr><td><code>n_rows</code></td><td class="muted">integer</td><td class="muted">none (all rows)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">fetch_arrow</span><span class="badge source">source</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">fetch_s3</span><span class="badge source">source</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>bucket</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>key</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>format</code></td><td class="muted">string</td><td class="muted">"parquet" (or "csv")</td></tr>
+              <tr><td><code>region</code></td><td class="muted">string</td><td class="muted">none</td></tr>
+              <tr><td><code>storage_options</code></td><td class="muted">object</td><td class="muted">none</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">fetch_postgres</span><span class="badge source">source</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>dsn</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>table</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>query</code></td><td class="muted">string</td><td class="muted">none (reads whole table)</td></tr>
+              <tr><td><code>partition_on</code></td><td class="muted">string</td><td class="muted">none</td></tr>
+              <tr><td><code>partition_num</code></td><td class="muted">integer</td><td class="muted">none</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">push_internal</span><span class="badge sink">sink</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>key</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>bucket</code></td><td class="muted">string</td><td class="muted">none</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">push_csv</span> / <span class="mono-title">push_parquet</span> / <span class="mono-title">push_arrow</span><span class="badge sink">sink</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Applies to</th></tr></thead>
+            <tbody>
+              <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td><td class="muted">all three</td></tr>
+              <tr><td><code>separator</code></td><td class="muted">string</td><td class="muted">","</td><td class="muted">push_csv only</td></tr>
+              <tr><td><code>include_header</code></td><td class="muted">bool</td><td class="muted">true</td><td class="muted">push_csv only</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">push_postgres</span><span class="badge sink">sink</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>dsn</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>table</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>if_table_exists</code></td><td class="muted">string</td><td class="muted">"append"</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+
+
+      <footer>
+        <p>Tabular Manner engine reference. Node types, params, and event names reflect the built-in registry; custom node types added through <code class="inline">NodeLibrary</code> are usable the same way once registered.</p>
+      </footer>
+
+    </div>
+  </main>
+
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>
