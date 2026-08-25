@@ -6,8 +6,6 @@ from ..registry import NodeRegistry
 from ...runtime.expression_compiler import ExpressionCompiler
 from ...runtime.sandbox import Sandbox
 
-_COMPILER = ExpressionCompiler()
-
 class _ColumnProxy:
     def __getattr__(self, name: str) -> pl.Expr:
         return pl.col(name)
@@ -248,6 +246,7 @@ class Cast(Transform):
 
 class _ExpressionTransform(Transform):
     required = {"expression": str}
+    COMPILER = ExpressionCompiler()
 
     def __init__(self, name: str | None = None, sandbox: Sandbox | None = None, **params):
         super().__init__(name=name, sandbox=sandbox or Sandbox(), **params)
@@ -259,7 +258,7 @@ class _ExpressionTransform(Transform):
         self.sandbox.check_expression(self.expression)
 
     def _compile_expr(self) -> pl.Expr:
-        expr = _COMPILER.evaluate(self.expression, {"df": _ColumnProxy(), "pl": pl})
+        expr = self.COMPILER.evaluate(self.expression, {"df": _ColumnProxy(), "pl": pl})
         if not isinstance(expr, pl.Expr):
             raise TypeError("'expression' must evaluate to a polars Expr")
         return expr

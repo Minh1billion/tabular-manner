@@ -12,7 +12,7 @@ from tabular_manner.engine.application.nodes.builtin.io_bound import (
     PushParquet,
 )
 from tabular_manner.engine.application.io.reader_factory import ReaderFactory
-from tabular_manner.engine.application.storage.resource_storage import ResourceStorage
+from tabular_manner.engine.application.io.resource_storage import ResourceStorage
 from tabular_manner.engine.application.io.writer_factory import WriterFactory
 from tabular_manner.engine.domain.models.plan import Plan
 from tabular_manner.engine.infrastructure.resource_storage.local_resource_storage_repository import (

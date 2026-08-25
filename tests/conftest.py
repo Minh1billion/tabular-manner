@@ -4,7 +4,7 @@ import sys
 import pytest
 
 from tabular_manner.engine import build_engine
-from tabular_manner.engine.application.storage.resource_storage import ResourceStorage
+from tabular_manner.engine.application.io.resource_storage import ResourceStorage
 from tabular_manner.engine.infrastructure.resource_storage.local_resource_storage_repository import (
     LocalResourceStorageRepository,
 )
@@ -49,13 +49,13 @@ def load_spec(samples_path):
     return _load
 
 def _seed_raw() -> None:
-    repository = LocalResourceStorageRepository(root=str(default_storage_root()))
+    repository = LocalResourceStorageRepository(root=str(default_storage_root()), namespace=".resource")
     resource_storage = ResourceStorage(repository=repository)
     df = generate_dataframe(n_rows=2000, null_ratio=0.1, seed=42)
     resource_storage.save("raw", df.lazy())
 
 def _seed_cleaned_mid() -> None:
-    repository = LocalResourceStorageRepository(root=str(default_storage_root()))
+    repository = LocalResourceStorageRepository(root=str(default_storage_root()), namespace=".resource")
     resource_storage = ResourceStorage(repository=repository)
     df = generate_dataframe(n_rows=2000, null_ratio=0.1, seed=42)
     resource_storage.save("cleaned_mid", df.select(["customer", "amount"]).lazy())

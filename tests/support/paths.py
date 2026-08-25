@@ -11,4 +11,4 @@ def samples_dir() -> Path:
     return find_repo_root() / "samples" / "json"
 
 def default_storage_root() -> Path:
-    return find_repo_root() / ".tm" / "resource_storage"
+    return find_repo_root() / ".tm"

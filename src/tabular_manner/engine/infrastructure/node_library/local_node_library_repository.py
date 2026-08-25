@@ -6,13 +6,17 @@ from ...application.ports.node_library_repository import NodeLibraryRepository
 from ...domain.models.custom_node import CustomNodeDefinition
 
 class LocalNodeLibraryRepository(NodeLibraryRepository):
-    def __init__(self, root: str = ".tm/node_library"):
+    def __init__(self, root: str = ".tm", namespace: str = ""):
         self._root = Path(root).resolve()
+        self._namespace = namespace.strip("/")
         self._root.mkdir(parents=True, exist_ok=True)
 
     def _resolve_bucket_dir(self, bucket: str | None = None) -> Path:
         bucket_name = bucket or "default"
-        candidate = (self._root / bucket_name).resolve()
+        parts = [bucket_name]
+        if self._namespace:
+            parts.append(self._namespace)
+        candidate = self._root.joinpath(*parts).resolve()
         if candidate != self._root and self._root not in candidate.parents:
             raise ValueError(f"Invalid bucket name '{bucket}'")
         return candidate

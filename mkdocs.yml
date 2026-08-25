@@ -1,0 +1,54 @@
+site_name: Tabular Manner
+site_description: A low-code platform for designing data processing workflows using a graph-based model.
+repo_url: https://github.com/Minh1billion/tabular-manner
+repo_name: tabular-manner
+
+theme:
+  name: material
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+  palette:
+    - scheme: default
+      primary: green
+      accent: green
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: green
+      accent: green
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - toc.integrate
+    - content.code.copy
+    - content.code.annotate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Start:
+      - Overview: index.md
+      - Getting started: getting-started.md
+  - API reference: api-reference.md
+  - Default nodes:
+      - Source and sink: nodes/io.md
+      - Transform: nodes/transform.md
+      - Merge: nodes/merge.md
+  - Writing a graph: writing-a-graph.md
+
+plugins:
+  - search

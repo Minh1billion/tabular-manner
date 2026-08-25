@@ -1,5 +1,7 @@
+import threading
 import traceback
 import uuid
+from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Any, Iterator
 
@@ -8,8 +10,9 @@ import polars as pl
 from ..application.compiler.graph import Graph, NodeExecutionError
 from ..application.compiler.parser import Parser
 from ..application.compiler.validator import Validator
+from ..application.nodes.custom_node_service import LibraryService
 from ..application.runtime.context_manager import ContextManager
-from ..application.nodes.registry import NodeRegistry
+from ..application.nodes.registry import NodeRegistry, NodeRegistryProvider
 from ..application.runtime.sandbox import Sandbox
 from ..domain.models.plan import Plan
 
@@ -29,49 +32,108 @@ def _failure_event(exc: Exception) -> dict[str, Any]:
         data["node_type"] = exc.node_type
     return _event("failed", **data)
 
-class Execution:
-    def __init__(self, context_manager: ContextManager, registry: NodeRegistry, sandbox: Sandbox):
-        self._context_manager = context_manager
-        self._registry = registry
-        self._sandbox = sandbox
-        self._graphs: dict[str, Graph] = {}
+def _apply_default_bucket(spec: dict[str, Any], registry: NodeRegistry, bucket: str | None) -> dict[str, Any]:
+    if bucket is None:
+        return spec
 
-    def _compile(self, spec: dict[str, Any]) -> Iterator[dict[str, Any]]:
+    changed = False
+    nodes = []
+    for n in spec.get("nodes", []):
         try:
+            operator_cls = registry.get(n["type"])
+        except KeyError:
+            nodes.append(n)
+            continue
+
+        binds_storage = "resource_storage" in operator_cls.context and "bucket" in operator_cls.optional
+        params = n.get("params", {})
+        if binds_storage and "bucket" not in params:
+            n = {**n, "params": {**params, "bucket": bucket}}
+            changed = True
+        nodes.append(n)
+
+    return {**spec, "nodes": nodes} if changed else spec
+
+class Execution:
+    def __init__(
+        self,
+        context_manager: ContextManager,
+        registry_provider: NodeRegistryProvider,
+        sandbox: Sandbox,
+        library_service: LibraryService,
+        max_cached_graphs: int = 128,
+    ):
+        self._context_manager = context_manager
+        self._registry_provider = registry_provider
+        self._sandbox = sandbox
+        self._library_service = library_service
+        self._max_cached_graphs = max_cached_graphs
+        self._graphs: "OrderedDict[str, Graph]" = OrderedDict()
+        self._lock = threading.Lock()
+
+    def _prepare(self, spec: dict[str, Any], bucket: str | None) -> tuple[NodeRegistry, dict[str, Any]]:
+        self._library_service.load_persisted(bucket)
+        registry = self._registry_provider.get(bucket)
+        spec = _apply_default_bucket(spec, registry, bucket)
+        return registry, spec
+
+    def _remember(self, execution_id: str, graph: Graph) -> None:
+        with self._lock:
+            self._graphs[execution_id] = graph
+            self._graphs.move_to_end(execution_id)
+            while len(self._graphs) > self._max_cached_graphs:
+                self._graphs.popitem(last=False)
+
+    def _recall(self, execution_id: str) -> Graph | None:
+        with self._lock:
+            graph = self._graphs.get(execution_id)
+            if graph is not None:
+                self._graphs.move_to_end(execution_id)
+            return graph
+
+    def discard(self, execution_id: str) -> None:
+        with self._lock:
+            self._graphs.pop(execution_id, None)
+
+    def _compile(self, spec: dict[str, Any], bucket: str | None = None) -> Iterator[dict[str, Any]]:
+        try:
+            registry, spec = self._prepare(spec, bucket)
+
             yield _event("validating")
-            Validator(self._registry, self._sandbox).validate(spec)
+            Validator(registry, self._sandbox).validate(spec)
 
             yield _event("parsing")
-            graph = Parser.from_json(spec, self._registry, self._sandbox)
+            graph = Parser.from_json(spec, registry, self._sandbox)
 
             execution_id = str(uuid.uuid4())
-            self._graphs[execution_id] = graph
+            self._remember(execution_id, graph)
             yield _event("compiled", data={"execution_id": execution_id, "entries": list(graph.entry_ids), "node_count": len(graph.nodes)})
         except Exception as exc:
             yield _failure_event(exc)
 
-    def validate(self, spec: dict[str, Any]) -> Iterator[dict[str, Any]]:
+    def validate(self, spec: dict[str, Any], bucket: str | None = None) -> Iterator[dict[str, Any]]:
         try:
+            registry, spec = self._prepare(spec, bucket)
             yield _event("validating")
-            Validator(self._registry, self._sandbox).validate(spec)
+            Validator(registry, self._sandbox).validate(spec)
             yield _event("valid")
         except Exception as exc:
             yield _failure_event(exc)
 
-    def execute(self, execution_id: str | None = None, spec: dict[str, Any] | None = None) -> Iterator[dict[str, Any]]:
+    def execute(self, execution_id: str | None = None, spec: dict[str, Any] | None = None, bucket: str | None = None) -> Iterator[dict[str, Any]]:
         try:
             if execution_id is None and spec is None:
                 raise ValueError("Either 'execution_id' or 'spec' must be provided")
 
             if execution_id is None:
-                for event in self._compile(spec):
+                for event in self._compile(spec, bucket=bucket):
                     yield event
                     if event["event"] == "failed":
                         return
                     if event["event"] == "compiled":
                         execution_id = event["data"]["execution_id"]
 
-            graph = self._graphs.get(execution_id)
+            graph = self._recall(execution_id)
             if graph is None:
                 raise ValueError(f"Unknown execution_id '{execution_id}'")
 

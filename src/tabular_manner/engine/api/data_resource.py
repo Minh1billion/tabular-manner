@@ -4,7 +4,7 @@ from typing import Any, Iterator
 import polars as pl
 
 from ..application.io.reader_factory import ReaderFactory
-from ..application.storage.resource_storage import ResourceStorage
+from ..application.io.resource_storage import ResourceStorage
 
 def _event(name: str, **data: Any) -> dict[str, Any]:
     return {"event": name, "ts": datetime.now(timezone.utc).isoformat(), **data}

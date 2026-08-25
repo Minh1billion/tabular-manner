@@ -23,7 +23,6 @@ def stubber(repository):
 def _definition(name: str = "double") -> CustomNodeDefinition:
     return CustomNodeDefinition(
         name=name,
-        kind="transform",
         description="Doubles a numeric column",
         created_at="2024-01-01T00:00:00+00:00",
         expression="value * 2",
@@ -45,13 +44,9 @@ class TestSave:
                 "Body": json.dumps(
                     {
                         "name": "double",
-                        "kind": "transform",
                         "description": "Doubles a numeric column",
                         "created_at": "2024-01-01T00:00:00+00:00",
                         "expression": "value * 2",
-                        "service": None,
-                        "method": None,
-                        "handle_param": None,
                     },
                     indent=2,
                 ).encode("utf-8"),
@@ -67,13 +62,9 @@ class TestGet:
     def test_returns_definition_when_present(self, repository, stubber):
         payload = {
             "name": "double",
-            "kind": "transform",
             "description": "Doubles a numeric column",
             "created_at": "2024-01-01T00:00:00+00:00",
             "expression": "value * 2",
-            "service": None,
-            "method": None,
-            "handle_param": None,
         }
         stubber.add_response(
             "get_object",
@@ -142,13 +133,9 @@ class TestList:
             {"Body": _body_stream(
                 {
                     "name": "double",
-                    "kind": "transform",
                     "description": "",
                     "created_at": "2024-01-01T00:00:00+00:00",
                     "expression": "value * 2",
-                    "service": None,
-                    "method": None,
-                    "handle_param": None,
                 }
             )},
             {"Bucket": "my-bucket", "Key": "node_library/double.json"},
@@ -158,13 +145,9 @@ class TestList:
             {"Body": _body_stream(
                 {
                     "name": "add_one",
-                    "kind": "transform",
                     "description": "",
                     "created_at": "2024-01-01T00:00:00+00:00",
                     "expression": "value + 1",
-                    "service": None,
-                    "method": None,
-                    "handle_param": None,
                 }
             )},
             {"Bucket": "my-bucket", "Key": "node_library/add_one.json"},

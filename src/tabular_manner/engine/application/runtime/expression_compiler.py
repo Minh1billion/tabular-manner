@@ -1,24 +1,24 @@
 import ast
 import operator
 
-_BIN_OPS = {
-    ast.Add: operator.add,
-    ast.Sub: operator.sub,
-    ast.Mult: operator.mul,
-    ast.Div: operator.truediv,
-    ast.Mod: operator.mod,
-}
-
-_COMPARE_OPS = {
-    ast.Eq: operator.eq,
-    ast.NotEq: operator.ne,
-    ast.Lt: operator.lt,
-    ast.LtE: operator.le,
-    ast.Gt: operator.gt,
-    ast.GtE: operator.ge,
-}
-
 class ExpressionCompiler:
+    BIN_OPS = {
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+        ast.Mod: operator.mod,
+    }
+
+    COMPARE_OPS = {
+        ast.Eq: operator.eq,
+        ast.NotEq: operator.ne,
+        ast.Lt: operator.lt,
+        ast.LtE: operator.le,
+        ast.Gt: operator.gt,
+        ast.GtE: operator.ge,
+    }
+
     def evaluate(self, expression: str, names: dict[str, object]) -> object:
         tree = ast.parse(expression, mode="eval")
         return self._eval(tree.body, names)
@@ -36,7 +36,7 @@ class ExpressionCompiler:
             kwargs = {kw.arg: self._eval(kw.value, names) for kw in node.keywords}
             return func(*args, **kwargs)
         if isinstance(node, ast.BinOp):
-            return _BIN_OPS[type(node.op)](self._eval(node.left, names), self._eval(node.right, names))
+            return self.BIN_OPS[type(node.op)](self._eval(node.left, names), self._eval(node.right, names))
         if isinstance(node, ast.UnaryOp):
             return not self._eval(node.operand, names)
         if isinstance(node, ast.BoolOp):
@@ -61,7 +61,7 @@ class ExpressionCompiler:
         result = None
         for op, comparator in zip(node.ops, node.comparators):
             right = self._eval(comparator, names)
-            step = _COMPARE_OPS[type(op)](left, right)
+            step = self.COMPARE_OPS[type(op)](left, right)
             result = step if result is None else (result and step)
             left = right
         return result

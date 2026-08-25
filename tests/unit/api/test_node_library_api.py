@@ -8,7 +8,6 @@ from tabular_manner.engine.domain.models.custom_node import CustomNodeDefinition
 def _definition(name: str = "double") -> CustomNodeDefinition:
     return CustomNodeDefinition(
         name=name,
-        kind="transform",
         description="",
         created_at="2024-01-01T00:00:00+00:00",
         expression="value * 2",
@@ -38,15 +37,6 @@ class TestRegisterTransform:
 
         assert [e["event"] for e in events] == ["validating", "failed"]
         assert events[-1]["error"] == "bad expression"
-
-class TestRegisterAction:
-    def test_yields_failed_event_on_error(self, node_library, service):
-        service.register_action.side_effect = ValueError("not available")
-
-        events = list(node_library.register_action(name="x", service="material_buffer", method="get"))
-
-        assert [e["event"] for e in events] == ["validating", "failed"]
-        assert events[-1]["error"] == "not available"
 
 class TestUnregisterNode:
     def test_yields_failed_event_on_error(self, node_library, service):

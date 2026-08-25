@@ -12,7 +12,6 @@ def repository(tmp_path):
 def _definition(name="double") -> CustomNodeDefinition:
     return CustomNodeDefinition(
         name=name,
-        kind="transform",
         description="doubles a column",
         created_at="2026-01-01T00:00:00+00:00",
         expression="value * 2",
