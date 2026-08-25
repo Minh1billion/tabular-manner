@@ -6,6 +6,7 @@ class S3ResourceStorageRepository(ResourceStorageRepository):
         self,
         bucket_name: str,
         root_prefix: str = "",
+        namespace: str = "",
         region: str = "us-east-1",
         endpoint_url: str | None = None,
         access_key_id: str | None = None,
@@ -15,6 +16,7 @@ class S3ResourceStorageRepository(ResourceStorageRepository):
     ):
         self._bucket_name = bucket_name
         self._root_prefix = root_prefix.strip("/")
+        self._namespace = namespace.strip("/")
         self._storage_options = build_storage_options(
             region=region,
             endpoint_url=endpoint_url,
@@ -38,11 +40,11 @@ class S3ResourceStorageRepository(ResourceStorageRepository):
     def _resolve_key(self, key: str, bucket: str | None = None) -> str:
         if not key or not key.strip():
             raise ValueError("'key' must not be empty")
-        segments = [segment for segment in (self._root_prefix, bucket, key) if segment]
+        segments = [segment for segment in (self._root_prefix, bucket, self._namespace, key) if segment]
         return "/".join(segments)
 
     def _resolve_prefix(self, bucket: str | None = None) -> str:
-        segments = [segment for segment in (self._root_prefix, bucket) if segment]
+        segments = [segment for segment in (self._root_prefix, bucket, self._namespace) if segment]
         prefix = "/".join(segments)
         return f"{prefix}/" if prefix else ""
 

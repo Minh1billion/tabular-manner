@@ -6,9 +6,6 @@ from typing import Iterator
 from ...domain.models.operator import Operator
 from ...domain.models.plan import Plan
 
-_ENTRY_SOURCE = "__entry__"
-_DEFAULT_EXECUTION_SCOPE = "__no_execution_id__"
-
 class NodeExecutionError(RuntimeError):
     def __init__(self, node_id: str, node_type: str, original: Exception):
         super().__init__(f"Node '{node_id}' ({node_type}) failed: {original}")
@@ -27,6 +24,8 @@ class TraversalStep:
         return not self.next_ids
 
 class Node:
+    DEFAULT_EXECUTION_SCOPE = "__no_execution_id__"
+
     def __init__(self, id: str, operator: Operator, in_degree: int = 1):
         self.id = id
         self.operator = operator
@@ -41,7 +40,7 @@ class Node:
             result_plan, port = self.operator.forward(plan)
             return result_plan, self.out_ports.get(port, [])
 
-        execution_id = plan.meta.get("execution_id", _DEFAULT_EXECUTION_SCOPE)
+        execution_id = plan.meta.get("execution_id", self.DEFAULT_EXECUTION_SCOPE)
 
         with self._pending_lock:
             bucket = self._pending.setdefault(execution_id, {})
@@ -59,6 +58,8 @@ class Node:
         return result_plan, self.out_ports.get(port, [])
 
 class Graph:
+    ENTRY_SOURCE = "__entry__"
+
     def __init__(self, nodes: dict[str, Node], entry_ids: tuple[str, ...]):
         self.nodes = nodes
         self.entry_ids = entry_ids
@@ -74,7 +75,7 @@ class Graph:
     def traverse(self, initial_plan: Plan, max_steps: int | None = None) -> Iterator[TraversalStep]:
         limit = max_steps if max_steps is not None else self._default_max_steps()
         frontier: deque[tuple[str, str, Plan]] = deque(
-            (entry_id, _ENTRY_SOURCE, initial_plan) for entry_id in self.entry_ids
+            (entry_id, self.ENTRY_SOURCE, initial_plan) for entry_id in self.entry_ids
         )
         steps = 0
 

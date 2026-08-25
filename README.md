@@ -122,9 +122,8 @@ parameter instead.
 
 **Extending the engine**
 
-- Custom transform/action nodes: use `engine.node_library.register_transform(...)`
-  or `engine.node_library.register_action(...)` - no need to touch the node
-  registry directly.
+- Custom transform nodes: use `engine.node_library.register_transform(...)` -
+  no need to touch the node registry directly.
 - Alternate storage/readers/writers: `build_engine(...)` accepts
   `resource_storage_repository`, `node_library_repository`, `reader_factory`,
   and `writer_factory` overrides (e.g. swap in the S3-backed repositories from

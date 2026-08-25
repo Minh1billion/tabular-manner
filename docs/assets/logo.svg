@@ -1,0 +1,31 @@
+<svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#E2E5E0" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- background -->
+  <rect x="0" y="0" width="240" height="240" rx="40" fill="#F5F5EF"/>
+  <rect x="0" y="0" width="240" height="240" rx="40" fill="url(#grid)"/>
+
+  <!-- T stylized as a fork -->
+  <g stroke="#343A3C" stroke-width="7" stroke-linecap="round" fill="none">
+    <line x1="70" y1="42" x2="70" y2="190"/>
+    <line x1="52" y1="52" x2="52" y2="104"/>
+    <line x1="88" y1="52" x2="88" y2="104"/>
+  </g>
+  <circle cx="70" cy="42" r="8" fill="#123D2C"/>
+  <circle cx="52" cy="52" r="7" fill="#32664D"/>
+  <circle cx="88" cy="52" r="7" fill="#32664D"/>
+  <circle cx="70" cy="190" r="8" fill="#123D2C"/>
+
+  <!-- M stylized as connected graph nodes -->
+  <path d="M 120 190 L 120 115 L 160 155 L 200 115 L 200 190"
+        stroke="#343A3C" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="120" cy="190" r="8" fill="#123D2C"/>
+  <circle cx="120" cy="115" r="8" fill="#32664D"/>
+  <circle cx="160" cy="155" r="8" fill="#123D2C"/>
+  <circle cx="200" cy="115" r="8" fill="#32664D"/>
+  <circle cx="200" cy="190" r="8" fill="#123D2C"/>
+</svg>

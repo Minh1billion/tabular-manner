@@ -10,13 +10,9 @@ def _event(name: str, **data: Any) -> dict[str, Any]:
 def _serialize(definition: CustomNodeDefinition) -> dict[str, Any]:
     return {
         "name": definition.name,
-        "kind": definition.kind,
         "description": definition.description,
         "created_at": definition.created_at,
         "expression": definition.expression,
-        "service": definition.service,
-        "method": definition.method,
-        "handle_param": definition.handle_param,
     }
 
 class NodeLibrary:
@@ -30,25 +26,6 @@ class NodeLibrary:
             yield _event("validating", node_name=name)
             definition = self._service.register_transform(
                 name=name, expression=expression, description=description, bucket=bucket
-            )
-            yield _event("completed", data=_serialize(definition))
-        except Exception as exc:
-            yield _event("failed", error=str(exc))
-
-    def register_action(
-        self,
-        name: str,
-        service: str,
-        method: str,
-        description: str = "",
-        handle_param: str | None = None,
-        bucket: str | None = None,
-    ) -> Iterator[dict[str, Any]]:
-        try:
-            yield _event("validating", node_name=name)
-            definition = self._service.register_action(
-                name=name, service=service, method=method, description=description,
-                handle_param=handle_param, bucket=bucket,
             )
             yield _event("completed", data=_serialize(definition))
         except Exception as exc:

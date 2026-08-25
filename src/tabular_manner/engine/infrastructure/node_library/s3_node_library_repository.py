@@ -9,7 +9,8 @@ class S3NodeLibraryRepository(NodeLibraryRepository):
     def __init__(
         self,
         bucket_name: str,
-        root_prefix: str = "node_library",
+        root_prefix: str = "",
+        namespace: str = "",
         region: str = "us-east-1",
         endpoint_url: str | None = None,
         access_key_id: str | None = None,
@@ -18,6 +19,7 @@ class S3NodeLibraryRepository(NodeLibraryRepository):
     ):
         self._bucket_name = bucket_name
         self._root_prefix = root_prefix.strip("/")
+        self._namespace = namespace.strip("/")
         self._client = build_boto3_client(
             region=region,
             endpoint_url=endpoint_url,
@@ -29,11 +31,11 @@ class S3NodeLibraryRepository(NodeLibraryRepository):
     def _key(self, name: str, bucket: str | None = None) -> str:
         if not name or not name.strip() or "/" in name or name in (".", ".."):
             raise ValueError(f"Invalid name '{name}'")
-        segments = [segment for segment in (self._root_prefix, bucket, f"{name}.json") if segment]
+        segments = [segment for segment in (self._root_prefix, bucket, self._namespace, f"{name}.json") if segment]
         return "/".join(segments)
 
     def _prefix(self, bucket: str | None = None) -> str:
-        segments = [segment for segment in (self._root_prefix, bucket) if segment]
+        segments = [segment for segment in (self._root_prefix, bucket, self._namespace) if segment]
         prefix = "/".join(segments)
         return f"{prefix}/" if prefix else ""
 

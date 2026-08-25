@@ -3,27 +3,27 @@ import pytest
 
 
 from tabular_manner.engine import build_engine
-from tabular_manner.engine.application.storage.resource_storage import ResourceStorage
+from tabular_manner.engine.application.io.resource_storage import ResourceStorage
 from tabular_manner.engine.infrastructure.resource_storage.local_resource_storage_repository import (
     LocalResourceStorageRepository,
 )
 
 @pytest.fixture
 def storage_root(tmp_path):
-    root = tmp_path / ".resource_storage"
-    repository = LocalResourceStorageRepository(root=str(root))
+    root = tmp_path / ".object_storage"
+    repository = LocalResourceStorageRepository(root=str(root), namespace=".resource")
     resource_storage = ResourceStorage(repository=repository)
     df = pl.DataFrame({"customer": ["a", "b", "c"], "amount": [10.0, 20.0, 30.0], "quantity": [1, 2, 3]})
     resource_storage.save("raw", df.lazy())
     return root
 
 @pytest.fixture
-def node_library_root(tmp_path):
-    return tmp_path / ".node_library"
+def node_library_root(storage_root):
+    return storage_root / "default" / ".node_lib"
 
 @pytest.fixture
-def engine(storage_root, node_library_root):
-    return build_engine(storage_root=str(storage_root), node_library_root=str(node_library_root))
+def engine(storage_root):
+    return build_engine(storage_root=str(storage_root))
 
 def _completed(events: list[dict]) -> dict:
     failed = [e for e in events if e["event"] == "failed"]
@@ -59,8 +59,8 @@ class TestRegisterTransform:
         data = _completed(events)
         assert data["name"] == "double"
         assert data["expression"] == "value * 2"
-        assert "double" in engine.registry.keys()
-        assert not engine.registry.is_builtin("double")
+        assert "double" in engine.registry_provider.get().keys()
+        assert not engine.registry_provider.get().is_builtin("double")
 
     def test_rejects_name_colliding_with_builtin(self, engine):
         events = list(engine.node_library.register_transform(name="select", expression="value * 2"))
@@ -83,7 +83,7 @@ class TestRegisterTransform:
     def test_rejects_expression_violating_sandbox(self, engine, expression):
         events = list(engine.node_library.register_transform(name="malicious", expression=expression))
         _failed(events)
-        assert "malicious" not in engine.registry.keys()
+        assert "malicious" not in engine.registry_provider.get().keys()
 
     def test_rejected_expression_is_not_persisted(self, engine, node_library_root):
         list(engine.node_library.register_transform(name="malicious", expression="pl.read_csv('/etc/passwd')"))
@@ -108,7 +108,7 @@ class TestUnregisterTransform:
 
         events = list(engine.node_library.unregister_node("double"))
         _completed(events)
-        assert "double" not in engine.registry.keys()
+        assert "double" not in engine.registry_provider.get().keys()
 
         run_events = list(engine.execution.execute(spec=_double_pipeline()))
         error = _failed(run_events)
@@ -184,77 +184,15 @@ class TestGetAndListNodes:
         data = _completed(events)
         assert data["custom"] == []
 
-def _custom_action_pipeline(node_id: str = "2") -> dict:
-    return {
-        "name": "Custom Save Action Pipeline",
-        "nodes": [
-            {"id": "1", "type": "fetch_internal", "name": "Fetch Data", "params": {"key": "raw"}},
-            {"id": node_id, "type": "custom_save", "name": "Custom Save", "params": {"key": "custom_export"}},
-        ],
-        "connections": [
-            {"from": "1", "to": node_id},
-        ],
-    }
-
-class TestRegisterAction:
-    def test_registers_successfully(self, engine):
-        events = list(engine.node_library.register_action(
-            name="custom_save",
-            service="resource_storage",
-            method="save",
-            handle_param="lf",
-            description="Saves the current dataframe via resource_storage.save",
-        ))
-        data = _completed(events)
-        assert data["kind"] == "action"
-        assert data["service"] == "resource_storage"
-        assert data["method"] == "save"
-        assert "custom_save" in engine.registry.keys()
-
-    def test_rejects_service_outside_whitelist(self, engine):
-        events = list(engine.node_library.register_action(
-            name="peek_buffer", service="material_buffer", method="get_or_materialize",
-        ))
-        error = _failed(events)
-        assert "not available" in error["error"]
-        assert "peek_buffer" not in engine.registry.keys()
-
-    def test_rejects_method_outside_whitelist(self, engine):
-        events = list(engine.node_library.register_action(
-            name="wipe_storage", service="resource_storage", method="delete",
-        ))
-        error = _failed(events)
-        assert "not allowed" in error["error"]
-        assert "wipe_storage" not in engine.registry.keys()
-
-    def test_rejects_name_colliding_with_builtin(self, engine):
-        events = list(engine.node_library.register_action(name="select", service="resource_storage", method="save"))
-        error = _failed(events)
-        assert "already registered" in error["error"]
-
-class TestUsingCustomActionInPipeline:
-    def test_action_persists_data_through_whitelisted_service_call(self, engine):
-        list(engine.node_library.register_action(
-            name="custom_save", service="resource_storage", method="save", handle_param="lf",
-        ))
-
-        events = list(engine.execution.execute(spec=_custom_action_pipeline()))
-        _completed(events)
-
-        loaded = list(engine.data_resource.get("custom_export"))
-        rows = _completed(loaded)["rows"]
-        amounts = sorted(row["amount"] for row in rows)
-        assert amounts == [10.0, 20.0, 30.0]
-
 class TestPersistenceAcrossRestart:
-    def test_custom_transform_survives_restart(self, storage_root, node_library_root):
-        engine_a = build_engine(storage_root=str(storage_root), node_library_root=str(node_library_root))
+    def test_custom_transform_survives_restart(self, storage_root):
+        engine_a = build_engine(storage_root=str(storage_root))
         list(engine_a.node_library.register_transform(name="double", expression="value * 2"))
-        assert "double" in engine_a.registry.keys()
+        assert "double" in engine_a.registry_provider.get().keys()
 
-        engine_b = build_engine(storage_root=str(storage_root), node_library_root=str(node_library_root))
-        assert engine_b.registry is not engine_a.registry
-        assert "double" in engine_b.registry.keys()
+        engine_b = build_engine(storage_root=str(storage_root))
+        assert engine_b.registry_provider is not engine_a.registry_provider
+        assert "double" in engine_b.registry_provider.get().keys()
 
         events = list(engine_b.execution.execute(spec=_double_pipeline()))
         data = _completed(events)
