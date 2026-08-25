@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API reference - Tabular Manner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="shell">
+
+  <nav class="sidebar">
+    <a class="brand" href="index.html#top">
+      <svg width="30" height="30" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="240" height="240" rx="40" fill="#F5F5EF"/>
+        <g stroke="#343A3C" stroke-width="14" stroke-linecap="round" fill="none">
+          <line x1="70" y1="42" x2="70" y2="190"/>
+          <line x1="52" y1="52" x2="52" y2="104"/>
+          <line x1="88" y1="52" x2="88" y2="104"/>
+        </g>
+        <circle cx="70" cy="42" r="16" fill="#123D2C"/>
+        <circle cx="52" cy="52" r="14" fill="#32664D"/>
+        <circle cx="88" cy="52" r="14" fill="#32664D"/>
+        <circle cx="70" cy="190" r="16" fill="#123D2C"/>
+        <path d="M 120 190 L 120 115 L 160 155 L 200 115 L 200 190" stroke="#343A3C" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="120" cy="190" r="16" fill="#123D2C"/>
+        <circle cx="120" cy="115" r="16" fill="#32664D"/>
+        <circle cx="160" cy="155" r="16" fill="#123D2C"/>
+        <circle cx="200" cy="115" r="16" fill="#32664D"/>
+        <circle cx="200" cy="190" r="16" fill="#123D2C"/>
+      </svg>
+      <span>
+        <span class="brand-text">Tabular Manner</span>
+        <span class="brand-sub">engine reference</span>
+      </span>
+    </a>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">Start</p>
+      <ul>
+        <li><a class="nav-link" href="index.html#overview"><span class="dot"></span>Overview</a></li>
+        <li><a class="nav-link" href="index.html#getting-started"><span class="dot"></span>Getting started</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">API reference</p>
+      <ul>
+        <li><a class="nav-link" href="api-reference.html#api-execution"><span class="dot"></span>Execution</a></li>
+        <li><a class="nav-link" href="api-reference.html#api-data-resource"><span class="dot"></span>DataResource</a></li>
+        <li><a class="nav-link" href="api-reference.html#api-node-library"><span class="dot"></span>NodeLibrary</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">Default nodes</p>
+      <ul>
+        <li><a class="nav-link" href="nodes/io.html#nodes-io"><span class="dot"></span>Source and sink</a></li>
+        <li><a class="nav-link" href="nodes/transform.html#nodes-transform"><span class="dot"></span>Transform</a></li>
+        <li><a class="nav-link" href="nodes/merge.html#nodes-merge"><span class="dot"></span>Merge</a></li>
+        <li><a class="nav-link" href="nodes/control.html#nodes-control"><span class="dot"></span>Control</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">Writing a graph</p>
+      <ul>
+        <li><a class="nav-link" href="writing-a-graph.html#graph-anatomy"><span class="dot"></span>Graph anatomy</a></li>
+        <li><a class="nav-link" href="writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and branching</a></li>
+        <li><a class="nav-link" href="writing-a-graph.html#graph-expressions"><span class="dot"></span>Expressions</a></li>
+        <li><a class="nav-link" href="writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main id="api-reference">
+    <div class="content">
+
+      <section id="api-execution">
+        <h2>Execution</h2>
+        <p class="section-desc">Compiles a graph spec and runs it, or re-runs a graph already compiled in a previous call. Accessible as <code class="inline">engine.execution</code>.</p>
+
+        <h3><span class="mono-title">execute</span>(execution_id=None, spec=None)</h3>
+        <div class="sig">Iterator[dict] execute(execution_id: str | None, spec: dict | None)</div>
+        <p>Provide <code class="inline">spec</code> to validate, parse, and run a new graph in one call, or pass a previously returned <code class="inline">execution_id</code> to re-run an already-compiled graph against a fresh context. Exactly one of the two is required.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Event</th><th>When</th></tr></thead>
+            <tbody>
+              <tr><td><code>validating</code></td><td class="muted">Spec structure and node params are being checked.</td></tr>
+              <tr><td><code>parsing</code></td><td class="muted">Nodes and connections are compiled into an execution graph.</td></tr>
+              <tr><td><code>compiled</code></td><td class="muted">Carries the new <code>execution_id</code>, entry node ids, and node count.</td></tr>
+              <tr><td><code>injecting_context</code></td><td class="muted">Shared services (storage, readers, writers) are bound to nodes.</td></tr>
+              <tr><td><code>running</code></td><td class="muted">Traversal starts; carries <code>total_nodes</code>.</td></tr>
+              <tr><td><code>node_started</code> / <code>node_completed</code></td><td class="muted">Emitted for every node visited, in traversal order.</td></tr>
+              <tr><td><code>leaf_reached</code></td><td class="muted">Emitted once per branch with no outgoing connection; carries the resulting column list and step history.</td></tr>
+              <tr><td><code>completed</code></td><td class="muted">Final event; carries the <code>execution_id</code> and all reached leaves.</td></tr>
+              <tr><td><code>failed</code></td><td class="muted">Carries the error message, error type, and, for node failures, the offending <code>node_id</code> and <code>node_type</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">validate</span>(spec)</h3>
+        <div class="sig">Iterator[dict] validate(spec: dict)</div>
+        <p>Checks a spec against the registry and sandbox without compiling or running it. Yields <code class="inline">validating</code> followed by either <code class="inline">valid</code> or <code class="inline">failed</code>.</p>
+      </section>
+
+      <section id="api-data-resource">
+        <h2>DataResource</h2>
+        <p class="section-desc">Manages the named internal resources that <code class="inline">fetch_internal</code> and <code class="inline">push_internal</code> nodes read from and write to. Accessible as <code class="inline">engine.data_resource</code>.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Method</th><th>Parameters</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>import_source</code></td><td class="muted">key, source_kind, source_params, bucket=None, overwrite=False</td><td>Reads from an external source (file, database, and so on) and saves the result under <code>key</code>.</td></tr>
+              <tr><td><code>list</code></td><td class="muted">bucket=None, prefix=None, limit=None, offset=0</td><td>Lists stored resource keys, optionally filtered by prefix and paged.</td></tr>
+              <tr><td><code>get</code></td><td class="muted">key, bucket=None, limit=100, offset=0</td><td>Returns schema, row count, and a page of rows for a stored resource.</td></tr>
+              <tr><td><code>delete</code></td><td class="muted">key, bucket=None</td><td>Removes a stored resource.</td></tr>
+              <tr><td><code>exists</code></td><td class="muted">key, bucket=None</td><td>Returns a plain boolean, not an event stream.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Resources are scoped by an optional <code class="inline">bucket</code>, letting the same key coexist across separate namespaces.</p>
+      </section>
+
+      <section id="api-node-library">
+        <h2>NodeLibrary</h2>
+        <p class="section-desc">Registers custom node types on top of the built-in ones, so a graph can reference project-specific logic by name. Accessible as <code class="inline">engine.node_library</code>.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Method</th><th>Parameters</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>register_transform</code></td><td class="muted">name, expression, description="", bucket=None</td><td>Registers a reusable sandboxed expression as a new transform node type.</td></tr>
+              <tr><td><code>register_action</code></td><td class="muted">name, service, method, description="", handle_param=None, bucket=None</td><td>Registers a node type that calls an allow-listed method on a shared service.</td></tr>
+              <tr><td><code>unregister_node</code></td><td class="muted">name, bucket=None</td><td>Removes a previously registered custom node type. Built-in types cannot be unregistered.</td></tr>
+              <tr><td><code>get_node</code></td><td class="muted">name, bucket=None</td><td>Returns the definition of one custom node type.</td></tr>
+              <tr><td><code>describe_nodes</code></td><td class="muted">bucket=None</td><td>Returns a descriptive summary of every node type available to the parser.</td></tr>
+              <tr><td><code>list_nodes</code></td><td class="muted">bucket=None</td><td>Returns built-in type keys alongside full definitions of custom types.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Custom node types are looked up by the parser the same way built-in ones are, so once registered they can be used as any other <code class="inline">type</code> value in a graph spec.</p>
+      </section>
+
+      <div class="edge-divider"><span class="node"></span></div>
+
+
+
+      <footer>
+        <p>Tabular Manner engine reference. Node types, params, and event names reflect the built-in registry; custom node types added through <code class="inline">NodeLibrary</code> are usable the same way once registered.</p>
+      </footer>
+
+    </div>
+  </main>
+
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

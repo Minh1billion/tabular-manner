@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transform nodes - Tabular Manner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div class="shell">
+
+  <nav class="sidebar">
+    <a class="brand" href="../index.html#top">
+      <svg width="30" height="30" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="240" height="240" rx="40" fill="#F5F5EF"/>
+        <g stroke="#343A3C" stroke-width="14" stroke-linecap="round" fill="none">
+          <line x1="70" y1="42" x2="70" y2="190"/>
+          <line x1="52" y1="52" x2="52" y2="104"/>
+          <line x1="88" y1="52" x2="88" y2="104"/>
+        </g>
+        <circle cx="70" cy="42" r="16" fill="#123D2C"/>
+        <circle cx="52" cy="52" r="14" fill="#32664D"/>
+        <circle cx="88" cy="52" r="14" fill="#32664D"/>
+        <circle cx="70" cy="190" r="16" fill="#123D2C"/>
+        <path d="M 120 190 L 120 115 L 160 155 L 200 115 L 200 190" stroke="#343A3C" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="120" cy="190" r="16" fill="#123D2C"/>
+        <circle cx="120" cy="115" r="16" fill="#32664D"/>
+        <circle cx="160" cy="155" r="16" fill="#123D2C"/>
+        <circle cx="200" cy="115" r="16" fill="#32664D"/>
+        <circle cx="200" cy="190" r="16" fill="#123D2C"/>
+      </svg>
+      <span>
+        <span class="brand-text">Tabular Manner</span>
+        <span class="brand-sub">engine reference</span>
+      </span>
+    </a>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">Start</p>
+      <ul>
+        <li><a class="nav-link" href="../index.html#overview"><span class="dot"></span>Overview</a></li>
+        <li><a class="nav-link" href="../index.html#getting-started"><span class="dot"></span>Getting started</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">API reference</p>
+      <ul>
+        <li><a class="nav-link" href="../api-reference.html#api-execution"><span class="dot"></span>Execution</a></li>
+        <li><a class="nav-link" href="../api-reference.html#api-data-resource"><span class="dot"></span>DataResource</a></li>
+        <li><a class="nav-link" href="../api-reference.html#api-node-library"><span class="dot"></span>NodeLibrary</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">Default nodes</p>
+      <ul>
+        <li><a class="nav-link" href="io.html#nodes-io"><span class="dot"></span>Source and sink</a></li>
+        <li><a class="nav-link" href="transform.html#nodes-transform"><span class="dot"></span>Transform</a></li>
+        <li><a class="nav-link" href="merge.html#nodes-merge"><span class="dot"></span>Merge</a></li>
+        <li><a class="nav-link" href="control.html#nodes-control"><span class="dot"></span>Control</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">Writing a graph</p>
+      <ul>
+        <li><a class="nav-link" href="../writing-a-graph.html#graph-anatomy"><span class="dot"></span>Graph anatomy</a></li>
+        <li><a class="nav-link" href="../writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and branching</a></li>
+        <li><a class="nav-link" href="../writing-a-graph.html#graph-expressions"><span class="dot"></span>Expressions</a></li>
+        <li><a class="nav-link" href="../writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main id="transform">
+    <div class="content">
+
+      <section id="nodes-transform">
+        <h2>Transform nodes<span class="badge transform">transform</span></h2>
+        <p class="section-desc">Single-input, single-output nodes that reshape the data passing through a branch. Each takes one input and produces one output.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Type</th><th>Params</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>select</code></td><td class="muted">columns (list of string, required)</td><td>Keeps only the given columns, in order.</td></tr>
+              <tr><td><code>drop</code></td><td class="muted">columns (list of string, required)</td><td>Removes the given columns.</td></tr>
+              <tr><td><code>limit</code></td><td class="muted">n (integer, required)</td><td>Keeps at most the first <code>n</code> rows.</td></tr>
+              <tr><td><code>head</code></td><td class="muted">n (integer, required)</td><td>Keeps the first <code>n</code> rows.</td></tr>
+              <tr><td><code>tail</code></td><td class="muted">n (integer, required)</td><td>Keeps the last <code>n</code> rows.</td></tr>
+              <tr><td><code>explode</code></td><td class="muted">columns (list of string, required)</td><td>Explodes list-typed columns into multiple rows, one per element.</td></tr>
+              <tr><td><code>group_by</code></td><td class="muted">by (list of string, required), aggregations (object of string to string, required)</td><td>Groups rows by the given columns and aggregates the rest using one of <code>sum</code>, <code>mean</code>, <code>min</code>, <code>max</code>, <code>count</code>, <code>median</code>, <code>std</code>, <code>first</code>, <code>last</code>.</td></tr>
+              <tr><td><code>log</code></td><td class="muted">columns (list of string, required), base (float, optional)</td><td>Applies a logarithm to the given columns, using the natural log unless <code>base</code> is given.</td></tr>
+              <tr><td><code>zscore_normalize</code></td><td class="muted">columns (list of string, required)</td><td>Rescales the given columns to zero mean and unit standard deviation.</td></tr>
+              <tr><td><code>minmax_normalize</code></td><td class="muted">columns (list of string, required)</td><td>Rescales the given columns to the [0, 1] range based on their min and max.</td></tr>
+              <tr><td><code>fill_mean</code></td><td class="muted">columns (list of string, required)</td><td>Fills nulls in the given columns with each column's mean.</td></tr>
+              <tr><td><code>fill_null</code></td><td class="muted">columns (list of string, required), value (any, required)</td><td>Fills nulls in the given columns with a fixed value.</td></tr>
+              <tr><td><code>drop_nulls</code></td><td class="muted">columns (list of string, optional)</td><td>Drops rows with a null in any of the given columns, or any column if omitted.</td></tr>
+              <tr><td><code>drop_duplicates</code></td><td class="muted">subset (list of string, optional), keep ("first" | "last" | "any" | "none", default "first")</td><td>Removes duplicate rows, optionally scoped to a subset of columns.</td></tr>
+              <tr><td><code>rename</code></td><td class="muted">mapping (object of string to string, required)</td><td>Renames columns from old name to new name.</td></tr>
+              <tr><td><code>sort</code></td><td class="muted">by (list of string, required), descending (bool, default false)</td><td>Sorts rows by one or more columns.</td></tr>
+              <tr><td><code>cast</code></td><td class="muted">types (object of string to string, required)</td><td>Casts columns to the named Polars dtype, for example <code>Int64</code> or <code>Float64</code>.</td></tr>
+              <tr><td><code>filter</code></td><td class="muted">expression (string, required)</td><td>Keeps rows where the sandboxed expression evaluates to true.</td></tr>
+              <tr><td><code>derive</code></td><td class="muted">expression (string, required), column (string, required)</td><td>Adds or replaces a column with the result of the sandboxed expression.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+
+
+      <footer>
+        <p>Tabular Manner engine reference. Node types, params, and event names reflect the built-in registry; custom node types added through <code class="inline">NodeLibrary</code> are usable the same way once registered.</p>
+      </footer>
+
+    </div>
+  </main>
+
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>
