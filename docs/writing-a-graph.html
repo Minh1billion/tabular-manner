@@ -51,8 +51,8 @@
       <p class="nav-eyebrow">API reference</p>
       <ul>
         <li><a class="nav-link" href="api-reference.html#api-execution"><span class="dot"></span>Execution</a></li>
-        <li><a class="nav-link" href="api-reference.html#api-data-resource"><span class="dot"></span>DataResource</a></li>
-        <li><a class="nav-link" href="api-reference.html#api-node-library"><span class="dot"></span>NodeLibrary</a></li>
+        <li><a class="nav-link" href="api-reference.html#api-data-resource"><span class="dot"></span>Data Resource</a></li>
+        <li><a class="nav-link" href="api-reference.html#api-node-library"><span class="dot"></span>Node Library</a></li>
       </ul>
     </div>
 
@@ -62,7 +62,6 @@
         <li><a class="nav-link" href="nodes/io.html#nodes-io"><span class="dot"></span>Source and sink</a></li>
         <li><a class="nav-link" href="nodes/transform.html#nodes-transform"><span class="dot"></span>Transform</a></li>
         <li><a class="nav-link" href="nodes/merge.html#nodes-merge"><span class="dot"></span>Merge</a></li>
-        <li><a class="nav-link" href="nodes/control.html#nodes-control"><span class="dot"></span>Control</a></li>
       </ul>
     </div>
 
@@ -70,7 +69,7 @@
       <p class="nav-eyebrow">Writing a graph</p>
       <ul>
         <li><a class="nav-link" href="writing-a-graph.html#graph-anatomy"><span class="dot"></span>Graph anatomy</a></li>
-        <li><a class="nav-link" href="writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and branching</a></li>
+        <li><a class="nav-link" href="writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and merging</a></li>
         <li><a class="nav-link" href="writing-a-graph.html#graph-expressions"><span class="dot"></span>Expressions</a></li>
         <li><a class="nav-link" href="writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
       </ul>
@@ -134,7 +133,6 @@
             <thead><tr><th>Field</th><th>Description</th></tr></thead>
             <tbody>
               <tr><td><code>from</code> / <code>to</code></td><td>Node ids being connected.</td></tr>
-              <tr><td><code>on</code></td><td>Output port to follow. Defaults to <code>"out"</code>; required for branching nodes such as <code>if</code> and <code>switch</code>.</td></tr>
               <tr><td><code>into</code></td><td>Input slot to fill on the target node. Required for fan-in nodes with named inputs, such as <code>join</code>'s <code>left</code> and <code>right</code>.</td></tr>
             </tbody>
           </table>
@@ -146,28 +144,15 @@
       </section>
 
       <section id="graph-ports">
-        <h2>Ports and branching</h2>
-        <p class="section-desc">Most nodes have a single output port named <code class="inline">out</code>, so most connections omit <code class="inline">on</code> entirely. Control nodes expose more than one port, and each outgoing connection picks which one to follow.</p>
-
-        <div class="card-grid">
-          <div class="card">
-            <span class="step-num">if</span>
-            <h4>Two fixed ports</h4>
-            <p style="margin:0;">Always exposes <code class="inline">true</code> and <code class="inline">false</code>. Route one connection to each with <code class="inline">"on": "true"</code> and <code class="inline">"on": "false"</code>.</p>
-          </div>
-          <div class="card">
-            <span class="step-num">switch</span>
-            <h4>One port per case</h4>
-            <p style="margin:0;">Exposes one port per entry in <code class="inline">cases</code>, plus the <code class="inline">default_case</code> port for values that match none of them.</p>
-          </div>
-        </div>
+        <h2>Ports and merging</h2>
+        <p class="section-desc">Every built-in node has a single output port, so connections never need to pick a port on the way out. A node's output can still feed more than one connection — that's how a branch fans out to several downstream nodes.</p>
 
         <p>Fan-in nodes work the other way: instead of choosing an output port, incoming connections choose an input slot. <code class="inline">union</code> accepts any number of branches on the default port and concatenates them. <code class="inline">join</code> requires exactly two, matched to its <code class="inline">left</code> and <code class="inline">right</code> input slots via each connection's <code class="inline">into</code> field.</p>
       </section>
 
       <section id="graph-expressions">
         <h2>Expressions</h2>
-        <p class="section-desc">The <code class="inline">expression</code> param used by <code class="inline">filter</code>, <code class="inline">derive</code>, <code class="inline">switch</code>, and <code class="inline">if</code> is not arbitrary Python. It is parsed and checked against a small allow-list before it ever runs.</p>
+        <p class="section-desc">The <code class="inline">expression</code> param used by <code class="inline">filter</code> and <code class="inline">derive</code> is not arbitrary Python. It is parsed and checked against a small allow-list before it ever runs.</p>
 
         <div class="table-wrap">
           <table>
@@ -186,44 +171,12 @@
 
         <p>Anything outside this set, imports, arbitrary function calls, attribute access on anything other than <code class="inline">df</code> or a narrow set of <code class="inline">pl</code> helpers, is rejected before the graph runs rather than at data time.</p>
 
-        <div class="callout warn">
-          <strong>Scalar reduction.</strong> <code class="inline">switch</code> and <code class="inline">if</code> evaluate their expression once per checkpoint, not per row. If the expression does not already reduce to a single value, aggregate it first, for example with <code class="inline">.mean()</code>, <code class="inline">.first()</code>, or <code class="inline">.all()</code>.
-        </div>
+        <p><code class="inline">register_transform</code> (see <code class="inline">NodeLibrary</code>) uses the same sandbox with a <code class="inline">value</code> identifier in place of <code class="inline">df</code>, since a registered transform applies its expression per target column rather than against the whole row.</p>
       </section>
 
       <section id="graph-examples">
         <h2>Common patterns</h2>
-        <p class="section-desc">A few small shapes cover most graphs: a straight line, a fan-out, a two-way branch, a many-way branch, and a merge.</p>
-
-        <h3>Branching with <span class="mono-title">if</span></h3>
-        <div class="code-block">
-          <button class="copy-btn" onclick="copyBlock(this)">copy</button>
-          <pre>{
-  <span class="tok-key">"id"</span>: <span class="tok-str">"4"</span>, <span class="tok-key">"type"</span>: <span class="tok-str">"if"</span>, <span class="tok-key">"name"</span>: <span class="tok-str">"Check Row Count"</span>,
-  <span class="tok-key">"params"</span>: { <span class="tok-key">"expression"</span>: <span class="tok-str">"df.amount.mean() &gt;= 100"</span> }
-}
-
-<span class="tok-com">// connections</span>
-{ <span class="tok-key">"from"</span>: <span class="tok-str">"4"</span>, <span class="tok-key">"to"</span>: <span class="tok-str">"5"</span>, <span class="tok-key">"on"</span>: <span class="tok-str">"true"</span> }
-{ <span class="tok-key">"from"</span>: <span class="tok-str">"4"</span>, <span class="tok-key">"to"</span>: <span class="tok-str">"6"</span>, <span class="tok-key">"on"</span>: <span class="tok-str">"false"</span> }</pre>
-        </div>
-
-        <h3>Branching with <span class="mono-title">switch</span></h3>
-        <div class="code-block">
-          <button class="copy-btn" onclick="copyBlock(this)">copy</button>
-          <pre>{
-  <span class="tok-key">"id"</span>: <span class="tok-str">"4"</span>, <span class="tok-key">"type"</span>: <span class="tok-str">"switch"</span>, <span class="tok-key">"name"</span>: <span class="tok-str">"Bucket By Amount"</span>,
-  <span class="tok-key">"params"</span>: {
-    <span class="tok-key">"expression"</span>: <span class="tok-str">"pl.when(df.amount.mean() &gt;= 150).then(pl.lit('high')).when(df.amount.mean() &gt;= 80).then(pl.lit('mid')).otherwise(pl.lit('low'))"</span>,
-    <span class="tok-key">"cases"</span>: [<span class="tok-str">"high"</span>, <span class="tok-str">"mid"</span>, <span class="tok-str">"low"</span>]
-  }
-}
-
-<span class="tok-com">// connections</span>
-{ <span class="tok-key">"from"</span>: <span class="tok-str">"4"</span>, <span class="tok-key">"to"</span>: <span class="tok-str">"5"</span>, <span class="tok-key">"on"</span>: <span class="tok-str">"high"</span> }
-{ <span class="tok-key">"from"</span>: <span class="tok-str">"4"</span>, <span class="tok-key">"to"</span>: <span class="tok-str">"6"</span>, <span class="tok-key">"on"</span>: <span class="tok-str">"mid"</span> }
-{ <span class="tok-key">"from"</span>: <span class="tok-str">"4"</span>, <span class="tok-key">"to"</span>: <span class="tok-str">"7"</span>, <span class="tok-key">"on"</span>: <span class="tok-str">"low"</span> }</pre>
-        </div>
+        <p class="section-desc">A few small shapes cover most graphs: a straight line, a fan-out, and a merge.</p>
 
         <h3>Fan-out to two sinks</h3>
         <div class="code-block">
@@ -246,7 +199,6 @@
 { <span class="tok-key">"from"</span>: <span class="tok-str">"2"</span>, <span class="tok-key">"to"</span>: <span class="tok-str">"3"</span>, <span class="tok-key">"into"</span>: <span class="tok-str">"right"</span> }</pre>
         </div>
       </section>
-
 
       <footer>
         <p>Tabular Manner engine reference. Node types, params, and event names reflect the built-in registry; custom node types added through <code class="inline">NodeLibrary</code> are usable the same way once registered.</p>

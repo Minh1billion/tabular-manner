@@ -28,6 +28,10 @@ class S3NodeLibraryRepository(NodeLibraryRepository):
             path_style=path_style,
         )
 
+    def close(self) -> None:
+        if hasattr(self._client, "close"):
+            self._client.close()
+
     def _key(self, name: str, bucket: str | None = None) -> str:
         if not name or not name.strip() or "/" in name or name in (".", ".."):
             raise ValueError(f"Invalid name '{name}'")

@@ -37,6 +37,10 @@ class S3ResourceStorageRepository(ResourceStorageRepository):
     def storage_options(self) -> dict[str, str] | None:
         return self._storage_options
 
+    def close(self) -> None:
+        if hasattr(self._client, "close"):
+            self._client.close()
+
     def _resolve_key(self, key: str, bucket: str | None = None) -> str:
         if not key or not key.strip():
             raise ValueError("'key' must not be empty")

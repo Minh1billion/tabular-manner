@@ -73,3 +73,8 @@ class NodeRegistryProvider:
     def buckets(self) -> list[str]:
         with self._lock:
             return sorted(self._registries)
+
+    def evict(self, bucket: str | None = None) -> None:
+        key = bucket or self.DEFAULT_BUCKET
+        with self._lock:
+            self._registries.pop(key, None)

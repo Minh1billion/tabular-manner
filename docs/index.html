@@ -51,8 +51,8 @@
       <p class="nav-eyebrow">API reference</p>
       <ul>
         <li><a class="nav-link" href="api-reference.html#api-execution"><span class="dot"></span>Execution</a></li>
-        <li><a class="nav-link" href="api-reference.html#api-data-resource"><span class="dot"></span>DataResource</a></li>
-        <li><a class="nav-link" href="api-reference.html#api-node-library"><span class="dot"></span>NodeLibrary</a></li>
+        <li><a class="nav-link" href="api-reference.html#api-data-resource"><span class="dot"></span>Data Resource</a></li>
+        <li><a class="nav-link" href="api-reference.html#api-node-library"><span class="dot"></span>Node Library</a></li>
       </ul>
     </div>
 
@@ -69,7 +69,7 @@
       <p class="nav-eyebrow">Writing a graph</p>
       <ul>
         <li><a class="nav-link" href="writing-a-graph.html#graph-anatomy"><span class="dot"></span>Graph anatomy</a></li>
-        <li><a class="nav-link" href="writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and branching</a></li>
+        <li><a class="nav-link" href="writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and merging</a></li>
         <li><a class="nav-link" href="writing-a-graph.html#graph-expressions"><span class="dot"></span>Expressions</a></li>
         <li><a class="nav-link" href="writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
       </ul>
@@ -129,7 +129,7 @@
 
       <section id="overview">
         <h2>Overview</h2>
-        <p class="section-desc">A pipeline is a named JSON document with two top-level arrays: <code class="inline">nodes</code> and <code class="inline">connections</code>. Each node wraps one registered node type; connections wire node outputs to node inputs, optionally through a named port.</p>
+        <p class="section-desc">A pipeline is a named JSON document with two top-level arrays: <code class="inline">nodes</code> and <code class="inline">connections</code>. Each node wraps one registered node type; connections wire node outputs to node inputs, optionally through a named input slot.</p>
 
         <div class="card-grid">
           <div class="card">
@@ -138,7 +138,7 @@
           </div>
           <div class="card">
             <h4>Connections</h4>
-            <p style="margin:0;">Each entry has a <code class="inline">from</code> id and a <code class="inline">to</code> id, and optionally <code class="inline">on</code> (which output port to follow) and <code class="inline">into</code> (which input slot to fill).</p>
+            <p style="margin:0;">Each entry has a <code class="inline">from</code> id and a <code class="inline">to</code> id, and optionally <code class="inline">into</code> (which input slot to fill on a fan-in node such as <code class="inline">join</code>).</p>
           </div>
         </div>
 
@@ -176,15 +176,13 @@ engine = build_engine()
               <tr><td><code>node_library</code></td><td>NodeLibrary</td><td>Register and inspect custom node types.</td></tr>
               <tr><td><code>registry</code></td><td>NodeRegistry</td><td>The set of node types available to the parser, built-in and custom.</td></tr>
               <tr><td><code>context_manager</code></td><td>ContextManager</td><td>Holds shared runtime services (storage, readers, writers) injected into nodes.</td></tr>
-              <tr><td><code>sandbox</code></td><td>Sandbox</td><td>Restricts what expressions and custom actions are allowed to do.</td></tr>
+              <tr><td><code>sandbox</code></td><td>Sandbox</td><td>Restricts what expressions are allowed to do.</td></tr>
             </tbody>
           </table>
         </div>
       </section>
 
       <div class="edge-divider"><span class="node"></span></div>
-
-
 
       <footer>
         <p>Tabular Manner engine reference. Node types, params, and event names reflect the built-in registry; custom node types added through <code class="inline">NodeLibrary</code> are usable the same way once registered.</p>

@@ -61,6 +61,12 @@ class ObjectStorage:
     def node_library_repository(self) -> NodeLibraryRepository:
         return self._node_library_repository
 
+    def close(self) -> None:
+        if hasattr(self._resource_repository, "close"):
+            self._resource_repository.close()
+        if hasattr(self._node_library_repository, "close"):
+            self._node_library_repository.close()
+
 @ObjectStorage.register_backend("local")
 def _build_local_backend(storage: ObjectStorage) -> tuple[ResourceStorageRepository, NodeLibraryRepository]:
     from ...infrastructure.resource_storage.local_resource_storage_repository import LocalResourceStorageRepository
