@@ -24,10 +24,6 @@ dev = [
     "pathspec",
     "twine>=7.0.0",
 ]
-docs = [
-    "mkdocs",
-    "mkdocs-material",
-]
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"

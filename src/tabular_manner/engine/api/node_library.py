@@ -19,6 +19,9 @@ class NodeLibrary:
     def __init__(self, service: LibraryService):
         self._service = service
 
+    def load_persisted(self, bucket: str | None = None) -> None:
+        self._service.load_persisted(bucket)
+
     def register_transform(
         self, name: str, expression: str, description: str = "", bucket: str | None = None
     ) -> Iterator[dict[str, Any]]:

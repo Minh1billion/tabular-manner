@@ -51,8 +51,8 @@
       <p class="nav-eyebrow">API reference</p>
       <ul>
         <li><a class="nav-link" href="../api-reference.html#api-execution"><span class="dot"></span>Execution</a></li>
-        <li><a class="nav-link" href="../api-reference.html#api-data-resource"><span class="dot"></span>DataResource</a></li>
-        <li><a class="nav-link" href="../api-reference.html#api-node-library"><span class="dot"></span>NodeLibrary</a></li>
+        <li><a class="nav-link" href="../api-reference.html#api-data-resource"><span class="dot"></span>Data Resource</a></li>
+        <li><a class="nav-link" href="../api-reference.html#api-node-library"><span class="dot"></span>Node Library</a></li>
       </ul>
     </div>
 
@@ -62,7 +62,6 @@
         <li><a class="nav-link" href="io.html#nodes-io"><span class="dot"></span>Source and sink</a></li>
         <li><a class="nav-link" href="transform.html#nodes-transform"><span class="dot"></span>Transform</a></li>
         <li><a class="nav-link" href="merge.html#nodes-merge"><span class="dot"></span>Merge</a></li>
-        <li><a class="nav-link" href="control.html#nodes-control"><span class="dot"></span>Control</a></li>
       </ul>
     </div>
 
@@ -70,7 +69,7 @@
       <p class="nav-eyebrow">Writing a graph</p>
       <ul>
         <li><a class="nav-link" href="../writing-a-graph.html#graph-anatomy"><span class="dot"></span>Graph anatomy</a></li>
-        <li><a class="nav-link" href="../writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and branching</a></li>
+        <li><a class="nav-link" href="../writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and merging</a></li>
         <li><a class="nav-link" href="../writing-a-graph.html#graph-expressions"><span class="dot"></span>Expressions</a></li>
         <li><a class="nav-link" href="../writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
       </ul>
@@ -84,35 +83,204 @@
         <h2>Transform nodes<span class="badge transform">transform</span></h2>
         <p class="section-desc">Single-input, single-output nodes that reshape the data passing through a branch. Each takes one input and produces one output.</p>
 
+        <h3><span class="mono-title">select</span></h3>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Type</th><th>Params</th><th>Description</th></tr></thead>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
             <tbody>
-              <tr><td><code>select</code></td><td class="muted">columns (list of string, required)</td><td>Keeps only the given columns, in order.</td></tr>
-              <tr><td><code>drop</code></td><td class="muted">columns (list of string, required)</td><td>Removes the given columns.</td></tr>
-              <tr><td><code>limit</code></td><td class="muted">n (integer, required)</td><td>Keeps at most the first <code>n</code> rows.</td></tr>
-              <tr><td><code>head</code></td><td class="muted">n (integer, required)</td><td>Keeps the first <code>n</code> rows.</td></tr>
-              <tr><td><code>tail</code></td><td class="muted">n (integer, required)</td><td>Keeps the last <code>n</code> rows.</td></tr>
-              <tr><td><code>explode</code></td><td class="muted">columns (list of string, required)</td><td>Explodes list-typed columns into multiple rows, one per element.</td></tr>
-              <tr><td><code>group_by</code></td><td class="muted">by (list of string, required), aggregations (object of string to string, required)</td><td>Groups rows by the given columns and aggregates the rest using one of <code>sum</code>, <code>mean</code>, <code>min</code>, <code>max</code>, <code>count</code>, <code>median</code>, <code>std</code>, <code>first</code>, <code>last</code>.</td></tr>
-              <tr><td><code>log</code></td><td class="muted">columns (list of string, required), base (float, optional)</td><td>Applies a logarithm to the given columns, using the natural log unless <code>base</code> is given.</td></tr>
-              <tr><td><code>zscore_normalize</code></td><td class="muted">columns (list of string, required)</td><td>Rescales the given columns to zero mean and unit standard deviation.</td></tr>
-              <tr><td><code>minmax_normalize</code></td><td class="muted">columns (list of string, required)</td><td>Rescales the given columns to the [0, 1] range based on their min and max.</td></tr>
-              <tr><td><code>fill_mean</code></td><td class="muted">columns (list of string, required)</td><td>Fills nulls in the given columns with each column's mean.</td></tr>
-              <tr><td><code>fill_null</code></td><td class="muted">columns (list of string, required), value (any, required)</td><td>Fills nulls in the given columns with a fixed value.</td></tr>
-              <tr><td><code>drop_nulls</code></td><td class="muted">columns (list of string, optional)</td><td>Drops rows with a null in any of the given columns, or any column if omitted.</td></tr>
-              <tr><td><code>drop_duplicates</code></td><td class="muted">subset (list of string, optional), keep ("first" | "last" | "any" | "none", default "first")</td><td>Removes duplicate rows, optionally scoped to a subset of columns.</td></tr>
-              <tr><td><code>rename</code></td><td class="muted">mapping (object of string to string, required)</td><td>Renames columns from old name to new name.</td></tr>
-              <tr><td><code>sort</code></td><td class="muted">by (list of string, required), descending (bool, default false)</td><td>Sorts rows by one or more columns.</td></tr>
-              <tr><td><code>cast</code></td><td class="muted">types (object of string to string, required)</td><td>Casts columns to the named Polars dtype, for example <code>Int64</code> or <code>Float64</code>.</td></tr>
-              <tr><td><code>filter</code></td><td class="muted">expression (string, required)</td><td>Keeps rows where the sandboxed expression evaluates to true.</td></tr>
-              <tr><td><code>derive</code></td><td class="muted">expression (string, required), column (string, required)</td><td>Adds or replaces a column with the result of the sandboxed expression.</td></tr>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Keeps only the given columns, in order.</td></tr>
             </tbody>
           </table>
         </div>
+
+        <h3><span class="mono-title">drop</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Removes the given columns.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">limit</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>n</code></td><td class="muted">integer</td><td class="muted">required</td><td>Keeps at most the first <code>n</code> rows.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">head</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>n</code></td><td class="muted">integer</td><td class="muted">required</td><td>Keeps the first <code>n</code> rows.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">tail</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>n</code></td><td class="muted">integer</td><td class="muted">required</td><td>Keeps the last <code>n</code> rows.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">explode</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Explodes list-typed columns into multiple rows, one per element.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">group_by</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>by</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Columns to group rows by.</td></tr>
+              <tr><td><code>aggregations</code></td><td class="muted">object of string to string</td><td class="muted">required</td><td>Maps a column to one of <code>sum</code>, <code>mean</code>, <code>min</code>, <code>max</code>, <code>count</code>, <code>median</code>, <code>std</code>, <code>first</code>, <code>last</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">log</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Columns to apply a logarithm to.</td></tr>
+              <tr><td><code>base</code></td><td class="muted">float</td><td class="muted">none (natural log)</td><td>Log base. Uses the natural log if omitted.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">zscore_normalize</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Rescales the given columns to zero mean and unit standard deviation.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">minmax_normalize</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Rescales the given columns to the [0, 1] range based on their min and max.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">fill_mean</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Fills nulls in the given columns with each column's mean.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">fill_null</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Columns to fill.</td></tr>
+              <tr><td><code>value</code></td><td class="muted">any</td><td class="muted">required</td><td>Fixed value used to fill nulls in the given columns.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">drop_nulls</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">none (any column)</td><td>Drops rows with a null in any of the given columns, or any column if omitted.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">drop_duplicates</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>subset</code></td><td class="muted">list of string</td><td class="muted">none (all columns)</td><td>Scopes duplicate detection to a subset of columns.</td></tr>
+              <tr><td><code>keep</code></td><td class="muted">string</td><td class="muted">"first"</td><td>One of <code>"first"</code>, <code>"last"</code>, <code>"any"</code>, <code>"none"</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">rename</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>mapping</code></td><td class="muted">object of string to string</td><td class="muted">required</td><td>Renames columns from old name to new name.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">sort</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>by</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Columns to sort rows by.</td></tr>
+              <tr><td><code>descending</code></td><td class="muted">bool</td><td class="muted">false</td><td>Sorts in descending order when true.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">cast</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>types</code></td><td class="muted">object of string to string</td><td class="muted">required</td><td>Casts columns to the named Polars dtype, for example <code>Int64</code> or <code>Float64</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">filter</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>expression</code></td><td class="muted">string</td><td class="muted">required</td><td>Keeps rows where the sandboxed expression evaluates to true.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">derive</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>expression</code></td><td class="muted">string</td><td class="muted">required</td><td>Sandboxed expression producing the column's value.</td></tr>
+              <tr><td><code>column</code></td><td class="muted">string</td><td class="muted">required</td><td>Adds or replaces this column with the result of <code>expression</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>See <strong>Writing a graph &rarr; Expressions</strong> for what <code class="inline">filter</code> and <code class="inline">derive</code> accept in <code class="inline">expression</code>.</p>
       </section>
-
-
 
       <footer>
         <p>Tabular Manner engine reference. Node types, params, and event names reflect the built-in registry; custom node types added through <code class="inline">NodeLibrary</code> are usable the same way once registered.</p>

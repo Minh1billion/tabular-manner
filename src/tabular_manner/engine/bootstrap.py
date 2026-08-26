@@ -27,6 +27,7 @@ def build_engine(
     reader_factory: ReaderFactory | None = None,
     writer_factory: WriterFactory | None = None,
     storage_root: str = ".tm",
+    max_cached_graphs: int = 128,
 ) -> Engine:
     object_storage = object_storage or ObjectStorage(backend="local", root=storage_root)
     reader_factory = reader_factory or ReaderFactory()
@@ -55,6 +56,7 @@ def build_engine(
         registry_provider=registry_provider,
         sandbox=sandbox,
         library_service=node_library_service,
+        max_cached_graphs=max_cached_graphs,
     )
 
     return Engine(
