@@ -13,6 +13,11 @@ class NodeExecutionError(RuntimeError):
         self.node_type = node_type
         self.original = original
 
+class ExecutionCancelled(RuntimeError):
+    def __init__(self, execution_id: str):
+        super().__init__(f"Execution '{execution_id}' was cancelled")
+        self.execution_id = execution_id
+
 @dataclass(frozen=True)
 class TraversalStep:
     node_id: str
@@ -72,7 +77,13 @@ class Graph:
         total_edges = sum(len(ids) for node in self.nodes.values() for ids in node.out_ports.values())
         return total_edges + len(self.entry_ids)
 
-    def traverse(self, initial_plan: Plan, max_steps: int | None = None) -> Iterator[TraversalStep]:
+    def traverse(
+        self,
+        initial_plan: Plan,
+        max_steps: int | None = None,
+        cancel_event: threading.Event | None = None,
+        execution_id: str | None = None,
+    ) -> Iterator[TraversalStep]:
         limit = max_steps if max_steps is not None else self._default_max_steps()
         frontier: deque[tuple[str, str, Plan]] = deque(
             (entry_id, self.ENTRY_SOURCE, initial_plan) for entry_id in self.entry_ids
@@ -80,6 +91,9 @@ class Graph:
         steps = 0
 
         while frontier:
+            if cancel_event is not None and cancel_event.is_set():
+                raise ExecutionCancelled(execution_id or "")
+
             if steps >= limit:
                 raise RuntimeError(
                     f"Execution exceeded max_steps={limit}; the graph likely contains a cycle "
