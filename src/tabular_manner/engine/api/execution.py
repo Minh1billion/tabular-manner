@@ -1,5 +1,5 @@
+import logging
 import threading
-import traceback
 import uuid
 from collections import OrderedDict
 from datetime import datetime, timezone
@@ -16,16 +16,17 @@ from ..application.nodes.registry import NodeRegistry, NodeRegistryProvider
 from ..application.runtime.sandbox import Sandbox
 from ..domain.models.plan import Plan
 
+logger = logging.getLogger(__name__)
+
 def _event(name: str, **data: Any) -> dict[str, Any]:
     return {"event": name, "ts": datetime.now(timezone.utc).isoformat(), **data}
 
-
 def _failure_event(exc: Exception) -> dict[str, Any]:
     root = exc.original if isinstance(exc, NodeExecutionError) else exc
+    logger.error("Execution failed: %s", exc, exc_info=True)
     data: dict[str, Any] = {
         "error": str(exc),
         "error_type": type(root).__name__,
-        "traceback": traceback.format_exc(),
     }
     if isinstance(exc, NodeExecutionError):
         data["node_id"] = exc.node_id

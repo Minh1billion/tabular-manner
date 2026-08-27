@@ -8,10 +8,19 @@ class Sandbox:
         ast.Attribute, ast.Name, ast.Load, ast.Constant, ast.Call,
     )
     DEFAULT_ALLOWED_PL_ATTRS = frozenset({"col", "lit", "when"})
+    DEFAULT_ALLOWED_CHAIN_ATTRS = frozenset({
+        "mean", "sum", "min", "max", "median", "std", "count", "len",
+        "first", "last", "when", "then", "otherwise",
+    })
     DEFAULT_ALLOWED_NAMES = frozenset({"df", "pl"})
 
-    def __init__(self, allowed_pl_attrs: frozenset[str] = DEFAULT_ALLOWED_PL_ATTRS):
+    def __init__(
+        self,
+        allowed_pl_attrs: frozenset[str] = DEFAULT_ALLOWED_PL_ATTRS,
+        allowed_chain_attrs: frozenset[str] = DEFAULT_ALLOWED_CHAIN_ATTRS,
+    ):
         self.allowed_pl_attrs = allowed_pl_attrs
+        self.allowed_chain_attrs = allowed_chain_attrs
 
     def check_expression(self, expression: str, allowed_names: frozenset[str] = DEFAULT_ALLOWED_NAMES) -> None:
         try:
@@ -29,5 +38,8 @@ class Sandbox:
             if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "pl":
                 if node.attr not in self.allowed_pl_attrs:
                     raise ValueError(f"Disallowed attribute access 'pl.{node.attr}' in expression")
+            elif isinstance(node, ast.Attribute) and not (isinstance(node.value, ast.Name) and node.value.id == "df"):
+                if node.attr not in self.allowed_chain_attrs:
+                    raise ValueError(f"Disallowed attribute access '.{node.attr}' in expression")
             if isinstance(node, ast.Call) and not isinstance(node.func, ast.Attribute):
                 raise ValueError("Calls must be method/function calls via attribute access")

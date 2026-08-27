@@ -96,6 +96,26 @@ class TestSandboxAdversarial:
         with pytest.raises(ValueError):
             sandbox.check_expression("os", allowed_names=frozenset({"df", "pl"}))
 
+class TestSandboxBlocksAttributeChainBypass:
+    @pytest.mark.parametrize(
+        "expression",
+        [
+            "pl.col('a').map_elements(pl.col)",
+            "pl.col('a').map_batches(pl.col)",
+            "pl.lit(1).pipe(pl.col)",
+            "pl.when(True).then(pl.lit(1)).write_parquet('/tmp/x.parquet')",
+        ],
+    )
+    def test_blocked(self, sandbox, expression):
+        with pytest.raises(ValueError):
+            sandbox.check_expression(expression)
+
+    def test_blocked_value_identifier_chain(self, sandbox):
+        with pytest.raises(ValueError):
+            sandbox.check_expression(
+                "value.map_elements(pl.col)", allowed_names=frozenset({"value", "pl"})
+            )
+
 class TestSandboxAllowsLegitimateExpressions:
     @pytest.mark.parametrize(
         "expression",
