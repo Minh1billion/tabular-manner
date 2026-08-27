@@ -83,8 +83,8 @@
         <h2>Execution</h2>
         <p class="section-desc">Compiles a graph spec and runs it, or re-runs a graph already compiled in a previous call. Accessible as <code class="inline">engine.execution</code>.</p>
 
-        <h3><span class="mono-title">execute</span>(execution_id=None, spec=None)</h3>
-        <div class="sig">Iterator[dict] execute(execution_id: str | None, spec: dict | None)</div>
+        <h3><span class="mono-title">execute</span>(execution_id=None, spec=None, cancel_check=None)</h3>
+        <div class="sig">Iterator[dict] execute(execution_id: str | None, spec: dict | None, cancel_check: Callable[[], bool] | None)</div>
         <p>Provide <code class="inline">spec</code> to validate, parse, and run a new graph in one call, or pass a previously returned <code class="inline">execution_id</code> to re-run an already-compiled graph against a fresh context. Exactly one of the two is required.</p>
 
         <div class="table-wrap">
@@ -98,15 +98,42 @@
               <tr><td><code>running</code></td><td class="muted">Traversal starts; carries <code>total_nodes</code>.</td></tr>
               <tr><td><code>node_started</code> / <code>node_completed</code></td><td class="muted">Emitted for every node visited, in traversal order.</td></tr>
               <tr><td><code>leaf_reached</code></td><td class="muted">Emitted once per branch with no outgoing connection; carries the resulting column list and step history.</td></tr>
+              <tr><td><code>cancelled</code></td><td class="muted">Emitted instead of <code>completed</code> when <code>cancel_check</code> reports a cancellation; carries the <code>execution_id</code>, <code>processed</code> node count, and <code>total</code> node count.</td></tr>
               <tr><td><code>completed</code></td><td class="muted">Final event; carries the <code>execution_id</code> and all reached leaves.</td></tr>
               <tr><td><code>failed</code></td><td class="muted">Carries the error message, error type, and, for node failures, the offending <code>node_id</code> and <code>node_type</code>.</td></tr>
             </tbody>
           </table>
         </div>
 
+        <h4>Cancelling a run</h4>
+        <p><code class="inline">cancel_check</code> is an optional zero-argument callable returning a bool. When provided, <code class="inline">execute</code> calls it once before traversal starts and again before every node in the graph, in order:</p>
+        <ul>
+          <li>Before injecting context, right after the graph is resolved (whether just compiled or recalled via <code class="inline">execution_id</code>). If it returns truthy here, no node ever runs.</li>
+          <li>Before each step of <code class="inline">graph.traverse(...)</code>, so cancellation takes effect between nodes rather than mid-node.</li>
+        </ul>
+        <p>The first truthy check yields a single <code class="inline">cancelled</code> event and returns, without yielding <code class="inline">completed</code>. Either way, a cancelled execution's compiled graph is dropped from the cache, so its <code class="inline">execution_id</code> can no longer be reused with <code class="inline">execute(execution_id=...)</code>.</p>
+
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyBlock(this)">copy</button>
+          <pre><span class="tok-com"># typical wiring: a threading.Event flipped by whatever cancels the job</span>
+cancel_event = threading.Event()
+
+<span class="tok-key">for</span> event <span class="tok-key">in</span> engine.execution.execute(spec=spec, cancel_check=cancel_event.is_set):
+    <span class="tok-key">if</span> event[<span class="tok-str">"event"</span>] == <span class="tok-str">"cancelled"</span>:
+        <span class="tok-key">break</span></pre>
+        </div>
+
+        <div class="callout">
+          <strong>No <code class="inline">cancel_check</code>, no cancellation.</strong> When it's omitted, <code class="inline">execute</code> runs straight through to <code class="inline">completed</code> or <code class="inline">failed</code>; the check is only ever consulted if you pass one in.
+        </div>
+
         <h3><span class="mono-title">validate</span>(spec)</h3>
         <div class="sig">Iterator[dict] validate(spec: dict)</div>
         <p>Checks a spec against the registry and sandbox without compiling or running it. Yields <code class="inline">validating</code> followed by either <code class="inline">valid</code> or <code class="inline">failed</code>.</p>
+
+        <h3><span class="mono-title">discard</span>(execution_id)</h3>
+        <div class="sig">None discard(execution_id: str)</div>
+        <p>Drops a compiled graph from the cache so it can no longer be reused with <code class="inline">execute(execution_id=...)</code>. Called automatically on cancellation; can also be called directly to free a graph you know you won't re-run.</p>
       </section>
 
       <section id="api-data-resource">
