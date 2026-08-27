@@ -3,7 +3,7 @@ import traceback
 import uuid
 from collections import OrderedDict
 from datetime import datetime, timezone
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator
 
 import polars as pl
 
@@ -120,7 +120,13 @@ class Execution:
         except Exception as exc:
             yield _failure_event(exc)
 
-    def execute(self, execution_id: str | None = None, spec: dict[str, Any] | None = None, bucket: str | None = None) -> Iterator[dict[str, Any]]:
+    def execute(
+        self,
+        execution_id: str | None = None,
+        spec: dict[str, Any] | None = None,
+        bucket: str | None = None,
+        cancel_check: Callable[[], bool] | None = None,
+    ) -> Iterator[dict[str, Any]]:
         try:
             if execution_id is None and spec is None:
                 raise ValueError("Either 'execution_id' or 'spec' must be provided")
@@ -137,6 +143,11 @@ class Execution:
             if graph is None:
                 raise ValueError(f"Unknown execution_id '{execution_id}'")
 
+            if cancel_check is not None and cancel_check():
+                yield _event("cancelled", data={"execution_id": execution_id, "processed": 0, "total": len(graph.nodes)})
+                self.discard(execution_id)
+                return
+
             yield _event("injecting_context")
             self._context_manager.inject(graph.nodes)
 
@@ -148,6 +159,11 @@ class Execution:
 
             yield _event("running", total_nodes=total)
             for step in graph.traverse(initial_plan):
+                if cancel_check is not None and cancel_check():
+                    yield _event("cancelled", data={"execution_id": execution_id, "processed": processed, "total": total})
+                    self.discard(execution_id)
+                    return
+
                 yield _event("node_started", node_id=step.node_id)
 
                 processed += 1
