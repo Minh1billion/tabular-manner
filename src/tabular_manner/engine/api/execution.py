@@ -3,11 +3,11 @@ import traceback
 import uuid
 from collections import OrderedDict
 from datetime import datetime, timezone
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator
 
 import polars as pl
 
-from ..application.compiler.graph import ExecutionCancelled, Graph, NodeExecutionError
+from ..application.compiler.graph import Graph, NodeExecutionError
 from ..application.compiler.parser import Parser
 from ..application.compiler.validator import Validator
 from ..application.nodes.custom_node_service import LibraryService
@@ -69,7 +69,6 @@ class Execution:
         self._library_service = library_service
         self._max_cached_graphs = max_cached_graphs
         self._graphs: "OrderedDict[str, Graph]" = OrderedDict()
-        self._cancel_events: dict[str, threading.Event] = {}
         self._lock = threading.Lock()
 
     def _prepare(self, spec: dict[str, Any], bucket: str | None) -> tuple[NodeRegistry, dict[str, Any]]:
@@ -82,10 +81,8 @@ class Execution:
         with self._lock:
             self._graphs[execution_id] = graph
             self._graphs.move_to_end(execution_id)
-            self._cancel_events[execution_id] = threading.Event()
             while len(self._graphs) > self._max_cached_graphs:
-                evicted_id, _ = self._graphs.popitem(last=False)
-                self._cancel_events.pop(evicted_id, None)
+                self._graphs.popitem(last=False)
 
     def _recall(self, execution_id: str) -> Graph | None:
         with self._lock:
@@ -94,22 +91,9 @@ class Execution:
                 self._graphs.move_to_end(execution_id)
             return graph
 
-    def _cancel_event(self, execution_id: str) -> threading.Event:
-        with self._lock:
-            return self._cancel_events.setdefault(execution_id, threading.Event())
-
-    def cancel(self, execution_id: str) -> bool:
-        with self._lock:
-            event = self._cancel_events.get(execution_id)
-            if event is None:
-                return False
-            event.set()
-            return True
-
     def discard(self, execution_id: str) -> None:
         with self._lock:
             self._graphs.pop(execution_id, None)
-            self._cancel_events.pop(execution_id, None)
 
     def _compile(self, spec: dict[str, Any], bucket: str | None = None) -> Iterator[dict[str, Any]]:
         try:
@@ -136,7 +120,13 @@ class Execution:
         except Exception as exc:
             yield _failure_event(exc)
 
-    def execute(self, execution_id: str | None = None, spec: dict[str, Any] | None = None, bucket: str | None = None) -> Iterator[dict[str, Any]]:
+    def execute(
+        self,
+        execution_id: str | None = None,
+        spec: dict[str, Any] | None = None,
+        bucket: str | None = None,
+        cancel_check: Callable[[], bool] | None = None,
+    ) -> Iterator[dict[str, Any]]:
         try:
             if execution_id is None and spec is None:
                 raise ValueError("Either 'execution_id' or 'spec' must be provided")
@@ -153,6 +143,11 @@ class Execution:
             if graph is None:
                 raise ValueError(f"Unknown execution_id '{execution_id}'")
 
+            if cancel_check is not None and cancel_check():
+                yield _event("cancelled", data={"execution_id": execution_id, "processed": 0, "total": len(graph.nodes)})
+                self.discard(execution_id)
+                return
+
             yield _event("injecting_context")
             self._context_manager.inject(graph.nodes)
 
@@ -161,10 +156,14 @@ class Execution:
             leaves: list[dict[str, Any]] = []
 
             initial_plan = Plan(handle=pl.LazyFrame(), meta={"execution_id": execution_id})
-            cancel_event = self._cancel_event(execution_id)
 
             yield _event("running", total_nodes=total)
-            for step in graph.traverse(initial_plan, cancel_event=cancel_event, execution_id=execution_id):
+            for step in graph.traverse(initial_plan):
+                if cancel_check is not None and cancel_check():
+                    yield _event("cancelled", data={"execution_id": execution_id, "processed": processed, "total": total})
+                    self.discard(execution_id)
+                    return
+
                 yield _event("node_started", node_id=step.node_id)
 
                 processed += 1
@@ -176,7 +175,5 @@ class Execution:
                     yield _event("leaf_reached", **leaf)
 
             yield _event("completed", data={"execution_id": execution_id, "leaves": leaves})
-        except ExecutionCancelled:
-            yield _event("cancelled", data={"execution_id": execution_id})
         except Exception as exc:
             yield _failure_event(exc)

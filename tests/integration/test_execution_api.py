@@ -86,6 +86,36 @@ class TestExecuteWithExecutionId:
         error = next(e for e in events if e["event"] == "failed")
         assert "Either" in error["error"]
 
+class TestExecuteCancel:
+    def test_cancel_before_start_yields_cancelled_event(self, engine):
+        events = list(engine.execution.execute(spec=_simple_spec(), cancel_check=lambda: True))
+
+        assert _events_by_name(events) >= {"compiled", "cancelled"}
+        assert "completed" not in _events_by_name(events)
+
+    def test_cancel_discards_cached_graph(self, engine):
+        events = list(engine.execution.execute(spec=_simple_spec(), cancel_check=lambda: True))
+        execution_id = next(e for e in events if e["event"] == "cancelled")["data"]["execution_id"]
+
+        assert execution_id not in engine.execution._graphs
+
+    def test_cancel_mid_traversal_stops_before_completed(self, engine):
+        calls = {"n": 0}
+
+        def cancel_after_first_node():
+            calls["n"] += 1
+            return calls["n"] > 1
+
+        events = list(engine.execution.execute(spec=_simple_spec(), cancel_check=cancel_after_first_node))
+
+        assert "cancelled" in _events_by_name(events)
+        assert "completed" not in _events_by_name(events)
+
+    def test_no_cancel_check_runs_to_completion(self, engine):
+        events = list(engine.execution.execute(spec=_simple_spec(), cancel_check=lambda: False))
+
+        assert "completed" in _events_by_name(events)
+
 class TestExecuteFailure:
     def test_node_failure_reports_node_id_and_type(self, engine):
         spec = {
