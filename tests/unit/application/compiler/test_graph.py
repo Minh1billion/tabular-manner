@@ -28,12 +28,15 @@ class _Concat(Operator):
 def _initial_plan() -> Plan:
     return Plan(handle=pl.LazyFrame({"a": [1]}), meta={"execution_id": "e1"})
 
+def _completed_steps(graph, initial_plan, **kwargs):
+    return [step for kind, _, step in graph.traverse(initial_plan, **kwargs) if kind == "completed"]
+
 class TestLinearTraversal:
     def test_single_node_is_leaf(self):
         node = Node(id="1", operator=_Passthrough(name="only"))
         graph = Graph({"1": node}, entry_ids=("1",))
 
-        steps = list(graph.traverse(_initial_plan()))
+        steps = _completed_steps(graph, _initial_plan())
 
         assert len(steps) == 1
         assert steps[0].node_id == "1"
@@ -45,7 +48,7 @@ class TestLinearTraversal:
         n1.out_ports["out"] = ["2"]
         graph = Graph({"1": n1, "2": n2}, entry_ids=("1",))
 
-        steps = list(graph.traverse(_initial_plan()))
+        steps = _completed_steps(graph, _initial_plan())
 
         assert [s.node_id for s in steps] == ["1", "2"]
         assert steps[0].is_leaf is False
@@ -60,7 +63,7 @@ class TestFanOut:
         n1.out_ports["out"] = ["2", "3"]
         graph = Graph({"1": n1, "2": n2, "3": n3}, entry_ids=("1",))
 
-        steps = list(graph.traverse(_initial_plan()))
+        steps = _completed_steps(graph, _initial_plan())
         leaf_ids = {s.node_id for s in steps if s.is_leaf}
 
         assert leaf_ids == {"2", "3"}
@@ -74,7 +77,7 @@ class TestFanIn:
         n2.out_ports["out"] = ["3"]
         graph = Graph({"1": n1, "2": n2, "3": n3}, entry_ids=("1", "2"))
 
-        steps = list(graph.traverse(_initial_plan()))
+        steps = _completed_steps(graph, _initial_plan())
         leaves = [s for s in steps if s.is_leaf]
 
         assert len(leaves) == 1

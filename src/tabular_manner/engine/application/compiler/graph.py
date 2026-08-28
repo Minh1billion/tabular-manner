@@ -76,7 +76,7 @@ class Graph:
         self,
         initial_plan: Plan,
         max_steps: int | None = None,
-    ) -> Iterator[TraversalStep]:
+    ) -> Iterator[tuple[str, str, TraversalStep | None]]:
         limit = max_steps if max_steps is not None else self._default_max_steps()
         frontier: deque[tuple[str, str, Plan]] = deque(
             (entry_id, self.ENTRY_SOURCE, initial_plan) for entry_id in self.entry_ids
@@ -91,6 +91,8 @@ class Graph:
                 )
 
             node_id, source_id, current_plan = frontier.popleft()
+            yield ("started", node_id, None)
+
             try:
                 result = self.step(node_id, source_id, current_plan)
             except NodeExecutionError:
@@ -103,7 +105,7 @@ class Graph:
                 continue
 
             latest, next_ids = result
-            yield TraversalStep(node_id=node_id, plan=latest, next_ids=next_ids)
+            yield ("completed", node_id, TraversalStep(node_id=node_id, plan=latest, next_ids=next_ids))
 
             if next_ids:
                 frontier.extend((nid, node_id, latest) for nid in next_ids)
