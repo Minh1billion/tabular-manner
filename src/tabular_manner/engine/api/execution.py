@@ -159,13 +159,15 @@ class Execution:
             initial_plan = Plan(handle=pl.LazyFrame(), meta={"execution_id": execution_id})
 
             yield _event("running", total_nodes=total)
-            for step in graph.traverse(initial_plan):
-                if cancel_check is not None and cancel_check():
-                    yield _event("cancelled", data={"execution_id": execution_id, "processed": processed, "total": total})
-                    self.discard(execution_id)
-                    return
+            for kind, node_id, step in graph.traverse(initial_plan):
+                if kind == "started":
+                    if cancel_check is not None and cancel_check():
+                        yield _event("cancelled", data={"execution_id": execution_id, "processed": processed, "total": total})
+                        self.discard(execution_id)
+                        return
 
-                yield _event("node_started", node_id=step.node_id)
+                    yield _event("node_started", node_id=node_id)
+                    continue
 
                 processed += 1
                 yield _event("node_completed", node_id=step.node_id, processed=processed, total=total)
