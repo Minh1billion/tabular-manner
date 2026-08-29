@@ -43,6 +43,26 @@ class TestValidate:
 
         assert engine.execution._graphs == {}
 
+    def test_schema_error_reports_failing_node_id_and_type(self, engine):
+        spec = {
+            "nodes": [
+                {
+                    "id": "1",
+                    "type": "fetch_internal",
+                    "name": "Fetch",
+                    "params": {"key": "raw", "schema": {"customer": "String", "amount": "Float64"}},
+                },
+                {"id": "2", "type": "select", "name": "Select", "params": {"columns": ["ghost"]}},
+            ],
+            "connections": [{"from": "1", "to": "2"}],
+        }
+
+        events = list(engine.execution.validate(spec))
+        failed = next(e for e in events if e["event"] == "failed")
+
+        assert failed["node_id"] == "2"
+        assert failed["node_type"] == "select"
+
 class TestCompile:
     def test_compile_yields_compiled_event(self, engine):
         events = list(engine.execution._compile(_simple_spec()))

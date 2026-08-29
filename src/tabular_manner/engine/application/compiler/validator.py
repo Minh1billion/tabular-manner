@@ -102,7 +102,7 @@ class Validator:
             SchemaInference().infer(graph)
         except SchemaInferenceError as exc:
             if isinstance(exc.original, pl.exceptions.PolarsError):
-                raise ValueError(str(exc)) from exc
+                raise
         except Exception:
             pass
 
