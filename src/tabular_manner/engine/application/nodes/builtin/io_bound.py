@@ -2,15 +2,26 @@ import polars as pl
 
 from ....domain.models.plan import Plan
 from ....domain.models.operator import Operator
+from ....domain.models.schema import Schema
 from ..registry import NodeRegistry
 
 class SourceIO(Operator):
+    optional = {"schema": (dict, None)}
+
     def _stream(self) -> pl.LazyFrame:
         raise NotImplementedError("Not implemented yet.")
 
     def forward(self, plan: Plan) -> tuple[Plan, str]:
         fetched = self._stream()
         return plan.commit(fetched, step=self.name), self.default_port
+
+    def infer_schema(self) -> Schema:
+        if self.schema is not None:
+            return Schema.from_declared(self.schema)
+        return Schema.from_polars(self._sample_schema())
+
+    def _sample_schema(self) -> pl.Schema:
+        return self._stream().collect_schema()
 
 class SinkIO(Operator):
     def _persist(self, lf: pl.LazyFrame) -> None:
@@ -20,12 +31,15 @@ class SinkIO(Operator):
         self._persist(plan.handle)
         return plan, self.default_port
 
+    def infer_schema(self, input_schema: Schema) -> Schema:
+        return input_schema
+
 @NodeRegistry.register("fetch_internal")
 class FetchInternal(SourceIO):
     label = "Fetch (Internal)"
     category = "io"
     required = {"key": str}
-    optional = {"bucket": (str, None)}
+    optional = {**SourceIO.optional, "bucket": (str, None)}
     context = ("resource_storage",)
 
     def _stream(self) -> pl.LazyFrame:
@@ -36,7 +50,7 @@ class FetchCsv(SourceIO):
     label = "Fetch CSV"
     category = "io"
     required = {"path": str}
-    optional = {"separator": (str, ","), "has_header": (bool, True), "encoding": (str, "utf8")}
+    optional = {**SourceIO.optional, "separator": (str, ","), "has_header": (bool, True), "encoding": (str, "utf8")}
     context = ("reader_factory",)
 
     def _stream(self) -> pl.LazyFrame:
@@ -54,7 +68,7 @@ class FetchParquet(SourceIO):
     label = "Fetch Parquet"
     category = "io"
     required = {"path": str}
-    optional = {"columns": ((list, str), None), "n_rows": (int, None)}
+    optional = {**SourceIO.optional, "columns": ((list, str), None), "n_rows": (int, None)}
     context = ("reader_factory",)
 
     def _stream(self) -> pl.LazyFrame:
@@ -71,6 +85,7 @@ class FetchArrow(SourceIO):
     label = "Fetch Arrow"
     category = "io"
     required = {"path": str}
+    optional = SourceIO.optional
     context = ("reader_factory",)
 
     def _stream(self) -> pl.LazyFrame:
@@ -81,7 +96,7 @@ class FetchS3(SourceIO):
     label = "Fetch S3"
     category = "io"
     required = {"bucket": str, "key": str}
-    optional = {"format": (str, "parquet"), "region": (str, None), "storage_options": (dict, None)}
+    optional = {**SourceIO.optional, "format": (str, "parquet"), "region": (str, None), "storage_options": (dict, None)}
 
     def _stream(self) -> pl.LazyFrame:
         uri = f"s3://{self.bucket}/{self.key}"
@@ -99,6 +114,7 @@ class FetchPostgres(SourceIO):
     category = "io"
     required = {"dsn": str, "table": str}
     optional = {
+        **SourceIO.optional,
         "query": (str, None),
         "partition_on": (str, None),
         "partition_num": (int, None),
@@ -114,6 +130,16 @@ class FetchPostgres(SourceIO):
             partition_on=self.partition_on,
             partition_num=self.partition_num,
         )
+
+    def _sample_schema(self) -> pl.Schema:
+        return self.reader_factory.create(
+            "database",
+            dsn=self.dsn,
+            table=self.table,
+            query=self.query,
+            partition_on=self.partition_on,
+            partition_num=self.partition_num,
+        ).sample_schema()
 
 @NodeRegistry.register("push_internal")
 class PushInternal(SinkIO):

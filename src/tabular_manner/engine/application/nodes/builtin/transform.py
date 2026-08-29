@@ -2,6 +2,7 @@ import polars as pl
 
 from ....domain.models.plan import Plan
 from ....domain.models.operator import Operator
+from ....domain.models.schema import Schema
 from ..registry import NodeRegistry
 from ...runtime.expression_compiler import ExpressionCompiler
 from ...runtime.sandbox import Sandbox
@@ -17,6 +18,10 @@ class Transform(Operator):
     def forward(self, plan: Plan) -> tuple[Plan, str]:
         applied = self._apply(plan.handle)
         return plan.commit(applied, step=self.name), self.default_port
+
+    def infer_schema(self, input_schema: Schema) -> Schema:
+        applied = self._apply(input_schema.to_polars())
+        return Schema.from_polars(applied.collect_schema())
 
 @NodeRegistry.register("select")
 class Select(Transform):

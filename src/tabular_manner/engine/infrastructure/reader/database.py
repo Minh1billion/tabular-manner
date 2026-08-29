@@ -31,3 +31,9 @@ class DatabaseReaderAdapter(ReaderAdapter):
 
         df = pl.read_database_uri(query=query, uri=self.dsn, **kwargs)
         return df.lazy()
+
+    def sample_schema(self) -> pl.Schema:
+        base = self.query or f"SELECT * FROM {self.table}"
+        probe_query = f"SELECT * FROM ({base}) AS __schema_probe__ LIMIT 1"
+        df = pl.read_database_uri(query=probe_query, uri=self.dsn)
+        return df.lazy().collect_schema()

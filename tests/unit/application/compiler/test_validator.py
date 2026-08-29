@@ -161,3 +161,29 @@ class TestCycles:
             [{"from": "1", "to": "2"}, {"from": "1", "to": "3"}],
         )
         validator.validate(spec)
+
+class TestSchema:
+    def test_unknown_column_reference_raises_with_node_id(self, validator):
+        spec = _spec(
+            [
+                _node("src", "fetch_csv", {"path": "x.csv", "schema": {"a": "Int64"}}),
+                _node("sel", "select", {"columns": ["ghost"]}),
+            ],
+            [{"from": "src", "to": "sel"}],
+        )
+        with pytest.raises(ValueError, match="Node 'sel' \\(select\\) failed schema inference"):
+            validator.validate(spec)
+
+    def test_valid_schema_chain_passes(self, validator):
+        spec = _spec(
+            [
+                _node("src", "fetch_csv", {"path": "x.csv", "schema": {"a": "Int64", "b": "String"}}),
+                _node("sel", "select", {"columns": ["a"]}),
+            ],
+            [{"from": "src", "to": "sel"}],
+        )
+        validator.validate(spec)
+
+    def test_source_without_declared_schema_and_no_context_does_not_raise(self, validator):
+        spec = _spec([_node("1", "fetch_internal", {"key": "raw"})], [])
+        validator.validate(spec)

@@ -2,6 +2,7 @@ import polars as pl
 
 from ....domain.models.plan import Plan
 from ....domain.models.operator import Operator
+from ....domain.models.schema import Schema
 from ..registry import NodeRegistry
 
 class Merge(Operator):
@@ -22,6 +23,10 @@ class Merge(Operator):
 
         merged_plan = Plan(handle=combined, history=history, meta=meta)
         return merged_plan, self.default_port
+
+    def infer_schema_many(self, input_schemas: list[Schema]) -> Schema:
+        combined = self._combine([s.to_polars() for s in input_schemas])
+        return Schema.from_polars(combined.collect_schema())
 
 @NodeRegistry.register("union")
 class Union(Merge):
