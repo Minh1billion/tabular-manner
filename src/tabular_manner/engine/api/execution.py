@@ -9,6 +9,7 @@ import polars as pl
 
 from ..application.compiler.graph import Graph, NodeExecutionError
 from ..application.compiler.parser import Parser
+from ..application.compiler.schema_inference import SchemaInferenceError
 from ..application.compiler.validator import Validator
 from ..application.nodes.custom_node_service import LibraryService
 from ..application.runtime.context_manager import ContextManager
@@ -22,13 +23,13 @@ def _event(name: str, **data: Any) -> dict[str, Any]:
     return {"event": name, "ts": datetime.now(timezone.utc).isoformat(), **data}
 
 def _failure_event(exc: Exception) -> dict[str, Any]:
-    root = exc.original if isinstance(exc, NodeExecutionError) else exc
+    root = exc.original if isinstance(exc, (NodeExecutionError, SchemaInferenceError)) else exc
     logger.error("Execution failed: %s", exc, exc_info=True)
     data: dict[str, Any] = {
         "error": str(exc),
         "error_type": type(root).__name__,
     }
-    if isinstance(exc, NodeExecutionError):
+    if isinstance(exc, (NodeExecutionError, SchemaInferenceError)):
         data["node_id"] = exc.node_id
         data["node_type"] = exc.node_type
     return _event("failed", **data)

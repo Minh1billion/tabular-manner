@@ -1,5 +1,6 @@
 import pytest
 
+from tabular_manner.engine.application.compiler.schema_inference import SchemaInferenceError
 from tabular_manner.engine.application.compiler.validator import Validator
 from tabular_manner.engine.application.nodes.registry import NodeRegistry
 from tabular_manner.engine.application.runtime.sandbox import Sandbox
@@ -171,8 +172,10 @@ class TestSchema:
             ],
             [{"from": "src", "to": "sel"}],
         )
-        with pytest.raises(ValueError, match="Node 'sel' \\(select\\) failed schema inference"):
+        with pytest.raises(SchemaInferenceError) as excinfo:
             validator.validate(spec)
+        assert excinfo.value.node_id == "sel"
+        assert excinfo.value.node_type == "select"
 
     def test_valid_schema_chain_passes(self, validator):
         spec = _spec(
