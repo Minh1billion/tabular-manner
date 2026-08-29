@@ -2,6 +2,7 @@ from abc import ABC
 from typing import Any, ClassVar
 
 from .plan import Plan
+from .schema import Schema
 
 TypeSpec = type | tuple[type, type]
 
@@ -68,3 +69,9 @@ class Operator(ABC):
 
     def forward_many(self, plans: list[Plan]) -> tuple[Plan, str]:
         raise NotImplementedError(f"'{self.type}' does not support multi-input forward_many()")
+
+    def infer_schema(self, input_schema: Schema) -> Schema:
+        raise NotImplementedError(f"'{self.type}' does not support single-input infer_schema()")
+
+    def infer_schema_many(self, input_schemas: list[Schema]) -> Schema:
+        raise NotImplementedError(f"'{self.type}' does not support multi-input infer_schema_many()")

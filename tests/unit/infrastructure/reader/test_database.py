@@ -75,3 +75,41 @@ class TestExecute:
         _, kwargs = mocked.call_args
         assert "partition_on" not in kwargs
         assert "partition_num" not in kwargs
+
+class TestSampleSchema:
+    def test_wraps_table_query_with_limit_one(self):
+        adapter = DatabaseReaderAdapter(dsn="postgresql://localhost/db", table="customers")
+
+        with patch("polars.read_database_uri", return_value=pl.DataFrame({"id": [1]})) as mocked:
+            schema = adapter.sample_schema()
+
+        mocked.assert_called_once_with(
+            query="SELECT * FROM (SELECT * FROM customers) AS __schema_probe__ LIMIT 1",
+            uri="postgresql://localhost/db",
+        )
+        assert schema == pl.Schema({"id": pl.Int64})
+
+    def test_wraps_explicit_query_with_limit_one(self):
+        adapter = DatabaseReaderAdapter(
+            dsn="postgresql://localhost/db", query="SELECT id, name FROM customers WHERE active",
+        )
+
+        with patch("polars.read_database_uri", return_value=pl.DataFrame({"id": [1], "name": ["x"]})) as mocked:
+            adapter.sample_schema()
+
+        mocked.assert_called_once_with(
+            query="SELECT * FROM (SELECT id, name FROM customers WHERE active) AS __schema_probe__ LIMIT 1",
+            uri="postgresql://localhost/db",
+        )
+
+    def test_does_not_forward_partition_kwargs(self):
+        adapter = DatabaseReaderAdapter(
+            dsn="postgresql://localhost/db", table="customers", partition_on="id", partition_num=4,
+        )
+
+        with patch("polars.read_database_uri", return_value=pl.DataFrame({"id": [1]})) as mocked:
+            adapter.sample_schema()
+
+        _, kwargs = mocked.call_args
+        assert "partition_on" not in kwargs
+        assert "partition_num" not in kwargs

@@ -6,3 +6,6 @@ class ReaderAdapter(ABC):
     @abstractmethod
     def execute(self) -> pl.LazyFrame:
         ...
+
+    def sample_schema(self) -> pl.Schema:
+        return self.execute().collect_schema()

@@ -1,5 +1,9 @@
+import polars as pl
+
 from ..nodes.registry import NodeRegistry
 from ..runtime.sandbox import Sandbox
+from .parser import Parser
+from .schema_inference import SchemaInference, SchemaInferenceError
 
 class Validator:
     def __init__(self, registry: NodeRegistry, sandbox: Sandbox):
@@ -14,6 +18,7 @@ class Validator:
         self._check_fan_in(spec)
         self._check_ports(spec)
         self._check_no_cycles(spec)
+        self._check_schema(spec)
 
     def _check_structure(self, spec: dict) -> None:
         if "nodes" not in spec or "connections" not in spec:
@@ -90,6 +95,16 @@ class Validator:
                         f"Connection from node '{n['id']}' uses port '{port}', "
                         f"but valid ports are {valid_ports}"
                     )
+
+    def _check_schema(self, spec: dict) -> None:
+        graph = Parser.from_json(spec, self.registry, self.sandbox)
+        try:
+            SchemaInference().infer(graph)
+        except SchemaInferenceError as exc:
+            if isinstance(exc.original, pl.exceptions.PolarsError):
+                raise ValueError(str(exc)) from exc
+        except Exception:
+            pass
 
     def _check_no_cycles(self, spec: dict) -> None:
         adjacency: dict[str, list[str]] = {n["id"]: [] for n in spec["nodes"]}
