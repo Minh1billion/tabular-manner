@@ -12,7 +12,7 @@ class Parser:
         nodes: dict[str, Node] = {}
         for n in spec["nodes"]:
             operator_cls = registry.get(n["type"])
-            operator = operator_cls(name=n["name"], sandbox=sandbox, **n["params"])
+            operator = operator_cls(name=n.get("name"), sandbox=sandbox, **n["params"])
             in_degree = incoming_counts.get(n["id"], 0) or 1
             nodes[n["id"]] = Node(id=n["id"], operator=operator, in_degree=in_degree)
 

@@ -1,3 +1,4 @@
+import polars as pl
 import pytest
 
 from tabular_manner.engine.application.compiler.schema_inference import SchemaInferenceError
@@ -5,12 +6,16 @@ from tabular_manner.engine.application.compiler.validator import NodeValidationE
 from tabular_manner.engine.application.nodes.registry import NodeRegistry
 from tabular_manner.engine.application.runtime.sandbox import Sandbox
 from tabular_manner.engine.domain.models.operator import Operator
+from tabular_manner.engine.domain.models.schema import Schema
 
 class _NamedPortOperator(Operator):
     ports = ("true", "false")
 
     def forward(self, plan):
         return plan, "true"
+
+    def infer_schema(self, input_schema=None):
+        return Schema(fields={"a": pl.Int64})
 
 def _spec(nodes, connections):
     return {"nodes": nodes, "connections": connections}

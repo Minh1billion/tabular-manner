@@ -1,7 +1,5 @@
 from collections import deque
 
-import polars as pl
-
 from ..nodes.registry import NodeRegistry
 from ..runtime.sandbox import Sandbox
 from .graph import Graph
@@ -39,9 +37,6 @@ class Validator:
         surfaced: list[dict] = []
 
         for node_id in order:
-            if any(parent in blocked or parent in local_errors for parent in incoming_ids[node_id]):
-                blocked.add(node_id)
-                continue
             if node_id in local_errors:
                 surfaced.append({
                     "node_id": node_id,
@@ -49,6 +44,9 @@ class Validator:
                     "message": local_errors[node_id],
                     "exception": NodeValidationError(node_id, node_types[node_id], local_errors[node_id]),
                 })
+                blocked.add(node_id)
+                continue
+            if any(parent in blocked or parent in local_errors for parent in incoming_ids[node_id]):
                 blocked.add(node_id)
 
         reduced = {
@@ -177,7 +175,7 @@ class Validator:
             except Exception as exc:
                 schema_error = SchemaInferenceError(node_id, operator.type, exc)
                 failed.add(node_id)
-                if self.context_manager is None and not isinstance(exc, pl.exceptions.PolarsError):
+                if self.context_manager is None and operator.context:
                     continue
                 errors.append({
                     "node_id": node_id,
@@ -202,9 +200,16 @@ class Validator:
             raise ValueError("Duplicate node ids found")
 
     def _check_node_types(self, spec: dict) -> None:
-        for n in spec["nodes"]:
-            if n["type"] not in self.registry.keys():
-                raise NodeValidationError(n["id"], n["type"], f"Unknown node type '{n['type']}' for node '{n['id']}'")
+        unknown = [n for n in spec["nodes"] if n["type"] not in self.registry.keys()]
+        if not unknown:
+            return
+        errors = [
+            {"node_id": n["id"], "node_type": n["type"], "message": f"Unknown node type '{n['type']}' for node '{n['id']}'"}
+            for n in unknown
+        ]
+        exc = NodeValidationError(errors[0]["node_id"], errors[0]["node_type"], errors[0]["message"])
+        exc.errors = errors
+        raise exc
 
     def _check_connections(self, spec: dict) -> None:
         id_set = {n["id"] for n in spec["nodes"]}
