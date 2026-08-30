@@ -1,7 +1,7 @@
 import pytest
 
 from tabular_manner.engine.application.compiler.schema_inference import SchemaInferenceError
-from tabular_manner.engine.application.compiler.validator import Validator
+from tabular_manner.engine.application.compiler.validator import NodeValidationError, Validator
 from tabular_manner.engine.application.nodes.registry import NodeRegistry
 from tabular_manner.engine.application.runtime.sandbox import Sandbox
 from tabular_manner.engine.domain.models.operator import Operator
@@ -44,6 +44,13 @@ class TestNodeTypes:
         with pytest.raises(ValueError, match="Unknown node type"):
             validator.validate(spec)
 
+    def test_unknown_node_type_raises_with_node_id(self, validator):
+        spec = _spec([_node("1", "does_not_exist")], [])
+        with pytest.raises(NodeValidationError) as excinfo:
+            validator.validate(spec)
+        assert excinfo.value.node_id == "1"
+        assert excinfo.value.node_type == "does_not_exist"
+
 class TestConnections:
     def test_unknown_from_id_raises(self, validator):
         spec = _spec([_node("1", "fetch_internal", {"key": "raw"})], [{"from": "ghost", "to": "1"}])
@@ -82,8 +89,10 @@ class TestFanIn:
             [_node("1", "fetch_internal", {"key": "raw"}), _node("2", "union")],
             [{"from": "1", "to": "2"}],
         )
-        with pytest.raises(ValueError, match="exactly 2 incoming connections"):
+        with pytest.raises(NodeValidationError, match="exactly 2 incoming connections") as excinfo:
             validator.validate(spec)
+        assert excinfo.value.node_id == "2"
+        assert excinfo.value.node_type == "union"
 
     def test_fan_in_node_with_missing_slot_raises(self, validator):
         spec = _spec(
@@ -128,6 +137,23 @@ class TestPorts:
         spec = _spec([{"id": "1", "type": "select", "name": "1", "params": {}}], [])
         with pytest.raises(ValueError, match="Invalid params for node"):
             validator.validate(spec)
+
+    def test_invalid_node_params_raises_with_node_id(self, validator):
+        spec = _spec([{"id": "1", "type": "select", "name": "1", "params": {}}], [])
+        with pytest.raises(NodeValidationError) as excinfo:
+            validator.validate(spec)
+        assert excinfo.value.node_id == "1"
+        assert excinfo.value.node_type == "select"
+
+    def test_invalid_port_raises_with_node_id(self, validator):
+        spec = _spec(
+            [_node("1", "named_port_op", {}), _node("2")],
+            [{"from": "1", "to": "2", "on": "maybe"}],
+        )
+        with pytest.raises(NodeValidationError) as excinfo:
+            validator.validate(spec)
+        assert excinfo.value.node_id == "1"
+        assert excinfo.value.node_type == "named_port_op"
 
 class TestCycles:
     def test_self_loop_raises(self, validator):

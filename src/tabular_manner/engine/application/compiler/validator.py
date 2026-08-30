@@ -5,6 +5,12 @@ from ..runtime.sandbox import Sandbox
 from .parser import Parser
 from .schema_inference import SchemaInference, SchemaInferenceError
 
+class NodeValidationError(ValueError):
+    def __init__(self, node_id: str, node_type: str, message: str):
+        super().__init__(message)
+        self.node_id = node_id
+        self.node_type = node_type
+
 class Validator:
     def __init__(self, registry: NodeRegistry, sandbox: Sandbox):
         self.registry = registry
@@ -31,7 +37,7 @@ class Validator:
     def _check_node_types(self, spec: dict) -> None:
         for n in spec["nodes"]:
             if n["type"] not in self.registry.keys():
-                raise ValueError(f"Unknown node type '{n['type']}' for node '{n['id']}'")
+                raise NodeValidationError(n["id"], n["type"], f"Unknown node type '{n['type']}' for node '{n['id']}'")
 
     def _check_connections(self, spec: dict) -> None:
         id_set = {n["id"] for n in spec["nodes"]}
@@ -59,22 +65,28 @@ class Validator:
 
             if operator_cls.fan_in:
                 if count != 2:
-                    raise ValueError(
+                    raise NodeValidationError(
+                        node_id,
+                        node_types[node_id],
                         f"Fan-in node '{node_id}' of type '{node_types[node_id]}' must have "
-                        f"exactly 2 incoming connections, found {count}"
+                        f"exactly 2 incoming connections, found {count}",
                     )
                 if operator_cls.in_ports is not None:
                     slots = [c.get("into") for c in conns]
                     if sorted(s for s in slots if s is not None) != sorted(operator_cls.in_ports) or len(set(slots)) != len(slots):
-                        raise ValueError(
+                        raise NodeValidationError(
+                            node_id,
+                            node_types[node_id],
                             f"Fan-in node '{node_id}' of type '{node_types[node_id]}' requires each "
                             f"incoming connection to set 'into' to one of {operator_cls.in_ports} "
-                            f"(no duplicates, no missing), got {slots}"
+                            f"(no duplicates, no missing), got {slots}",
                         )
             elif count > 1:
-                raise ValueError(
+                raise NodeValidationError(
+                    node_id,
+                    node_types[node_id],
                     f"Node '{node_id}' of type '{node_types[node_id]}' has multiple incoming "
-                    "connections but does not support fan-in"
+                    "connections but does not support fan-in",
                 )
 
     def _check_ports(self, spec: dict) -> None:
@@ -83,7 +95,7 @@ class Validator:
             try:
                 operator = operator_cls(name=n.get("name"), sandbox=self.sandbox, **n["params"])
             except (ValueError, TypeError) as exc:
-                raise ValueError(f"Invalid params for node '{n['id']}': {exc}") from exc
+                raise NodeValidationError(n["id"], n["type"], f"Invalid params for node '{n['id']}': {exc}") from exc
 
             valid_ports = operator.valid_ports()
             for c in spec["connections"]:
@@ -91,9 +103,11 @@ class Validator:
                     continue
                 port = c.get("on", "out")
                 if port not in valid_ports:
-                    raise ValueError(
+                    raise NodeValidationError(
+                        n["id"],
+                        n["type"],
                         f"Connection from node '{n['id']}' uses port '{port}', "
-                        f"but valid ports are {valid_ports}"
+                        f"but valid ports are {valid_ports}",
                     )
 
     def _check_schema(self, spec: dict) -> None:
