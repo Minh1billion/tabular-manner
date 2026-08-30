@@ -46,7 +46,7 @@ class Operator(ABC):
 
     def validate(self):
         for field_name, spec in self.required.items():
-            if field_name not in self.params:
+            if field_name not in self.params or self.params[field_name] == "":
                 raise ValueError(f"'{field_name}' is required")
             value = self.params[field_name]
             if not self._check_type(value, spec):
