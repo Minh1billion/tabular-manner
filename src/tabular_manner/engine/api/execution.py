@@ -121,7 +121,11 @@ class Execution:
             Validator(registry, self._sandbox, self._context_manager).validate(spec)
             yield _event("valid")
         except Exception as exc:
-            yield _failure_event(exc)
+            event = _failure_event(exc)
+            errors = getattr(exc, "errors", None)
+            if errors is not None:
+                event["errors"] = errors
+            yield event
 
     def execute(
         self,
