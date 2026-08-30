@@ -39,11 +39,14 @@ class FetchInternal(SourceIO):
     label = "Fetch (Internal)"
     category = "io"
     required = {"key": str}
-    optional = {**SourceIO.optional, "bucket": (str, None)}
+    optional = {"bucket": (str, None)}
     context = ("resource_storage",)
 
     def _stream(self) -> pl.LazyFrame:
         return self.resource_storage.load(self.key, bucket=self.bucket)
+
+    def infer_schema(self) -> Schema:
+        return Schema.from_polars(self._sample_schema())
 
 @NodeRegistry.register("fetch_csv")
 class FetchCsv(SourceIO):

@@ -46,12 +46,7 @@ class TestValidate:
     def test_schema_error_reports_failing_node_id_and_type(self, engine):
         spec = {
             "nodes": [
-                {
-                    "id": "1",
-                    "type": "fetch_internal",
-                    "name": "Fetch",
-                    "params": {"key": "raw", "schema": {"customer": "String", "amount": "Float64"}},
-                },
+                {"id": "1", "type": "fetch_internal", "name": "Fetch", "params": {"key": "raw"}},
                 {"id": "2", "type": "select", "name": "Select", "params": {"columns": ["ghost"]}},
             ],
             "connections": [{"from": "1", "to": "2"}],
@@ -62,6 +57,18 @@ class TestValidate:
 
         assert failed["node_id"] == "2"
         assert failed["node_type"] == "select"
+
+    def test_missing_resource_reports_failing_node_id_and_type(self, engine):
+        spec = {
+            "nodes": [{"id": "1", "type": "fetch_internal", "name": "Fetch", "params": {"key": "missing_key"}}],
+            "connections": [],
+        }
+
+        events = list(engine.execution.validate(spec))
+        failed = next(e for e in events if e["event"] == "failed")
+
+        assert failed["node_id"] == "1"
+        assert failed["node_type"] == "fetchinternal"
 
 class TestCompile:
     def test_compile_yields_compiled_event(self, engine):
