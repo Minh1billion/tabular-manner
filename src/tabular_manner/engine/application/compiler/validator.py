@@ -12,9 +12,10 @@ class NodeValidationError(ValueError):
         self.node_type = node_type
 
 class Validator:
-    def __init__(self, registry: NodeRegistry, sandbox: Sandbox):
+    def __init__(self, registry: NodeRegistry, sandbox: Sandbox, context_manager=None):
         self.registry = registry
         self.sandbox = sandbox
+        self.context_manager = context_manager
 
     def validate(self, spec: dict) -> None:
         self._check_structure(spec)
@@ -112,13 +113,16 @@ class Validator:
 
     def _check_schema(self, spec: dict) -> None:
         graph = Parser.from_json(spec, self.registry, self.sandbox)
+        if self.context_manager is not None:
+            self.context_manager.inject(graph.nodes)
         try:
             SchemaInference().infer(graph)
         except SchemaInferenceError as exc:
-            if isinstance(exc.original, pl.exceptions.PolarsError):
+            if self.context_manager is not None or isinstance(exc.original, pl.exceptions.PolarsError):
                 raise
         except Exception:
-            pass
+            if self.context_manager is not None:
+                raise
 
     def _check_no_cycles(self, spec: dict) -> None:
         adjacency: dict[str, list[str]] = {n["id"]: [] for n in spec["nodes"]}

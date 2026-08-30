@@ -103,7 +103,7 @@ class Execution:
             registry, spec = self._prepare(spec, bucket)
 
             yield _event("validating")
-            Validator(registry, self._sandbox).validate(spec)
+            Validator(registry, self._sandbox, self._context_manager).validate(spec)
 
             yield _event("parsing")
             graph = Parser.from_json(spec, registry, self._sandbox)
@@ -118,7 +118,7 @@ class Execution:
         try:
             registry, spec = self._prepare(spec, bucket)
             yield _event("validating")
-            Validator(registry, self._sandbox).validate(spec)
+            Validator(registry, self._sandbox, self._context_manager).validate(spec)
             yield _event("valid")
         except Exception as exc:
             yield _failure_event(exc)
