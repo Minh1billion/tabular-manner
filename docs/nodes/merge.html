@@ -88,9 +88,12 @@
           <table>
             <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
             <tbody>
-              <tr><td><code>how</code></td><td class="muted">string</td><td class="muted">"vertical_relaxed"</td><td>Stacks any number of incoming branches on the default port.</td></tr>
+              <tr><td><code>how</code></td><td class="muted">string</td><td class="muted">"vertical_relaxed"</td><td>Concatenates its two incoming branches on the default port (no <code>into</code> needed, since <code>union</code> has no named input slots).</td></tr>
             </tbody>
           </table>
+        </div>
+        <div class="callout">
+          <strong>Exactly two incoming connections, not "any number".</strong> Like every fan-in node, <code class="inline">union</code> is rejected by the validator unless it has exactly 2 incoming connections. To concatenate more than two branches, chain multiple <code class="inline">union</code> nodes (e.g. union A+B, then union that result with C).
         </div>
 
         <h3><span class="mono-title">join</span></h3>
@@ -104,6 +107,17 @@
           </table>
         </div>
       </section>
+
+      <nav class="page-nav">
+        <a class="page-nav-link prev" href="transform.html#nodes-transform">
+          <span class="page-nav-eyebrow">Previous</span>
+          <span class="page-nav-title">&larr; Transform</span>
+        </a>
+        <a class="page-nav-link next" href="../writing-a-graph.html#graph-anatomy">
+          <span class="page-nav-eyebrow">Next</span>
+          <span class="page-nav-title">Graph anatomy &rarr;</span>
+        </a>
+      </nav>
 
       <footer>
         <p>Tabular Manner engine reference. Node types, params, and event names reflect the built-in registry; custom node types added through <code class="inline">NodeLibrary</code> are usable the same way once registered.</p>

@@ -1,4 +1,4 @@
-  :root{
+:root{
     --paper:#F5F5EF;
     --paper-soft:#FBFBF8;
     --line:#E2E5E0;
@@ -210,18 +210,19 @@
 
   section > h2{
     font-size:26px;
-    display:flex;
-    align-items:center;
-    gap:10px;
+    position:relative;
     margin:0 0 6px;
   }
 
   section > h2::before{
     content:"";
+    position:absolute;
+    left:-19px;
+    top:50%;
+    transform:translateY(-50%);
     width:9px; height:9px;
     border-radius:50%;
     background:var(--forest);
-    flex:none;
   }
 
   .section-desc{
@@ -446,6 +447,45 @@
     border-top:1px solid var(--line);
     color:var(--ink-soft);
     font-size:13px;
+  }
+
+  .page-nav{
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+    margin-top:56px;
+  }
+
+  .page-nav-link{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    max-width:46%;
+    padding:14px 16px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    text-decoration:none;
+    background:var(--paper-soft);
+    transition:border-color .15s ease;
+  }
+
+  .page-nav-link:hover{ border-color:var(--sage); }
+
+  .page-nav-link.next{ margin-left:auto; text-align:right; align-items:flex-end; }
+
+  .page-nav-eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+
+  .page-nav-title{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    color:var(--forest);
+    font-size:15px;
   }
 
   @media (max-width:920px){
