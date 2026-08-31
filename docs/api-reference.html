@@ -99,9 +99,13 @@
         <h2>Execution</h2>
         <p class="section-desc">Compiles a graph spec and runs it, or re-runs a graph already compiled in a previous call. Accessible as <code class="inline">engine.execution</code>.</p>
 
-        <h3><span class="mono-title">execute</span>(execution_id=None, spec=None, cancel_check=None)</h3>
-        <div class="sig">Iterator[dict] execute(execution_id: str | None, spec: dict | None, cancel_check: Callable[[], bool] | None)</div>
-        <p>Provide <code class="inline">spec</code> to validate, parse, and run a new graph in one call, or pass a previously returned <code class="inline">execution_id</code> to re-run an already-compiled graph against a fresh context. Exactly one of the two is required.</p>
+        <h3><span class="mono-title">execute</span>(execution_id=None, spec=None, bucket=None, cancel_check=None)</h3>
+        <div class="sig">Iterator[dict] execute(execution_id: str | None, spec: dict | None, bucket: str | None, cancel_check: Callable[[], bool] | None)</div>
+        <p>Provide <code class="inline">spec</code> to validate, parse, and run a new graph in one call, or pass a previously returned <code class="inline">execution_id</code> to re-run an already-compiled graph against a fresh context. Exactly one of the two is required. <code class="inline">bucket</code> is only used when compiling from <code class="inline">spec</code>; it is ignored when re-running via <code class="inline">execution_id</code>, since the graph was already compiled against whatever bucket was active at that time.</p>
+
+        <div class="callout">
+          <strong><code class="inline">bucket</code> does two things.</strong> First, it selects which node registry the parser resolves <code class="inline">type</code> against: custom node types registered through <code class="inline">NodeLibrary.register_transform(..., bucket=...)</code> are only visible to graphs compiled with that same <code class="inline">bucket</code> (omitting it uses the default registry). A <code class="inline">type</code> that exists in another bucket still fails validation as an unknown node type. Second, for any node whose type binds <code class="inline">resource_storage</code> from context and accepts an optional <code class="inline">bucket</code> param (<code class="inline">fetch_internal</code>, <code class="inline">push_internal</code>), <code class="inline">execute</code>'s <code class="inline">bucket</code> is copied into that node's own <code class="inline">params.bucket</code> whenever the spec didn't already set one. An explicit <code class="inline">bucket</code> in a node's <code class="inline">params</code> always wins over this default.
+        </div>
 
         <div class="table-wrap">
           <table>
@@ -143,13 +147,15 @@ cancel_event = threading.Event()
           <strong>No <code class="inline">cancel_check</code>, no cancellation.</strong> When it's omitted, <code class="inline">execute</code> runs straight through to <code class="inline">completed</code> or <code class="inline">failed</code>; the check is only ever consulted if you pass one in.
         </div>
 
-        <h3><span class="mono-title">validate</span>(spec)</h3>
-        <div class="sig">Iterator[dict] validate(spec: dict)</div>
-        <p>Checks a spec against the registry and sandbox without compiling or running it. Yields <code class="inline">validating</code> followed by either <code class="inline">valid</code> or <code class="inline">failed</code>.</p>
+        <h3><span class="mono-title">validate</span>(spec, bucket=None)</h3>
+        <div class="sig">Iterator[dict] validate(spec: dict, bucket: str | None)</div>
+        <p>Checks a spec against the registry and sandbox without compiling or running it. <code class="inline">bucket</code> scopes the node registry the same way it does for <code class="inline">execute</code>, so a graph using bucket-specific custom node types must be validated with that same <code class="inline">bucket</code> to resolve them. Yields <code class="inline">validating</code> followed by either <code class="inline">valid</code> or <code class="inline">failed</code>.</p>
+
+        <p>Unlike <code class="inline">execute</code>'s <code class="inline">failed</code> event, which only carries the single error that stopped compilation, <code class="inline">validate</code> walks the whole graph and, when the failure comes from node params, connection wiring, or schema inference, attaches an <code class="inline">errors</code> array to the <code class="inline">failed</code> event with one entry (<code class="inline">node_id</code>, <code class="inline">node_type</code>, <code class="inline">message</code>) per problem found, not just the first. Structural failures (unknown node type, bad connection reference, no entry point, a cycle) still short-circuit as a single error.</p>
 
         <h3><span class="mono-title">discard</span>(execution_id)</h3>
         <div class="sig">None discard(execution_id: str)</div>
-        <p>Drops a compiled graph from the cache so it can no longer be reused with <code class="inline">execute(execution_id=...)</code>. Called automatically on cancellation; can also be called directly to free a graph you know you won't re-run.</p>
+        <p>Drops a compiled graph from the cache so it can no longer be reused with <code class="inline">execute(execution_id=...)</code>. Called automatically on cancellation; can also be called directly to free a graph you know you won't re-run. Compiled graphs are also evicted automatically, oldest-used first, once more than <code class="inline">max_cached_graphs</code> (see <code class="inline">build_engine</code>, default 128) are held at once - so a long-idle <code class="inline">execution_id</code> can become invalid even without an explicit <code class="inline">discard</code>.</p>
       </section>
 
       <section id="api-data-resource">
@@ -169,6 +175,9 @@ cancel_event = threading.Event()
           </table>
         </div>
         <p>Resources are scoped by an optional <code class="inline">bucket</code>, letting the same key coexist across separate namespaces.</p>
+        <div class="callout">
+          <strong>Storage format and <code class="inline">source_kind</code>.</strong> Whatever format a resource was imported from, it is always persisted internally as Parquet; <code class="inline">key</code> should not include a file extension. For <code class="inline">import_source</code>, <code class="inline">source_kind="file"</code> accepts a <code class="inline">source_params.format</code> of <code class="inline">"csv"</code>, <code class="inline">"parquet"</code>, <code class="inline">"arrow"</code>, or <code class="inline">"json"</code> (newline-delimited JSON) - the same reader used by <code class="inline">fetch_csv</code>/<code class="inline">fetch_parquet</code>/<code class="inline">fetch_arrow</code>, plus a <code class="inline">"json"</code> format that has no dedicated built-in fetch node. <code class="inline">source_kind="database"</code> takes the same <code class="inline">dsn</code>/<code class="inline">table</code>/<code class="inline">query</code>/<code class="inline">partition_on</code>/<code class="inline">partition_num</code> params as <code class="inline">fetch_postgres</code>.
+        </div>
       </section>
 
       <section id="api-node-library">
@@ -179,6 +188,7 @@ cancel_event = threading.Event()
           <table>
             <thead><tr><th>Method</th><th>Parameters</th><th>Description</th></tr></thead>
             <tbody>
+              <tr><td><code>load_persisted</code></td><td class="muted">bucket=None</td><td>Loads previously registered custom types for a bucket into that bucket's live registry. <code class="inline">execute</code> and <code class="inline">validate</code> already call this internally before compiling, so it rarely needs to be called directly - mainly useful to warm a bucket's registry ahead of time.</td></tr>
               <tr><td><code>register_transform</code></td><td class="muted">name, expression, description="", bucket=None</td><td>Registers a reusable sandboxed expression as a new transform node type.</td></tr>
               <tr><td><code>unregister_node</code></td><td class="muted">name, bucket=None</td><td>Removes a previously registered custom node type. Built-in types cannot be unregistered.</td></tr>
               <tr><td><code>get_node</code></td><td class="muted">name, bucket=None</td><td>Returns the definition of one custom node type.</td></tr>
@@ -187,7 +197,9 @@ cancel_event = threading.Event()
             </tbody>
           </table>
         </div>
-        <p>Custom node types are looked up by the parser the same way built-in ones are, so once registered they can be used as any other <code class="inline">type</code> value in a graph spec.</p>
+        <p>Custom node types are looked up by the parser the same way built-in ones are, so once registered they can be used as any other <code class="inline">type</code> value in a graph spec - provided that graph is compiled with the same <code class="inline">bucket</code> the type was registered under (default bucket if omitted on both sides). A name is global to its bucket: it cannot collide with a built-in type or with another custom type in the same bucket, but the same name can be reused independently in a different bucket.</p>
+
+        <p>A node type produced by <code class="inline">register_transform</code> is not called with zero configuration: at graph-build time it still requires a <code class="inline">columns</code> param (list of column names), and applies <code class="inline">expression</code> to each of those columns independently, with the target column's own value bound to the identifier <code class="inline">value</code> (in place of the whole-row <code class="inline">df</code> used by <code class="inline">filter</code>/<code class="inline">derive</code>).</p>
       </section>
 
       <div class="edge-divider"><span class="node"></span></div>

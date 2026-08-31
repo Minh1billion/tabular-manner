@@ -182,6 +182,19 @@ engine = build_engine()
 
         <p>Every call on the engine's APIs returns an iterator of event dictionaries rather than a single value. Each event has an <code class="inline">event</code> name and a <code class="inline">ts</code> timestamp; the terminal event is either <code class="inline">completed</code> (with a <code class="inline">data</code> payload) or <code class="inline">failed</code> (with an <code class="inline">error</code> message). This gives callers a consistent, streamable shape across validation, execution, resource management, and node registration.</p>
 
+        <h4><span class="mono-title">build_engine</span>(object_storage=None, reader_factory=None, writer_factory=None, storage_root=".tm", max_cached_graphs=128)</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Default</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td><code>object_storage</code></td><td class="muted">none (builds a local <code>ObjectStorage</code>)</td><td>Where <code class="inline">fetch_internal</code>/<code class="inline">push_internal</code> resources and registered custom node definitions actually live. Pass a pre-built <code class="inline">ObjectStorage(backend="s3", s3_bucket_name=...)</code> to persist those in S3 instead of the local filesystem. This is unrelated to the <code class="inline">fetch_s3</code>/<code class="inline">fetch_postgres</code> nodes, which read arbitrary external sources regardless of where the engine's own storage lives.</td></tr>
+              <tr><td><code>storage_root</code></td><td class="muted">".tm"</td><td>Root directory for the default local <code class="inline">ObjectStorage</code>. Ignored if <code class="inline">object_storage</code> is provided.</td></tr>
+              <tr><td><code>reader_factory</code> / <code>writer_factory</code></td><td class="muted">none (built-in "file" and "database" adapters)</td><td>Pass a customized <code class="inline">ReaderFactory</code>/<code class="inline">WriterFactory</code> to add reader/writer kinds beyond "file" and "database" via their <code class="inline">.register(kind, adapter_cls)</code> method.</td></tr>
+              <tr><td><code>max_cached_graphs</code></td><td class="muted">128</td><td>How many compiled graphs <code class="inline">Execution</code> keeps in memory at once, keyed by <code class="inline">execution_id</code>. It's an LRU: once the limit is exceeded, the least-recently-used graph is dropped silently, and re-running its <code class="inline">execution_id</code> afterward fails with <code class="inline">Unknown execution_id</code> — the same as if <code class="inline">discard()</code> had been called on it.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
         <h4>The Engine object</h4>
         <div class="table-wrap">
           <table>
@@ -190,11 +203,15 @@ engine = build_engine()
               <tr><td><code>execution</code></td><td>Execution</td><td>Validate and run pipeline graphs.</td></tr>
               <tr><td><code>data_resource</code></td><td>DataResource</td><td>Import, list, read, and remove named internal resources.</td></tr>
               <tr><td><code>node_library</code></td><td>NodeLibrary</td><td>Register and inspect custom node types.</td></tr>
-              <tr><td><code>registry</code></td><td>NodeRegistry</td><td>The set of node types available to the parser, built-in and custom.</td></tr>
+              <tr><td><code>registry_provider</code></td><td>NodeRegistryProvider</td><td>Resolves the per-bucket <code>NodeRegistry</code> the parser looks node types up in — built-in types plus whatever custom types were registered for that bucket.</td></tr>
               <tr><td><code>context_manager</code></td><td>ContextManager</td><td>Holds shared runtime services (storage, readers, writers) injected into nodes.</td></tr>
+              <tr><td><code>object_storage</code></td><td>ObjectStorage</td><td>The backend (local filesystem or S3) backing <code>data_resource</code> and persisted custom node definitions.</td></tr>
               <tr><td><code>sandbox</code></td><td>Sandbox</td><td>Restricts what expressions are allowed to do.</td></tr>
             </tbody>
           </table>
+        </div>
+        <div class="callout">
+          <strong>Not <code class="inline">registry</code>.</strong> The engine attribute is <code class="inline">engine.registry_provider</code> (a <code class="inline">NodeRegistryProvider</code>), not <code class="inline">engine.registry</code>. Call <code class="inline">engine.registry_provider.get(bucket)</code> to get the actual <code class="inline">NodeRegistry</code> for a given bucket (or the default one, if <code class="inline">bucket</code> is omitted).
         </div>
       </section>
 
