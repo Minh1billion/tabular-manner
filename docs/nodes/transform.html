@@ -13,7 +13,17 @@
 
 <div class="shell">
 
+  <div class="mobile-topbar">
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <a class="brand" href="../index.html#top" style="margin:0;">
+      <span class="brand-text">Tabular Manner</span>
+    </a>
+  </div>
+  <div class="nav-scrim"></div>
   <nav class="sidebar">
+    <button class="nav-close" aria-label="Close menu">&times;</button>
     <a class="brand" href="../index.html#top">
       <svg width="30" height="30" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" width="240" height="240" rx="40" fill="#F5F5EF"/>
@@ -72,6 +82,12 @@
         <li><a class="nav-link" href="../writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and merging</a></li>
         <li><a class="nav-link" href="../writing-a-graph.html#graph-expressions"><span class="dot"></span>Expressions</a></li>
         <li><a class="nav-link" href="../writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
+      </ul>
+    </div>
+    <div class="nav-group">
+      <p class="nav-eyebrow">Try it</p>
+      <ul>
+        <li><a class="nav-link" href="../playground.html#playground-top"><span class="dot"></span>Playground</a></li>
       </ul>
     </div>
   </nav>
@@ -281,17 +297,6 @@
 
         <p>See <strong>Writing a graph &rarr; Expressions</strong> for what <code class="inline">filter</code> and <code class="inline">derive</code> accept in <code class="inline">expression</code>.</p>
       </section>
-
-      <nav class="page-nav">
-        <a class="page-nav-link prev" href="io.html#nodes-io">
-          <span class="page-nav-eyebrow">Previous</span>
-          <span class="page-nav-title">&larr; Source and sink</span>
-        </a>
-        <a class="page-nav-link next" href="merge.html#nodes-merge">
-          <span class="page-nav-eyebrow">Next</span>
-          <span class="page-nav-title">Merge &rarr;</span>
-        </a>
-      </nav>
 
       <footer>
         <p>Tabular Manner engine reference. Node types, params, and event names reflect the built-in registry; custom node types added through <code class="inline">NodeLibrary</code> are usable the same way once registered.</p>

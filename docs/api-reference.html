@@ -13,7 +13,17 @@
 
 <div class="shell">
 
+  <div class="mobile-topbar">
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <a class="brand" href="index.html#top" style="margin:0;">
+      <span class="brand-text">Tabular Manner</span>
+    </a>
+  </div>
+  <div class="nav-scrim"></div>
   <nav class="sidebar">
+    <button class="nav-close" aria-label="Close menu">&times;</button>
     <a class="brand" href="index.html#top">
       <svg width="30" height="30" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" width="240" height="240" rx="40" fill="#F5F5EF"/>
@@ -74,6 +84,12 @@
         <li><a class="nav-link" href="writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
       </ul>
     </div>
+    <div class="nav-group">
+      <p class="nav-eyebrow">Try it</p>
+      <ul>
+        <li><a class="nav-link" href="playground.html#playground-top"><span class="dot"></span>Playground</a></li>
+      </ul>
+    </div>
   </nav>
 
   <main id="api-reference">
@@ -83,13 +99,9 @@
         <h2>Execution</h2>
         <p class="section-desc">Compiles a graph spec and runs it, or re-runs a graph already compiled in a previous call. Accessible as <code class="inline">engine.execution</code>.</p>
 
-        <h3><span class="mono-title">execute</span>(execution_id=None, spec=None, bucket=None, cancel_check=None)</h3>
-        <div class="sig">Iterator[dict] execute(execution_id: str | None, spec: dict | None, bucket: str | None, cancel_check: Callable[[], bool] | None)</div>
-        <p>Provide <code class="inline">spec</code> to validate, parse, and run a new graph in one call, or pass a previously returned <code class="inline">execution_id</code> to re-run an already-compiled graph against a fresh context. Exactly one of <code class="inline">execution_id</code> and <code class="inline">spec</code> is required.</p>
-
-        <div class="callout">
-          <strong><code class="inline">bucket</code> scopes custom node types and default storage.</strong> When set, the spec is validated and compiled against that bucket's <code class="inline">NodeRegistry</code> (built-in types plus any custom types registered in that bucket via <code class="inline">NodeLibrary</code>). Any node whose type binds <code class="inline">resource_storage</code> and accepts a <code class="inline">bucket</code> param (for example <code class="inline">fetch_internal</code>, <code class="inline">push_internal</code>) is given this <code class="inline">bucket</code> as its default automatically, unless the node's own <code class="inline">params</code> already set one. <code class="inline">bucket=None</code> uses the default bucket.
-        </div>
+        <h3><span class="mono-title">execute</span>(execution_id=None, spec=None, cancel_check=None)</h3>
+        <div class="sig">Iterator[dict] execute(execution_id: str | None, spec: dict | None, cancel_check: Callable[[], bool] | None)</div>
+        <p>Provide <code class="inline">spec</code> to validate, parse, and run a new graph in one call, or pass a previously returned <code class="inline">execution_id</code> to re-run an already-compiled graph against a fresh context. Exactly one of the two is required.</p>
 
         <div class="table-wrap">
           <table>
@@ -131,17 +143,13 @@ cancel_event = threading.Event()
           <strong>No <code class="inline">cancel_check</code>, no cancellation.</strong> When it's omitted, <code class="inline">execute</code> runs straight through to <code class="inline">completed</code> or <code class="inline">failed</code>; the check is only ever consulted if you pass one in.
         </div>
 
-        <h3><span class="mono-title">validate</span>(spec, bucket=None)</h3>
-        <div class="sig">Iterator[dict] validate(spec: dict, bucket: str | None)</div>
-        <p>Checks a spec against the registry and sandbox without compiling or running it. Yields <code class="inline">validating</code> followed by either <code class="inline">valid</code> or <code class="inline">failed</code> (a <code class="inline">failed</code> event may carry an <code class="inline">errors</code> list with one entry per invalid node, each with <code class="inline">node_id</code>, <code class="inline">node_type</code>, and <code class="inline">message</code>). <code class="inline">bucket</code> has the same meaning as in <code class="inline">execute</code>.</p>
+        <h3><span class="mono-title">validate</span>(spec)</h3>
+        <div class="sig">Iterator[dict] validate(spec: dict)</div>
+        <p>Checks a spec against the registry and sandbox without compiling or running it. Yields <code class="inline">validating</code> followed by either <code class="inline">valid</code> or <code class="inline">failed</code>.</p>
 
         <h3><span class="mono-title">discard</span>(execution_id)</h3>
         <div class="sig">None discard(execution_id: str)</div>
         <p>Drops a compiled graph from the cache so it can no longer be reused with <code class="inline">execute(execution_id=...)</code>. Called automatically on cancellation; can also be called directly to free a graph you know you won't re-run.</p>
-
-        <div class="callout">
-          <strong>The compiled-graph cache is bounded.</strong> <code class="inline">Execution</code> keeps at most <code class="inline">max_cached_graphs</code> (default <code class="inline">128</code>, set via <code class="inline">build_engine()</code>) compiled graphs in memory, evicted least-recently-used first. Once a graph is evicted, its <code class="inline">execution_id</code> can no longer be passed to <code class="inline">execute(execution_id=...)</code> — a fresh <code class="inline">spec</code> must be recompiled instead.
-        </div>
       </section>
 
       <section id="api-data-resource">
@@ -161,8 +169,6 @@ cancel_event = threading.Event()
           </table>
         </div>
         <p>Resources are scoped by an optional <code class="inline">bucket</code>, letting the same key coexist across separate namespaces.</p>
-
-        <p>Like <code class="inline">Execution</code>, every method above (except <code class="inline">exists</code>) yields intermediate events before a terminal <code class="inline">completed</code> or <code class="inline">failed</code>. For <code class="inline">import_source</code> these are, in order: <code class="inline">validating</code>, <code class="inline">checking_existing</code>, <code class="inline">reading_source</code>, <code class="inline">source_read</code>, <code class="inline">saving</code>, <code class="inline">saved</code>, <code class="inline">counting_rows</code>, then <code class="inline">completed</code> with <code class="inline">key</code>, <code class="inline">bucket</code>, <code class="inline">columns</code>, and <code class="inline">row_count</code>. <code class="inline">import_source</code> raises if <code class="inline">key</code> already exists and <code class="inline">overwrite</code> is not set, or if the source produces no columns.</p>
       </section>
 
       <section id="api-node-library">
@@ -173,7 +179,7 @@ cancel_event = threading.Event()
           <table>
             <thead><tr><th>Method</th><th>Parameters</th><th>Description</th></tr></thead>
             <tbody>
-              <tr><td><code>register_transform</code></td><td class="muted">name, expression, description="", bucket=None</td><td>Registers a reusable sandboxed expression as a new transform node type. <code>name</code> must be a valid identifier not already used by a built-in or custom type.</td></tr>
+              <tr><td><code>register_transform</code></td><td class="muted">name, expression, description="", bucket=None</td><td>Registers a reusable sandboxed expression as a new transform node type.</td></tr>
               <tr><td><code>unregister_node</code></td><td class="muted">name, bucket=None</td><td>Removes a previously registered custom node type. Built-in types cannot be unregistered.</td></tr>
               <tr><td><code>get_node</code></td><td class="muted">name, bucket=None</td><td>Returns the definition of one custom node type.</td></tr>
               <tr><td><code>describe_nodes</code></td><td class="muted">bucket=None</td><td>Returns a descriptive summary of every node type available to the parser.</td></tr>
@@ -182,32 +188,10 @@ cancel_event = threading.Event()
           </table>
         </div>
         <p>Custom node types are looked up by the parser the same way built-in ones are, so once registered they can be used as any other <code class="inline">type</code> value in a graph spec.</p>
-
-        <p>A node registered via <code class="inline">register_transform</code> takes a single required param, <code class="inline">columns</code> (list of string): the expression is applied to each listed column in turn and the result replaces that column in place. Inside <code class="inline">expression</code>, the column being processed is referenced as <code class="inline">value</code> rather than <code class="inline">df.&lt;name&gt;</code>. For example, registering <code class="inline">clip_negative</code> with expression <code class="inline">pl.when(value &lt; 0).then(pl.lit(0)).otherwise(value)</code> lets a graph use:</p>
-        <div class="code-block">
-          <button class="copy-btn" onclick="copyBlock(this)">copy</button>
-          <pre>{
-  <span class="tok-str">"id"</span>: <span class="tok-str">"3"</span>,
-  <span class="tok-str">"type"</span>: <span class="tok-str">"clip_negative"</span>,
-  <span class="tok-str">"name"</span>: <span class="tok-str">"Clip Negative Amounts"</span>,
-  <span class="tok-str">"params"</span>: { <span class="tok-str">"columns"</span>: [<span class="tok-str">"amount"</span>] }
-}</pre>
-        </div>
       </section>
 
       <div class="edge-divider"><span class="node"></span></div>
-
-      <nav class="page-nav">
-        <a class="page-nav-link prev" href="index.html#getting-started">
-          <span class="page-nav-eyebrow">Previous</span>
-          <span class="page-nav-title">&larr; Getting started</span>
-        </a>
-        <a class="page-nav-link next" href="nodes/io.html#nodes-io">
-          <span class="page-nav-eyebrow">Next</span>
-          <span class="page-nav-title">Source and sink &rarr;</span>
-        </a>
-      </nav>
-
+      
       <footer>
         <p>Tabular Manner engine reference. Node types, params, and event names reflect the built-in registry; custom node types added through <code class="inline">NodeLibrary</code> are usable the same way once registered.</p>
       </footer>

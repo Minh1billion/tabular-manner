@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playground - Tabular Manner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/playground.css">
+</head>
+<body>
+
+<div class="shell">
+
+  <div class="mobile-topbar">
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <a class="brand" href="index.html#top" style="margin:0;">
+      <span class="brand-text">Tabular Manner</span>
+    </a>
+  </div>
+  <div class="nav-scrim"></div>
+  <nav class="sidebar">
+    <button class="nav-close" aria-label="Close menu">&times;</button>
+    <a class="brand" href="index.html#top">
+      <svg width="30" height="30" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="240" height="240" rx="40" fill="#F5F5EF"/>
+        <g stroke="#343A3C" stroke-width="14" stroke-linecap="round" fill="none">
+          <line x1="70" y1="42" x2="70" y2="190"/>
+          <line x1="52" y1="52" x2="52" y2="104"/>
+          <line x1="88" y1="52" x2="88" y2="104"/>
+        </g>
+        <circle cx="70" cy="42" r="16" fill="#123D2C"/>
+        <circle cx="52" cy="52" r="14" fill="#32664D"/>
+        <circle cx="88" cy="52" r="14" fill="#32664D"/>
+        <circle cx="70" cy="190" r="16" fill="#123D2C"/>
+        <path d="M 120 190 L 120 115 L 160 155 L 200 115 L 200 190" stroke="#343A3C" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="120" cy="190" r="16" fill="#123D2C"/>
+        <circle cx="120" cy="115" r="16" fill="#32664D"/>
+        <circle cx="160" cy="155" r="16" fill="#123D2C"/>
+        <circle cx="200" cy="115" r="16" fill="#32664D"/>
+        <circle cx="200" cy="190" r="16" fill="#123D2C"/>
+      </svg>
+      <span>
+        <span class="brand-text">Tabular Manner</span>
+        <span class="brand-sub">engine reference</span>
+      </span>
+    </a>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">Start</p>
+      <ul>
+        <li><a class="nav-link" href="index.html#overview"><span class="dot"></span>Overview</a></li>
+        <li><a class="nav-link" href="index.html#getting-started"><span class="dot"></span>Getting started</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">API reference</p>
+      <ul>
+        <li><a class="nav-link" href="api-reference.html#api-execution"><span class="dot"></span>Execution</a></li>
+        <li><a class="nav-link" href="api-reference.html#api-data-resource"><span class="dot"></span>Data Resource</a></li>
+        <li><a class="nav-link" href="api-reference.html#api-node-library"><span class="dot"></span>Node Library</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">Default nodes</p>
+      <ul>
+        <li><a class="nav-link" href="nodes/io.html#nodes-io"><span class="dot"></span>Source and sink</a></li>
+        <li><a class="nav-link" href="nodes/transform.html#nodes-transform"><span class="dot"></span>Transform</a></li>
+        <li><a class="nav-link" href="nodes/merge.html#nodes-merge"><span class="dot"></span>Merge</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">Writing a graph</p>
+      <ul>
+        <li><a class="nav-link" href="writing-a-graph.html#graph-anatomy"><span class="dot"></span>Graph anatomy</a></li>
+        <li><a class="nav-link" href="writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and merging</a></li>
+        <li><a class="nav-link" href="writing-a-graph.html#graph-expressions"><span class="dot"></span>Expressions</a></li>
+        <li><a class="nav-link" href="writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
+      </ul>
+    </div>
+    <div class="nav-group">
+      <p class="nav-eyebrow">Try it</p>
+      <ul>
+        <li><a class="nav-link active" href="playground.html#playground-top"><span class="dot"></span>Playground</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main id="playground-top">
+    <div class="content" style="max-width:1080px;">
+
+      <div class="pg-intro">
+        <p class="hero-eyebrow">Interactive</p>
+        <h1>Playground</h1>
+        <p class="lead">Paste a graph spec (or edit the default one) and step through exactly what the engine does: a structural check that walks the graph looking for cycles, then, if the graph is valid, the ready-queue traversal that decides execution order. Use <strong>Play</strong> to animate it, or <strong>Prev</strong> / <strong>Next</strong> to step by hand.</p>
+      </div>
+
+      <div class="pg-controls">
+        <button id="btnPrev" title="Previous">&larr; Prev</button>
+        <button id="btnPlay" class="primary" title="Play/Pause">Play</button>
+        <button id="btnNext" title="Next">Next &rarr;</button>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);">
+          speed
+          <input type="range" id="speed" min="300" max="2000" value="900">
+        </label>
+        <span id="speedLabel" class="pg-speed-label"></span>
+        <label class="pg-loop-toggle">
+          <input type="checkbox" id="loopToggle">
+          Loop
+        </label>
+        <div class="spacer"></div>
+        <span id="stepLabel">Step 0 / 0</span>
+      </div>
+
+      <div class="pg-grid">
+        <div class="pg-panel">
+          <h3>Graph</h3>
+          <svg id="graphCanvas" viewBox="0 0 520 300">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="#5E655F"></path>
+              </marker>
+            </defs>
+          </svg>
+        </div>
+        <div class="pg-panel">
+          <h3>Pseudocode</h3>
+          <pre id="pseudocode"></pre>
+        </div>
+      </div>
+
+      <div class="pg-grid pg-bottom">
+        <div class="pg-panel">
+          <h3>Graph input (JSON)</h3>
+          <textarea id="graphInput" spellcheck="false"></textarea>
+          <div class="pg-input-row">
+            <button id="btnRun">Run</button>
+          </div>
+          <div id="inputError"></div>
+        </div>
+
+        <div class="pg-panel pg-side">
+          <div class="sub">
+            <h3>Queue / stack</h3>
+            <div class="queue-row" id="queueRow"></div>
+            <div class="visited-row" id="visitedRow"></div>
+          </div>
+          <div class="sub">
+            <h3>Node inspector</h3>
+            <div id="inspectorBody"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="edge-divider"><span class="node"></span></div>
+
+      <footer>
+        <p>The playground runs the same two-phase algorithm as <code class="inline">engine.execution.validate</code> / <code class="inline">execute</code>: a DFS cycle check first (colors a node GRAY on entry, BLACK on exit — revisiting a GRAY node means a cycle), then, only if the graph is valid, a ready-queue traversal that runs a node once every one of its parents has completed.</p>
+      </footer>
+
+    </div>
+  </main>
+
+</div>
+
+<script src="assets/site.js"></script>
+<script src="assets/playground.js"></script>
+
+</body>
+</html>

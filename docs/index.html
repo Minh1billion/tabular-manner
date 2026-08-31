@@ -13,7 +13,17 @@
 
 <div class="shell">
 
+  <div class="mobile-topbar">
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <a class="brand" href="index.html#top" style="margin:0;">
+      <span class="brand-text">Tabular Manner</span>
+    </a>
+  </div>
+  <div class="nav-scrim"></div>
   <nav class="sidebar">
+    <button class="nav-close" aria-label="Close menu">&times;</button>
     <a class="brand" href="index.html#top">
       <svg width="30" height="30" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" width="240" height="240" rx="40" fill="#F5F5EF"/>
@@ -72,6 +82,12 @@
         <li><a class="nav-link" href="writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and merging</a></li>
         <li><a class="nav-link" href="writing-a-graph.html#graph-expressions"><span class="dot"></span>Expressions</a></li>
         <li><a class="nav-link" href="writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
+      </ul>
+    </div>
+    <div class="nav-group">
+      <p class="nav-eyebrow">Try it</p>
+      <ul>
+        <li><a class="nav-link" href="playground.html#playground-top"><span class="dot"></span>Playground</a></li>
       </ul>
     </div>
   </nav>
@@ -143,8 +159,6 @@
         </div>
 
         <p>Any node with no incoming connection is treated as an entry point; a graph needs at least one. Execution starts at every entry point and fans out along the connections until every branch reaches a node with no outgoing connection, called a leaf.</p>
-
-        <p>A graph must be a DAG: the validator walks the connection graph looking for cycles (including self-loops) and rejects the spec with a <code class="inline">"Cycle detected"</code> error before any node runs.</p>
       </section>
 
       <section id="getting-started">
@@ -168,38 +182,6 @@ engine = build_engine()
 
         <p>Every call on the engine's APIs returns an iterator of event dictionaries rather than a single value. Each event has an <code class="inline">event</code> name and a <code class="inline">ts</code> timestamp; the terminal event is either <code class="inline">completed</code> (with a <code class="inline">data</code> payload) or <code class="inline">failed</code> (with an <code class="inline">error</code> message). This gives callers a consistent, streamable shape across validation, execution, resource management, and node registration.</p>
 
-        <h4>build_engine() parameters</h4>
-        <p>All parameters are optional; called with no arguments, the engine stores internal resources and the custom node library on local disk under <code class="inline">.tm/</code>.</p>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
-            <tbody>
-              <tr><td><code>object_storage</code></td><td>ObjectStorage</td><td>none</td><td>Backend for internal resources (<code class="inline">fetch_internal</code>/<code class="inline">push_internal</code>) and the custom node library. Defaults to <code class="inline">ObjectStorage(backend="local", root=storage_root)</code>. Pass an <code class="inline">ObjectStorage(backend="s3", ...)</code> instance to back this storage with S3 instead — see below.</td></tr>
-              <tr><td><code>reader_factory</code></td><td>ReaderFactory</td><td>none</td><td>Override to customize or extend how <code class="inline">fetch_*</code> nodes and <code class="inline">import_source</code> read data.</td></tr>
-              <tr><td><code>writer_factory</code></td><td>WriterFactory</td><td>none</td><td>Override to customize or extend how <code class="inline">push_*</code> nodes write data.</td></tr>
-              <tr><td><code>storage_root</code></td><td>string</td><td><code>".tm"</code></td><td>Root directory used by the default local <code class="inline">ObjectStorage</code>. Ignored if <code class="inline">object_storage</code> is provided.</td></tr>
-              <tr><td><code>max_cached_graphs</code></td><td>integer</td><td><code>128</code></td><td>Maximum number of compiled graphs kept in memory for reuse via <code class="inline">execute(execution_id=...)</code>. The cache is LRU: once full, the least recently used compiled graph is evicted, and its <code class="inline">execution_id</code> can no longer be re-run.</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <h4>Storage backends</h4>
-        <p><code class="inline">ObjectStorage</code> ships a <code class="inline">"local"</code> backend (default) and a <code class="inline">"s3"</code> backend for the engine's own internal storage — this is distinct from the <code class="inline">fetch_s3</code>/<code class="inline">push_s3</code> nodes, which scan external files directly and don't go through <code class="inline">ObjectStorage</code> at all.</p>
-        <div class="code-block">
-          <button class="copy-btn" onclick="copyBlock(this)">copy</button>
-          <pre><span class="tok-key">from</span> tabular_manner.engine.application.storage.object_storage <span class="tok-key">import</span> ObjectStorage
-<span class="tok-key">from</span> tabular_manner.engine.bootstrap <span class="tok-key">import</span> build_engine
-
-storage = ObjectStorage(
-    backend=<span class="tok-str">"s3"</span>,
-    s3_bucket_name=<span class="tok-str">"my-bucket"</span>,
-    s3_root_prefix=<span class="tok-str">"tabular-manner/"</span>,
-    s3_region=<span class="tok-str">"us-east-1"</span>,
-)
-engine = build_engine(object_storage=storage)</pre>
-        </div>
-        <p>Other <code class="inline">ObjectStorage(backend="s3", ...)</code> parameters: <code class="inline">s3_endpoint_url</code>, <code class="inline">s3_access_key_id</code>, <code class="inline">s3_secret_access_key</code>, <code class="inline">s3_allow_http</code> (default <code class="inline">False</code>), <code class="inline">s3_path_style</code> (default <code class="inline">True</code>).</p>
-
         <h4>The Engine object</h4>
         <div class="table-wrap">
           <table>
@@ -208,9 +190,8 @@ engine = build_engine(object_storage=storage)</pre>
               <tr><td><code>execution</code></td><td>Execution</td><td>Validate and run pipeline graphs.</td></tr>
               <tr><td><code>data_resource</code></td><td>DataResource</td><td>Import, list, read, and remove named internal resources.</td></tr>
               <tr><td><code>node_library</code></td><td>NodeLibrary</td><td>Register and inspect custom node types.</td></tr>
-              <tr><td><code>registry_provider</code></td><td>NodeRegistryProvider</td><td>Looks up the <code class="inline">NodeRegistry</code> for a given bucket (built-in types plus that bucket's custom types). Call <code class="inline">engine.registry_provider.get(bucket)</code> to get a concrete registry.</td></tr>
+              <tr><td><code>registry</code></td><td>NodeRegistry</td><td>The set of node types available to the parser, built-in and custom.</td></tr>
               <tr><td><code>context_manager</code></td><td>ContextManager</td><td>Holds shared runtime services (storage, readers, writers) injected into nodes.</td></tr>
-              <tr><td><code>object_storage</code></td><td>ObjectStorage</td><td>The storage backend passed to (or defaulted by) <code class="inline">build_engine()</code>.</td></tr>
               <tr><td><code>sandbox</code></td><td>Sandbox</td><td>Restricts what expressions are allowed to do.</td></tr>
             </tbody>
           </table>
@@ -218,14 +199,6 @@ engine = build_engine(object_storage=storage)</pre>
       </section>
 
       <div class="edge-divider"><span class="node"></span></div>
-
-      <nav class="page-nav">
-        <span></span>
-        <a class="page-nav-link next" href="api-reference.html#api-execution">
-          <span class="page-nav-eyebrow">Next</span>
-          <span class="page-nav-title">Execution &rarr;</span>
-        </a>
-      </nav>
 
       <footer>
         <p>Tabular Manner engine reference. Node types, params, and event names reflect the built-in registry; custom node types added through <code class="inline">NodeLibrary</code> are usable the same way once registered.</p>

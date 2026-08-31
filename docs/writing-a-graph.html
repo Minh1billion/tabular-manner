@@ -13,7 +13,17 @@
 
 <div class="shell">
 
+  <div class="mobile-topbar">
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <a class="brand" href="index.html#top" style="margin:0;">
+      <span class="brand-text">Tabular Manner</span>
+    </a>
+  </div>
+  <div class="nav-scrim"></div>
   <nav class="sidebar">
+    <button class="nav-close" aria-label="Close menu">&times;</button>
     <a class="brand" href="index.html#top">
       <svg width="30" height="30" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" width="240" height="240" rx="40" fill="#F5F5EF"/>
@@ -72,6 +82,12 @@
         <li><a class="nav-link" href="writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and merging</a></li>
         <li><a class="nav-link" href="writing-a-graph.html#graph-expressions"><span class="dot"></span>Expressions</a></li>
         <li><a class="nav-link" href="writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
+      </ul>
+    </div>
+    <div class="nav-group">
+      <p class="nav-eyebrow">Try it</p>
+      <ul>
+        <li><a class="nav-link" href="playground.html#playground-top"><span class="dot"></span>Playground</a></li>
       </ul>
     </div>
   </nav>
@@ -134,7 +150,6 @@
             <tbody>
               <tr><td><code>from</code> / <code>to</code></td><td>Node ids being connected.</td></tr>
               <tr><td><code>into</code></td><td>Input slot to fill on the target node. Required for fan-in nodes with named inputs, such as <code>join</code>'s <code>left</code> and <code>right</code>.</td></tr>
-              <tr><td><code>on</code></td><td>Output port to read from on the source node. Defaults to <code>"out"</code>. Every built-in node exposes only its default port, so this is only needed for custom operators that declare additional named output ports.</td></tr>
             </tbody>
           </table>
         </div>
@@ -142,23 +157,13 @@
         <div class="callout">
           <strong>Entry points.</strong> Any node with no incoming connection starts a branch when the graph runs. A graph must have at least one; a graph with none fails validation.
         </div>
-
-        <div class="callout">
-          <strong>Graphs must be acyclic.</strong> Validation walks the connection graph and rejects any cycle, including a node connected back to itself, before the spec is compiled or run.
-        </div>
       </section>
 
       <section id="graph-ports">
         <h2>Ports and merging</h2>
         <p class="section-desc">Every built-in node has a single output port, so connections never need to pick a port on the way out. A node's output can still feed more than one connection — that's how a branch fans out to several downstream nodes.</p>
 
-        <p>Fan-in nodes work the other way: instead of choosing an output port, incoming connections choose an input slot.</p>
-
-        <div class="callout">
-          <strong>Every fan-in node currently requires exactly two incoming connections</strong>, regardless of node type — the validator rejects any other count with <code class="inline">"must have exactly 2 incoming connections"</code>. This applies to <code class="inline">union</code> as much as <code class="inline">join</code>; <code class="inline">union</code> cannot yet be used to merge three or more branches in a single node — chain two <code class="inline">union</code> nodes instead if you need to combine more than two.
-        </div>
-
-        <p><code class="inline">union</code> concatenates its two incoming branches on the default port (no <code class="inline">into</code> needed, since it has no named input slots). <code class="inline">join</code> requires its two inputs to be matched to its <code class="inline">left</code> and <code class="inline">right</code> input slots via each connection's <code class="inline">into</code> field.</p>
+        <p>Fan-in nodes work the other way: instead of choosing an output port, incoming connections choose an input slot. <code class="inline">union</code> accepts any number of branches on the default port and concatenates them. <code class="inline">join</code> requires exactly two, matched to its <code class="inline">left</code> and <code class="inline">right</code> input slots via each connection's <code class="inline">into</code> field.</p>
       </section>
 
       <section id="graph-expressions">
@@ -179,8 +184,6 @@
             </tbody>
           </table>
         </div>
-
-        <p>The full allow-list, not just the example column: <code class="inline">pl</code> attribute access is limited to <code class="inline">pl.col</code>, <code class="inline">pl.lit</code>, and <code class="inline">pl.when</code>; method calls on a column (or on a <code class="inline">pl.when(...)</code> chain) are limited to <code class="inline">mean</code>, <code class="inline">sum</code>, <code class="inline">min</code>, <code class="inline">max</code>, <code class="inline">median</code>, <code class="inline">std</code>, <code class="inline">count</code>, <code class="inline">len</code>, <code class="inline">first</code>, <code class="inline">last</code>, <code class="inline">then</code>, and <code class="inline">otherwise</code>. Any other attribute or method name is rejected at compile time.</p>
 
         <p>Anything outside this set, imports, arbitrary function calls, attribute access on anything other than <code class="inline">df</code> or a narrow set of <code class="inline">pl</code> helpers, is rejected before the graph runs rather than at data time.</p>
 
@@ -212,13 +215,6 @@
 { <span class="tok-key">"from"</span>: <span class="tok-str">"2"</span>, <span class="tok-key">"to"</span>: <span class="tok-str">"3"</span>, <span class="tok-key">"into"</span>: <span class="tok-str">"right"</span> }</pre>
         </div>
       </section>
-
-      <nav class="page-nav">
-        <a class="page-nav-link prev" href="nodes/merge.html#nodes-merge">
-          <span class="page-nav-eyebrow">Previous</span>
-          <span class="page-nav-title">&larr; Merge</span>
-        </a>
-      </nav>
 
       <footer>
         <p>Tabular Manner engine reference. Node types, params, and event names reflect the built-in registry; custom node types added through <code class="inline">NodeLibrary</code> are usable the same way once registered.</p>

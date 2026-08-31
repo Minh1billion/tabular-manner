@@ -1,3 +1,34 @@
+(function () {
+  var toggle = document.querySelector('.nav-toggle');
+  var scrim = document.querySelector('.nav-scrim');
+  var body = document.body;
+
+  function closeNav() {
+    body.classList.remove('nav-open');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  if (toggle) {
+    toggle.addEventListener('click', function () {
+      var isOpen = body.classList.toggle('nav-open');
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+  }
+  if (scrim) {
+    scrim.addEventListener('click', closeNav);
+  }
+  var navClose = document.querySelector('.nav-close');
+  if (navClose) {
+    navClose.addEventListener('click', closeNav);
+  }
+  document.querySelectorAll('.sidebar .nav-link, .sidebar .brand').forEach(function (link) {
+    link.addEventListener('click', closeNav);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeNav();
+  });
+})();
+
 function copyBlock(btn) {
   var pre = btn.parentElement.querySelector('pre');
   var text = pre.innerText;
