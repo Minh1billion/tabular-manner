@@ -13,7 +13,17 @@
 
 <div class="shell">
 
+  <div class="mobile-topbar">
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <a class="brand" href="index.html#top" style="margin:0;">
+      <span class="brand-text">Tabular Manner</span>
+    </a>
+  </div>
+  <div class="nav-scrim"></div>
   <nav class="sidebar">
+    <button class="nav-close" aria-label="Close menu">&times;</button>
     <a class="brand" href="index.html#top">
       <svg width="30" height="30" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" width="240" height="240" rx="40" fill="#F5F5EF"/>
@@ -72,6 +82,12 @@
         <li><a class="nav-link" href="writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and merging</a></li>
         <li><a class="nav-link" href="writing-a-graph.html#graph-expressions"><span class="dot"></span>Expressions</a></li>
         <li><a class="nav-link" href="writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
+      </ul>
+    </div>
+    <div class="nav-group">
+      <p class="nav-eyebrow">Try it</p>
+      <ul>
+        <li><a class="nav-link" href="playground.html#playground-top"><span class="dot"></span>Playground</a></li>
       </ul>
     </div>
   </nav>
@@ -134,18 +150,19 @@
             <tbody>
               <tr><td><code>from</code> / <code>to</code></td><td>Node ids being connected.</td></tr>
               <tr><td><code>into</code></td><td>Input slot to fill on the target node. Required for fan-in nodes with named inputs, such as <code>join</code>'s <code>left</code> and <code>right</code>.</td></tr>
+              <tr><td><code>on</code></td><td>Which output port of the <code>from</code> node to read. Defaults to <code>"out"</code>, the only port any built-in node exposes, so it can be omitted for every node type documented here; it exists for custom node types that declare more than one output port.</td></tr>
             </tbody>
           </table>
         </div>
 
         <div class="callout">
-          <strong>Entry points.</strong> Any node with no incoming connection starts a branch when the graph runs. A graph must have at least one; a graph with none fails validation.
+          <strong>Entry points, and no cycles.</strong> Any node with no incoming connection starts a branch when the graph runs. A graph must have at least one; a graph with none fails validation. Validation also walks the connection graph for cycles independently of the entry-point check, so a loop anywhere - even one that still leaves other nodes reachable from a valid entry point - fails validation with the offending cycle's node path in the error message.
         </div>
       </section>
 
       <section id="graph-ports">
         <h2>Ports and merging</h2>
-        <p class="section-desc">Every built-in node has a single output port, so connections never need to pick a port on the way out. A node's output can still feed more than one connection — that's how a branch fans out to several downstream nodes.</p>
+        <p class="section-desc">Every built-in node has a single output port, so connections never need to pick a port on the way out. A node's output can still feed more than one connection - that's how a branch fans out to several downstream nodes.</p>
 
         <p>Fan-in nodes work the other way: instead of choosing an output port, incoming connections choose an input slot. <code class="inline">union</code> accepts any number of branches on the default port and concatenates them. <code class="inline">join</code> requires exactly two, matched to its <code class="inline">left</code> and <code class="inline">right</code> input slots via each connection's <code class="inline">into</code> field.</p>
       </section>
@@ -163,13 +180,16 @@
               <tr><td>Conditional expression</td><td><code>pl.when(df.amount &gt;= 150).then(pl.lit("high")).otherwise(pl.lit("low"))</code></td></tr>
               <tr><td>Arithmetic</td><td><code>df.amount * df.quantity</code></td></tr>
               <tr><td>Comparisons</td><td><code>df.amount &gt;= 100</code></td></tr>
-              <tr><td>Boolean logic</td><td><code>df.amount &gt; 0 and df.quantity &gt; 0</code></td></tr>
               <tr><td>Method calls on columns</td><td><code>df.amount.mean()</code></td></tr>
             </tbody>
           </table>
         </div>
 
         <p>Anything outside this set, imports, arbitrary function calls, attribute access on anything other than <code class="inline">df</code> or a narrow set of <code class="inline">pl</code> helpers, is rejected before the graph runs rather than at data time.</p>
+
+        <div class="callout">
+          <strong><code class="inline">and</code> / <code class="inline">or</code> are accepted by the sandbox but not usable to combine two column conditions.</strong> The sandbox's grammar check lets <code class="inline">and</code>, <code class="inline">or</code>, and <code class="inline">not</code> through, but each side of a comparison like <code class="inline">df.amount &gt; 0</code> evaluates to a Polars <code class="inline">Expr</code>, and Polars raises <code class="inline">TypeError: the truth value of an Expr is ambiguous</code> as soon as such a value is used in a boolean context - which is exactly what evaluating <code class="inline">and</code>/<code class="inline">or</code>/<code class="inline">not</code> does. A <code class="inline">filter</code> or <code class="inline">derive</code> expression that combines two column conditions this way (for example <code class="inline">df.amount &gt; 0 and df.quantity &gt; 0</code>) passes validation but fails at execution time with that error. The bitwise equivalents Polars normally recommends for combining expressions (<code class="inline">&amp;</code>, <code class="inline">|</code>) are not in the sandbox's allowed syntax either, so there is currently no working way to AND/OR two column-based conditions in a single <code class="inline">expression</code>. <code class="inline">and</code>/<code class="inline">or</code>/<code class="inline">not</code> only work here on non-<code class="inline">Expr</code> values, such as plain Python constants.
+        </div>
 
         <p><code class="inline">register_transform</code> (see <code class="inline">NodeLibrary</code>) uses the same sandbox with a <code class="inline">value</code> identifier in place of <code class="inline">df</code>, since a registered transform applies its expression per target column rather than against the whole row.</p>
       </section>

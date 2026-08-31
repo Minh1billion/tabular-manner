@@ -1,0 +1,250 @@
+/* Playground page — extends style.css's tokens (--paper, --ink, --forest, --sage, --border-w, ...) */
+
+.pg-intro{
+  margin-bottom:28px;
+}
+
+.pg-intro h1{ font-size:34px; margin:0 0 12px; }
+.pg-intro p.lead{
+  color:var(--ink-soft);
+  max-width:640px;
+  margin:0;
+  font-size:15.5px;
+}
+
+/* ---------- controls bar ---------- */
+
+.pg-controls{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px;
+  margin:20px 0 18px;
+  padding:12px 14px;
+  border:var(--border-w) solid var(--ink);
+  border-radius:var(--radius);
+  background:var(--paper-soft);
+}
+
+.pg-controls button{
+  height:34px;
+  padding:0 14px;
+  border:var(--border-w) solid var(--ink);
+  border-radius:7px;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  transition:transform 0.1s ease;
+}
+.pg-controls button:hover:not(:disabled){ transform:translateY(-1px); }
+.pg-controls button:active:not(:disabled){ transform:translateY(0); }
+.pg-controls button.primary{ background:var(--sage); color:#fff; border-color:var(--forest); }
+.pg-controls button:disabled{ opacity:0.4; cursor:not-allowed; transform:none; }
+
+.pg-controls input[type=range]{ width:110px; accent-color:var(--sage); }
+
+.pg-speed-label{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  color:var(--ink-soft);
+  min-width:64px;
+}
+
+.pg-loop-toggle{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  color:var(--ink-soft);
+  cursor:pointer;
+  padding:5px 10px;
+  border:1.5px solid var(--line-strong);
+  border-radius:7px;
+  user-select:none;
+}
+.pg-loop-toggle:has(input:checked){
+  border-color:var(--forest);
+  color:var(--forest);
+  background:var(--sage-soft);
+}
+.pg-loop-toggle input{ accent-color:var(--sage); cursor:pointer; }
+
+.pg-controls .spacer{ flex:1; min-width:8px; }
+
+#stepLabel{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11.5px;
+  color:var(--ink-soft);
+  white-space:nowrap;
+}
+
+/* ---------- panel grid ---------- */
+
+.pg-grid{
+  display:grid;
+  grid-template-columns:1.6fr 1fr;
+  gap:14px;
+  margin-bottom:14px;
+}
+
+.pg-grid.pg-bottom{
+  grid-template-columns:1fr 1fr;
+}
+
+.pg-panel{
+  border:var(--border-w) solid var(--ink);
+  border-radius:var(--radius);
+  background:var(--paper-soft);
+  padding:14px;
+  min-width:0;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+.pg-panel h3{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:500;
+  margin:0 0 10px;
+}
+
+#graphCanvas{
+  width:100%;
+  height:auto;
+  min-height:260px;
+  max-height:420px;
+  flex:1;
+}
+
+#pseudocode{
+  margin:0;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11.5px;
+  line-height:1.65;
+  overflow-x:auto;
+  min-height:260px;
+  max-height:420px;
+  overflow-y:auto;
+}
+
+.code-line{ padding:1px 6px; border-radius:4px; white-space:pre; }
+.code-line.active{ background:var(--sage); color:#fff; }
+.code-line.dim{ color:var(--ink-soft); }
+
+/* svg node states, tuned to docs palette */
+.node-box{ fill:var(--line-strong); stroke:var(--ink); stroke-width:2; }
+.node-box.in-queue{ fill:#C98A3E; }
+.node-box.active{ fill:var(--sage); stroke:var(--forest); stroke-width:3; }
+.node-box.done{ fill:var(--forest); }
+.node-box.error{ fill:#B1503C; }
+.node-label{ font-size:11px; font-weight:600; pointer-events:none; }
+.edge-line{ stroke:var(--ink-soft); stroke-width:2; fill:none; marker-end:url(#arrow); }
+.edge-line.traversed{ stroke:var(--forest); stroke-width:3; }
+.edge-line.cycle{ stroke:#B1503C; stroke-width:3; }
+
+/* ---------- graph input ---------- */
+
+#graphInput{
+  flex:1;
+  width:100%;
+  min-height:220px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12px;
+  border:var(--border-w) solid var(--ink);
+  border-radius:8px;
+  padding:10px;
+  background:var(--paper);
+  color:var(--ink);
+  resize:vertical;
+}
+
+.pg-input-row{ display:flex; gap:8px; margin-top:10px; }
+.pg-input-row button{
+  padding:0 16px;
+  height:34px;
+  border:var(--border-w) solid var(--forest);
+  border-radius:7px;
+  background:var(--sage);
+  color:#fff;
+  font-weight:600;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12px;
+  cursor:pointer;
+}
+#inputError{
+  margin-top:8px;
+  font-size:11.5px;
+  color:#B1503C;
+  min-height:14px;
+}
+
+/* ---------- queue / visited / inspector ---------- */
+
+.pg-side .sub{ margin-bottom:16px; }
+.pg-side .sub:last-child{ margin-bottom:0; }
+
+.queue-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-height:34px; }
+.queue-item{
+  padding:6px 10px;
+  background:#C98A3E;
+  border:var(--border-w) solid var(--ink);
+  border-radius:6px;
+  font-size:11px;
+  font-weight:600;
+  color:var(--ink);
+}
+.visited-row{ margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; }
+.visited-dot{
+  width:24px; height:24px;
+  border-radius:6px;
+  background:var(--forest);
+  color:#fff;
+  font-size:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700;
+}
+
+.inspector-field{ margin-bottom:6px; font-size:12.5px; }
+.inspector-field span.k{ color:var(--ink-soft); display:inline-block; width:80px; }
+.inspector-field span.v{ font-weight:600; }
+
+.path-trace{ display:flex; gap:4px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+.path-node{ padding:3px 7px; background:var(--line-strong); border:1.5px solid var(--ink); border-radius:5px; font-size:10px; font-weight:700; }
+.path-arrow{ color:var(--ink-soft); font-size:11px; }
+
+.note-box{
+  margin-top:10px;
+  padding:8px 10px;
+  background:var(--paper);
+  border:1.5px solid var(--line-strong);
+  border-left:4px solid var(--sage);
+  border-radius:4px;
+  font-size:11.5px;
+}
+.note-box.warn{ border-left-color:#B1503C; }
+
+/* ---------- responsive ---------- */
+
+@media (max-width:1080px){
+  .pg-grid{ grid-template-columns:1fr; }
+  .pg-grid.pg-bottom{ grid-template-columns:1fr; }
+  #graphCanvas, #pseudocode{ max-height:340px; }
+}
+
+@media (max-width:640px){
+  .pg-intro h1{ font-size:26px; }
+  .pg-controls{ gap:8px; padding:10px; }
+  .pg-controls button{ height:32px; padding:0 10px; font-size:11px; }
+  .pg-controls input[type=range]{ width:80px; }
+  .pg-panel{ padding:10px; }
+  #graphCanvas, #pseudocode{ min-height:200px; max-height:280px; }
+  #graphInput{ min-height:180px; }
+}

@@ -13,7 +13,17 @@
 
 <div class="shell">
 
+  <div class="mobile-topbar">
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <a class="brand" href="../index.html#top" style="margin:0;">
+      <span class="brand-text">Tabular Manner</span>
+    </a>
+  </div>
+  <div class="nav-scrim"></div>
   <nav class="sidebar">
+    <button class="nav-close" aria-label="Close menu">&times;</button>
     <a class="brand" href="../index.html#top">
       <svg width="30" height="30" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" width="240" height="240" rx="40" fill="#F5F5EF"/>
@@ -74,6 +84,12 @@
         <li><a class="nav-link" href="../writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
       </ul>
     </div>
+    <div class="nav-group">
+      <p class="nav-eyebrow">Try it</p>
+      <ul>
+        <li><a class="nav-link" href="../playground.html#playground-top"><span class="dot"></span>Playground</a></li>
+      </ul>
+    </div>
   </nav>
 
   <main id="io">
@@ -83,7 +99,33 @@
         <h2>Source and sink nodes<span class="badge source">source</span><span class="badge sink">sink</span></h2>
         <p class="section-desc">Sources start a branch by reading data in; sinks end a branch by writing data out. Both types read and write lazily.</p>
 
-        <h3><span class="mono-title">fetch_internal</span><span class="badge source">source</span></h3>
+        <div class="callout">
+          <strong><code class="inline">schema</code>.</strong> Every source node except <code class="inline">fetch_internal</code> accepts an optional <code class="inline">schema</code> param: an object mapping column name to Polars dtype name (the same format as <code class="inline">cast</code>'s <code class="inline">types</code>, for example <code class="inline">{"amount": "Float64"}</code>). When set, it is used as-is for schema inference and validation instead of sampling the actual source, which is useful when the source isn't reachable yet at validation time or when inference would be expensive. It does not cast or affect the data read at execution time - only the schema the compiler assumes for downstream nodes.
+          <br><br>
+          <code class="inline">fetch_internal</code> is the one exception, and not by accident: it reads a resource the engine itself already wrote (via <code class="inline">push_internal</code> or <code class="inline">import_source</code>), stored internally as Parquet - a format that carries its own schema, so there's nothing to declare and nothing to sample remotely. The other five sources read something outside the engine's control (a file that may not exist yet, a bucket, a live database) where the schema either isn't knowable in advance or is expensive/impossible to check during <code class="inline">validate</code>, which is exactly what <code class="inline">schema</code> is for.
+        </div>
+
+        <nav class="onpage-toc" aria-label="Nodes on this page">
+          <p class="onpage-toc-group">Sources</p>
+          <ul>
+            <li><a href="#fetch_internal">fetch_internal</a></li>
+            <li><a href="#fetch_csv">fetch_csv</a></li>
+            <li><a href="#fetch_parquet">fetch_parquet</a></li>
+            <li><a href="#fetch_arrow">fetch_arrow</a></li>
+            <li><a href="#fetch_s3">fetch_s3</a></li>
+            <li><a href="#fetch_postgres">fetch_postgres</a></li>
+          </ul>
+          <p class="onpage-toc-group">Sinks</p>
+          <ul>
+            <li><a href="#push_internal">push_internal</a></li>
+            <li><a href="#push_csv">push_csv</a></li>
+            <li><a href="#push_parquet">push_parquet</a></li>
+            <li><a href="#push_arrow">push_arrow</a></li>
+            <li><a href="#push_postgres">push_postgres</a></li>
+          </ul>
+        </nav>
+
+        <h3 id="fetch_internal"><span class="mono-title">fetch_internal</span><span class="badge source">source</span></h3>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
@@ -94,7 +136,7 @@
           </table>
         </div>
 
-        <h3><span class="mono-title">fetch_csv</span><span class="badge source">source</span></h3>
+        <h3 id="fetch_csv"><span class="mono-title">fetch_csv</span><span class="badge source">source</span></h3>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
@@ -103,11 +145,12 @@
               <tr><td><code>separator</code></td><td class="muted">string</td><td class="muted">","</td></tr>
               <tr><td><code>has_header</code></td><td class="muted">bool</td><td class="muted">true</td></tr>
               <tr><td><code>encoding</code></td><td class="muted">string</td><td class="muted">"utf8"</td></tr>
+              <tr><td><code>schema</code></td><td class="muted">object of string to string</td><td class="muted">none (inferred)</td></tr>
             </tbody>
           </table>
         </div>
 
-        <h3><span class="mono-title">fetch_parquet</span><span class="badge source">source</span></h3>
+        <h3 id="fetch_parquet"><span class="mono-title">fetch_parquet</span><span class="badge source">source</span></h3>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
@@ -115,21 +158,23 @@
               <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td></tr>
               <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">none (all columns)</td></tr>
               <tr><td><code>n_rows</code></td><td class="muted">integer</td><td class="muted">none (all rows)</td></tr>
+              <tr><td><code>schema</code></td><td class="muted">object of string to string</td><td class="muted">none (inferred)</td></tr>
             </tbody>
           </table>
         </div>
 
-        <h3><span class="mono-title">fetch_arrow</span><span class="badge source">source</span></h3>
+        <h3 id="fetch_arrow"><span class="mono-title">fetch_arrow</span><span class="badge source">source</span></h3>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
             <tbody>
               <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>schema</code></td><td class="muted">object of string to string</td><td class="muted">none (inferred)</td></tr>
             </tbody>
           </table>
         </div>
 
-        <h3><span class="mono-title">fetch_s3</span><span class="badge source">source</span></h3>
+        <h3 id="fetch_s3"><span class="mono-title">fetch_s3</span><span class="badge source">source</span></h3>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
@@ -139,11 +184,12 @@
               <tr><td><code>format</code></td><td class="muted">string</td><td class="muted">"parquet" (or "csv")</td></tr>
               <tr><td><code>region</code></td><td class="muted">string</td><td class="muted">none</td></tr>
               <tr><td><code>storage_options</code></td><td class="muted">object</td><td class="muted">none</td></tr>
+              <tr><td><code>schema</code></td><td class="muted">object of string to string</td><td class="muted">none (inferred)</td></tr>
             </tbody>
           </table>
         </div>
 
-        <h3><span class="mono-title">fetch_postgres</span><span class="badge source">source</span></h3>
+        <h3 id="fetch_postgres"><span class="mono-title">fetch_postgres</span><span class="badge source">source</span></h3>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
@@ -153,11 +199,12 @@
               <tr><td><code>query</code></td><td class="muted">string</td><td class="muted">none (reads whole table)</td></tr>
               <tr><td><code>partition_on</code></td><td class="muted">string</td><td class="muted">none</td></tr>
               <tr><td><code>partition_num</code></td><td class="muted">integer</td><td class="muted">none</td></tr>
+              <tr><td><code>schema</code></td><td class="muted">object of string to string</td><td class="muted">none (inferred)</td></tr>
             </tbody>
           </table>
         </div>
 
-        <h3><span class="mono-title">push_internal</span><span class="badge sink">sink</span></h3>
+        <h3 id="push_internal"><span class="mono-title">push_internal</span><span class="badge sink">sink</span></h3>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
@@ -168,26 +215,46 @@
           </table>
         </div>
 
-        <h3><span class="mono-title">push_csv</span> / <span class="mono-title">push_parquet</span> / <span class="mono-title">push_arrow</span><span class="badge sink">sink</span></h3>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Applies to</th></tr></thead>
-            <tbody>
-              <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td><td class="muted">all three</td></tr>
-              <tr><td><code>separator</code></td><td class="muted">string</td><td class="muted">","</td><td class="muted">push_csv only</td></tr>
-              <tr><td><code>include_header</code></td><td class="muted">bool</td><td class="muted">true</td><td class="muted">push_csv only</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <h3><span class="mono-title">push_postgres</span><span class="badge sink">sink</span></h3>
+        <h3 id="push_csv"><span class="mono-title">push_csv</span><span class="badge sink">sink</span></h3>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
             <tbody>
-              <tr><td><code>dsn</code></td><td class="muted">string</td><td class="muted">required</td></tr>
-              <tr><td><code>table</code></td><td class="muted">string</td><td class="muted">required</td></tr>
-              <tr><td><code>if_table_exists</code></td><td class="muted">string</td><td class="muted">"append"</td></tr>
+              <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>separator</code></td><td class="muted">string</td><td class="muted">","</td></tr>
+              <tr><td><code>include_header</code></td><td class="muted">bool</td><td class="muted">true</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="push_parquet"><span class="mono-title">push_parquet</span><span class="badge sink">sink</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="push_arrow"><span class="mono-title">push_arrow</span><span class="badge sink">sink</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="push_postgres"><span class="mono-title">push_postgres</span><span class="badge sink">sink</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>dsn</code></td><td class="muted">string</td><td class="muted">required</td><td></td></tr>
+              <tr><td><code>table</code></td><td class="muted">string</td><td class="muted">required</td><td></td></tr>
+              <tr><td><code>if_table_exists</code></td><td class="muted">string</td><td class="muted">"append"</td><td>One of <code>"append"</code>, <code>"replace"</code>, <code>"fail"</code>.</td></tr>
             </tbody>
           </table>
         </div>
