@@ -102,6 +102,10 @@
         <p class="lead">Paste a graph spec (or edit the default one) and step through exactly what the engine does: a structural check that walks the graph looking for cycles, then, if the graph is valid, the ready-queue traversal that decides execution order. Use <strong>Play</strong> to animate it, or <strong>Prev</strong> / <strong>Next</strong> to step by hand.</p>
       </div>
 
+      <div class="callout" style="margin-bottom:24px;">
+        <strong>What you're watching.</strong> Each node only knows how to process its own data - it has no idea what's upstream or downstream. The graph never processes data itself; it just knows the wiring, and decides which node runs next. As you step through below, the graph is doing exactly that: checking a node is ready, handing it off, then reading the result to pick where to go next.
+      </div>
+
       <div class="pg-controls">
         <button id="btnPrev" title="Previous">&larr; Prev</button>
         <button id="btnPlay" class="primary" title="Play/Pause">Play</button>
@@ -139,10 +143,15 @@
       <div class="pg-grid pg-bottom">
         <div class="pg-panel">
           <h3>Graph input (JSON)</h3>
-          <textarea id="graphInput" spellcheck="false"></textarea>
-          <div class="pg-input-row">
-            <button id="btnRun">Run</button>
+          <div class="pg-preset-row">
+            <button class="preset-btn" data-preset="chain">Straight line</button>
+            <button class="preset-btn" data-preset="fanout">Fan-out</button>
+            <button class="preset-btn active" data-preset="join">Fan-out + join</button>
+            <button class="preset-btn" data-preset="union3">3-way merge</button>
+            <button class="preset-btn" data-preset="chained">Chained joins</button>
+            <button class="preset-btn" data-preset="cycle">Cycle (invalid)</button>
           </div>
+          <textarea id="graphInput" spellcheck="false"></textarea>
           <div id="inputError"></div>
         </div>
 
