@@ -102,6 +102,10 @@
         <p class="lead">Paste a graph spec (or edit the default one) and step through exactly what the engine does: a structural check that walks the graph looking for cycles, then, if the graph is valid, the ready-queue traversal that decides execution order. Use <strong>Play</strong> to animate it, or <strong>Prev</strong> / <strong>Next</strong> to step by hand.</p>
       </div>
 
+      <div class="callout" style="margin-bottom:24px;">
+        <strong>What you're watching.</strong> Each node only knows how to process its own data - it has no idea what's upstream or downstream. The graph never processes data itself; it just knows the wiring, and decides which node runs next. As you step through below, the graph is doing exactly that: checking a node is ready, handing it off, then reading the result to pick where to go next.
+      </div>
+
       <div class="pg-controls">
         <button id="btnPrev" title="Previous">&larr; Prev</button>
         <button id="btnPlay" class="primary" title="Play/Pause">Play</button>
@@ -139,10 +143,15 @@
       <div class="pg-grid pg-bottom">
         <div class="pg-panel">
           <h3>Graph input (JSON)</h3>
-          <textarea id="graphInput" spellcheck="false"></textarea>
-          <div class="pg-input-row">
-            <button id="btnRun">Run</button>
+          <div class="pg-preset-row">
+            <button class="preset-btn" data-preset="chain">Straight line</button>
+            <button class="preset-btn" data-preset="fanout">Fan-out</button>
+            <button class="preset-btn active" data-preset="join">Fan-out + join</button>
+            <button class="preset-btn" data-preset="union3">3-way merge</button>
+            <button class="preset-btn" data-preset="chained">Chained joins</button>
+            <button class="preset-btn" data-preset="cycle">Cycle (invalid)</button>
           </div>
+          <textarea id="graphInput" spellcheck="false"></textarea>
           <div id="inputError"></div>
         </div>
 
@@ -159,11 +168,35 @@
         </div>
       </div>
 
-      <div class="edge-divider"><span class="node"></span></div>
-
-      <footer>
-        <p>The playground runs the same two-phase algorithm as <code class="inline">engine.execution.validate</code> / <code class="inline">execute</code>: a DFS cycle check first (colors a node GRAY on entry, BLACK on exit — revisiting a GRAY node means a cycle), then, only if the graph is valid, a ready-queue traversal that runs a node once every one of its parents has completed.</p>
-      </footer>
+      <div class="pg-legend collapsed" id="pgLegend">
+        <button class="pg-legend-toggle" id="pgLegendToggle" aria-expanded="false" aria-controls="pgLegendBody">Legend</button>
+        <div class="pg-legend-body" id="pgLegendBody">
+          <div class="pg-legend-group">
+            <p class="pg-legend-title">Node color</p>
+            <div class="pg-legend-row"><span class="legend-swatch idle"></span>Idle - not visited yet</div>
+            <div class="pg-legend-row"><span class="legend-swatch queue"></span>Queued - waiting its turn</div>
+            <div class="pg-legend-row"><span class="legend-swatch wait"></span>Waiting - fan-in buffer incomplete</div>
+            <div class="pg-legend-row"><span class="legend-swatch active"></span>Active - running right now</div>
+            <div class="pg-legend-row"><span class="legend-swatch done"></span>Done - forwarded, result ready</div>
+            <div class="pg-legend-row"><span class="legend-swatch error"></span>GRAY on revisit - cycle</div>
+          </div>
+          <div class="pg-legend-group">
+            <p class="pg-legend-title">Edge color</p>
+            <div class="pg-legend-row"><span class="legend-swatch edge-idle"></span>Idle - not traversed yet</div>
+            <div class="pg-legend-row"><span class="legend-swatch edge-traversed"></span>Traversed - plan handed off</div>
+            <div class="pg-legend-row"><span class="legend-swatch edge-cycle"></span>Back-edge - closes a cycle</div>
+          </div>
+          <div class="pg-legend-group">
+            <p class="pg-legend-title">Pseudocode tokens</p>
+            <div class="pg-legend-row"><span class="legend-tok tok-key">if</span>control-flow keyword</div>
+            <div class="pg-legend-row"><span class="legend-tok tok-const">GRAY</span>DFS color / NONE constant</div>
+            <div class="pg-legend-row"><span class="legend-tok tok-fn">fn()</span>function or method call</div>
+            <div class="pg-legend-row"><span class="legend-tok tok-node">node</span>a Node - wraps one Operator</div>
+            <div class="pg-legend-row"><span class="legend-tok tok-graph">graph</span>the compiled Graph</div>
+            <div class="pg-legend-row"><span class="legend-tok tok-plan">plan</span>the Plan - LazyFrame + history</div>
+          </div>
+        </div>
+      </div>
 
     </div>
   </main>
