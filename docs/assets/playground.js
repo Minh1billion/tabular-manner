@@ -216,9 +216,21 @@ function computeLayout(graph) {
   });
   const maxLayer = Math.max(0, ...Object.values(layer));
   const maxRows = Math.max(1, ...Object.values(rowCounters));
-  const viewW = 30 + maxRows * COL_GAP + 30;
+
+  // An edge whose target sits at the same layer or above its source can't be drawn as a
+  // simple downward arrow - this is exactly what a cycle's back-edge looks like, and drawing
+  // it as a straight line just overlaps the forward edges below it and disappears. Flag these
+  // so renderGraph bows them out to the side instead.
+  const backEdgeSet = new Set();
+  graph.edges.forEach(([a, b]) => {
+    if (positions[b].y <= positions[a].y) backEdgeSet.add(edgeKey(a, b));
+  });
+  const rightEdge = Math.max(...Object.values(positions).map(p => p.x + NODE_W));
+  const bulgeExtra = backEdgeSet.size ? 60 + (backEdgeSet.size - 1) * 34 + 30 : 0;
+
+  const viewW = Math.max(30 + maxRows * COL_GAP + 30, rightEdge + 30) + bulgeExtra;
   const viewH = 30 + (maxLayer + 1) * ROW_GAP + 20;
-  return { positions, viewW, viewH };
+  return { positions, viewW, viewH, backEdgeSet, rightEdge };
 }
 
 function genSteps(graph) {
@@ -373,16 +385,34 @@ function renderGraph(svg, graph, layout, step) {
   svg.setAttribute("viewBox", "0 0 " + layout.viewW + " " + layout.viewH);
   const ns = svg.namespaceURI;
 
+  let backIdx = 0;
   graph.edges.forEach(([a, b]) => {
     const pa = layout.positions[a], pb = layout.positions[b];
-    const x1 = pa.x + NODE_W / 2, y1 = pa.y + NODE_H;
-    const x2 = pb.x + NODE_W / 2, y2 = pb.y;
-    const line = document.createElementNS(ns, "line");
-    line.setAttribute("x1", x1); line.setAttribute("y1", y1);
-    line.setAttribute("x2", x2); line.setAttribute("y2", y2);
     const state = step ? step.edgeStates[edgeKey(a, b)] : "idle";
-    line.setAttribute("class", "edge-line" + (state === "traversed" ? " traversed" : state === "cycle" ? " cycle" : ""));
-    svg.appendChild(line);
+    const stateClass = state === "traversed" ? " traversed" : state === "cycle" ? " cycle" : "";
+
+    if (!layout.backEdgeSet.has(edgeKey(a, b))) {
+      const x1 = pa.x + NODE_W / 2, y1 = pa.y + NODE_H;
+      const x2 = pb.x + NODE_W / 2, y2 = pb.y;
+      const line = document.createElementNS(ns, "line");
+      line.setAttribute("x1", x1); line.setAttribute("y1", y1);
+      line.setAttribute("x2", x2); line.setAttribute("y2", y2);
+      line.setAttribute("class", "edge-line" + stateClass);
+      svg.appendChild(line);
+      return;
+    }
+
+    // Back-edge (this is what a cycle looks like): bow it out to the right, clear of the
+    // node column, instead of drawing it straight where it would sit on top of - and be
+    // hidden by - the forward edges.
+    const x1 = pa.x + NODE_W, y1 = pa.y + NODE_H / 2;
+    const x2 = pb.x + NODE_W, y2 = pb.y + NODE_H / 2;
+    const ctrlX = layout.rightEdge + 40 + backIdx * 34;
+    backIdx += 1;
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", `M ${x1} ${y1} C ${ctrlX} ${y1} ${ctrlX} ${y2} ${x2} ${y2}`);
+    path.setAttribute("class", "edge-line edge-back" + stateClass);
+    svg.appendChild(path);
   });
 
   Object.keys(graph.nodes).forEach(id => {
@@ -617,3 +647,12 @@ document.getElementById("graphInput").addEventListener("input", () => {
 
 document.getElementById("graphInput").value = JSON.stringify(DEFAULT_GRAPH, null, 2);
 runGraph();
+
+const pgLegend = document.getElementById("pgLegend");
+const pgLegendToggle = document.getElementById("pgLegendToggle");
+if (pgLegend && pgLegendToggle) {
+  pgLegendToggle.addEventListener("click", () => {
+    const collapsed = pgLegend.classList.toggle("collapsed");
+    pgLegendToggle.setAttribute("aria-expanded", String(!collapsed));
+  });
+}
