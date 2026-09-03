@@ -12,10 +12,12 @@ class WriterFactory:
     def _default_adapters() -> dict[str, type[WriterAdapter]]:
         from ...infrastructure.writer.database import DatabaseWriterAdapter
         from ...infrastructure.writer.file import FileWriterAdapter
+        from ...infrastructure.writer.s3 import S3WriterAdapter
 
         return {
             "file": FileWriterAdapter,
             "database": DatabaseWriterAdapter,
+            "s3": S3WriterAdapter,
         }
 
     def register(self, kind: str, adapter_cls: type[WriterAdapter]) -> "WriterFactory":

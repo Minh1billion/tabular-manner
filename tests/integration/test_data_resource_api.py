@@ -159,30 +159,29 @@ class TestExport:
         engine.data_resource._resource_storage.save("raw", pl.DataFrame({"a": [1, 2, 3]}).lazy())
         dest = tmp_path / "out.csv"
 
-        events = list(engine.data_resource.export("raw", str(dest), format="csv"))
-        data = _completed(events)
+        events = list(engine.data_resource.export("raw", "file", {"path": str(dest)}, format="csv"))
+        _completed(events)
 
-        assert data["dest_path"] == str(dest)
         assert dest.read_text() == "a\n1\n2\n3\n"
 
     def test_exports_to_parquet(self, engine, tmp_path):
         engine.data_resource._resource_storage.save("raw", pl.DataFrame({"a": [1, 2, 3]}).lazy())
         dest = tmp_path / "out.parquet"
 
-        events = list(engine.data_resource.export("raw", str(dest), format="parquet"))
+        events = list(engine.data_resource.export("raw", "file", {"path": str(dest)}, format="parquet"))
         _completed(events)
 
         assert pl.read_parquet(dest)["a"].to_list() == [1, 2, 3]
 
     def test_missing_key_fails(self, engine, tmp_path):
-        events = list(engine.data_resource.export("does_not_exist", str(tmp_path / "out.csv")))
+        events = list(engine.data_resource.export("does_not_exist", "file", {"path": str(tmp_path / "out.csv")}))
         error = _failed(events)
         assert "not found" in error["error"]
 
     def test_unsupported_format_fails(self, engine, tmp_path):
         engine.data_resource._resource_storage.save("raw", pl.DataFrame({"a": [1]}).lazy())
 
-        events = list(engine.data_resource.export("raw", str(tmp_path / "out.xml"), format="xml"))
+        events = list(engine.data_resource.export("raw", "file", {"path": str(tmp_path / "out.xml")}, format="xml"))
         error = _failed(events)
         assert "Unsupported file format" in error["error"]
 
