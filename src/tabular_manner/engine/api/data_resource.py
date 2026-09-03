@@ -96,7 +96,7 @@ class DataResource:
         except Exception as exc:
             yield _event("failed", error=str(exc))
 
-    def export(self, key: str, dest_path: str, format: str = "csv", bucket: str | None = None) -> Iterator[dict[str, Any]]:
+    def export(self, key: str, writer_kind: str, writer_params: dict[str, Any], format: str = "csv", bucket: str | None = None) -> Iterator[dict[str, Any]]:
         try:
             yield _event("loading", key=key, bucket=bucket)
             if not self.exists(key, bucket=bucket):
@@ -104,10 +104,10 @@ class DataResource:
 
             lf = self._resource_storage.load(key, bucket=bucket)
 
-            yield _event("writing", dest_path=dest_path, format=format)
-            self._writer_factory.write("file", lf, path=dest_path, format=format)
+            yield _event("writing", writer_kind=writer_kind, format=format)
+            self._writer_factory.write(writer_kind, lf, format=format, **writer_params)
 
-            yield _event("completed", data={"key": key, "bucket": bucket, "dest_path": dest_path, "format": format})
+            yield _event("completed", data={"key": key, "bucket": bucket, "writer_kind": writer_kind, "format": format})
         except Exception as exc:
             yield _event("failed", error=str(exc))
 

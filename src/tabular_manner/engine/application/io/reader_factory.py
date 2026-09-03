@@ -10,10 +10,12 @@ class ReaderFactory:
     def _default_adapters() -> dict[str, type[ReaderAdapter]]:
         from ...infrastructure.reader.database import DatabaseReaderAdapter
         from ...infrastructure.reader.file import FileReaderAdapter
+        from ...infrastructure.reader.s3 import S3ReaderAdapter
 
         return {
             "file": FileReaderAdapter,
             "database": DatabaseReaderAdapter,
+            "s3": S3ReaderAdapter,
         }
 
     def register(self, kind: str, adapter_cls: type[ReaderAdapter]) -> "ReaderFactory":
