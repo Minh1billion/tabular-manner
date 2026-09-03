@@ -5,14 +5,16 @@ import polars as pl
 
 from ..application.io.reader_factory import ReaderFactory
 from ..application.io.resource_storage import ResourceStorage
+from ..application.io.writer_factory import WriterFactory
 
 def _event(name: str, **data: Any) -> dict[str, Any]:
     return {"event": name, "ts": datetime.now(timezone.utc).isoformat(), **data}
 
 class DataResource:
-    def __init__(self, resource_storage: ResourceStorage, reader_factory: ReaderFactory):
+    def __init__(self, resource_storage: ResourceStorage, reader_factory: ReaderFactory, writer_factory: WriterFactory):
         self._resource_storage = resource_storage
         self._reader_factory = reader_factory
+        self._writer_factory = writer_factory
 
     def import_source(self, key: str, source_kind: str, source_params: dict[str, Any], bucket: str | None = None, overwrite: bool = False) -> Iterator[dict[str, Any]]:
         try:
@@ -91,6 +93,21 @@ class DataResource:
             self._resource_storage.delete(key, bucket=bucket)
 
             yield _event("completed", data={"key": key, "bucket": bucket})
+        except Exception as exc:
+            yield _event("failed", error=str(exc))
+
+    def export(self, key: str, dest_path: str, format: str = "csv", bucket: str | None = None) -> Iterator[dict[str, Any]]:
+        try:
+            yield _event("loading", key=key, bucket=bucket)
+            if not self.exists(key, bucket=bucket):
+                raise ValueError(f"Resource '{key}' not found in bucket '{bucket}'")
+
+            lf = self._resource_storage.load(key, bucket=bucket)
+
+            yield _event("writing", dest_path=dest_path, format=format)
+            self._writer_factory.write("file", lf, path=dest_path, format=format)
+
+            yield _event("completed", data={"key": key, "bucket": bucket, "dest_path": dest_path, "format": format})
         except Exception as exc:
             yield _event("failed", error=str(exc))
 

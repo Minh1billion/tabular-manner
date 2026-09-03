@@ -50,7 +50,7 @@ def build_engine(
     context_manager.register("reader_factory", reader_factory)
     context_manager.register("writer_factory", writer_factory)
 
-    data_resource = DataResource(resource_storage=resource_storage, reader_factory=reader_factory)
+    data_resource = DataResource(resource_storage=resource_storage, reader_factory=reader_factory, writer_factory=writer_factory)
     execution = Execution(
         context_manager=context_manager,
         registry_provider=registry_provider,
