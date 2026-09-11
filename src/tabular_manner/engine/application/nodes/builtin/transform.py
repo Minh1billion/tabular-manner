@@ -1,7 +1,7 @@
 import polars as pl
 
 from ....domain.models.plan import Plan
-from ....domain.models.operator import Operator
+from ....domain.models.operator import Operator, SchemaStrategy
 from ....domain.models.schema import Schema
 from ..registry import NodeRegistry
 from ...runtime.expression_compiler import ExpressionCompiler
@@ -20,6 +20,8 @@ class Transform(Operator):
         return plan.commit(applied, step=self.name), self.default_port
 
     def infer_schema(self, input_schema: Schema) -> Schema:
+        if self.schema_strategy is SchemaStrategy.DECLARED:
+            return self.declared_schema(input_schema)
         applied = self._apply(input_schema.to_polars())
         return Schema.from_polars(applied.collect_schema())
 
