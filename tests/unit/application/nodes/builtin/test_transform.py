@@ -3,12 +3,21 @@ import polars as pl
 import pytest
 
 from tabular_manner.engine.application.nodes.builtin.transform import (
+    Abs,
+    AddRowIndex,
+    Bin,
     Cast,
+    Clip,
+    CumulativeSum,
+    DatePart,
     Derive,
     Drop,
     DropDuplicates,
     DropNulls,
     Explode,
+    ExtractRegex,
+    FillBackward,
+    FillForward,
     FillMean,
     FillNull,
     Filter,
@@ -16,11 +25,22 @@ from tabular_manner.engine.application.nodes.builtin.transform import (
     Head,
     Limit,
     Log,
+    MapValues,
     MinMaxNormalize,
+    ParseDate,
+    Power,
+    Rank,
     Rename,
+    Round,
     Select,
+    Shift,
     Sort,
+    Sqrt,
+    StrCase,
+    StrReplace,
+    StrStrip,
     Tail,
+    Unpivot,
     ZScoreNormalize,
 )
 from tabular_manner.engine.domain.models.plan import Plan
@@ -348,3 +368,255 @@ class TestDerive:
     def test_rejects_disallowed_expression(self):
         with pytest.raises(ValueError):
             Derive(name="derive", column="x", expression="df.a.map_elements(pl.read_csv)")
+
+class TestAbs:
+    def test_takes_absolute_value(self):
+        node = Abs(name="abs", columns=["a"])
+        plan = _plan({"a": [-1, 2, -3]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [1, 2, 3]
+
+class TestRound:
+    def test_rounds_to_given_decimals(self):
+        node = Round(name="round", columns=["a"], decimals=1)
+        plan = _plan({"a": [1.234, 2.567]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [1.2, 2.6]
+
+    def test_defaults_to_zero_decimals(self):
+        node = Round(name="round", columns=["a"])
+        plan = _plan({"a": [1.6]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [2.0]
+
+class TestClip:
+    def test_clips_values_to_bounds(self):
+        node = Clip(name="clip", columns=["a"], lower=-2.0, upper=2.0)
+        plan = _plan({"a": [-5.0, 0.0, 5.0]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [-2.0, 0.0, 2.0]
+
+    def test_rejects_when_no_bound_given(self):
+        with pytest.raises(ValueError):
+            Clip(name="clip", columns=["a"])
+
+class TestSqrt:
+    def test_applies_square_root(self):
+        node = Sqrt(name="sqrt", columns=["a"])
+        plan = _plan({"a": [4.0, 9.0]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [2.0, 3.0]
+
+class TestPower:
+    def test_raises_to_given_exponent(self):
+        node = Power(name="power", columns=["a"], exponent=2.0)
+        plan = _plan({"a": [2.0, 3.0]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [4.0, 9.0]
+
+class TestFillForward:
+    def test_fills_nulls_from_previous_value(self):
+        node = FillForward(name="ffill", columns=["a"])
+        plan = _plan({"a": [1, None, None, 4]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [1, 1, 1, 4]
+
+class TestFillBackward:
+    def test_fills_nulls_from_next_value(self):
+        node = FillBackward(name="bfill", columns=["a"])
+        plan = _plan({"a": [1, None, None, 4]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [1, 4, 4, 4]
+
+class TestStrCase:
+    def test_uppercases_text(self):
+        node = StrCase(name="case", columns=["a"], case="upper")
+        plan = _plan({"a": ["hi there"]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == ["HI THERE"]
+
+    def test_rejects_unknown_case(self):
+        with pytest.raises(ValueError):
+            StrCase(name="case", columns=["a"], case="bogus")
+
+class TestStrStrip:
+    def test_strips_surrounding_whitespace(self):
+        node = StrStrip(name="strip", columns=["a"])
+        plan = _plan({"a": ["  hi  "]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == ["hi"]
+
+class TestStrReplace:
+    def test_replaces_all_matches(self):
+        node = StrReplace(name="replace", columns=["a"], pattern="o", value="0")
+        plan = _plan({"a": ["foo bar"]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == ["f00 bar"]
+
+class TestRank:
+    def test_ranks_values_ascending(self):
+        node = Rank(name="rank", columns=["a"], method="ordinal")
+        plan = _plan({"a": [30, 10, 20]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [3.0, 1.0, 2.0]
+
+    def test_rejects_unknown_method(self):
+        with pytest.raises(ValueError):
+            Rank(name="rank", columns=["a"], method="bogus")
+
+class TestCumulativeSum:
+    def test_accumulates_values(self):
+        node = CumulativeSum(name="cumsum", columns=["a"])
+        plan = _plan({"a": [1, 2, 3]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [1, 3, 6]
+
+class TestShift:
+    def test_shifts_values_down_by_n(self):
+        node = Shift(name="shift", columns=["a"], n=1)
+        plan = _plan({"a": [1, 2, 3]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == [None, 1, 2]
+
+class TestAddRowIndex:
+    def test_adds_incrementing_index_column(self):
+        node = AddRowIndex(name="idx")
+        plan = _plan({"a": [10, 20, 30]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["index"].to_list() == [0, 1, 2]
+
+    def test_respects_custom_name_and_offset(self):
+        node = AddRowIndex(name="idx", index_name="row_id", offset=5)
+        plan = _plan({"a": [10, 20]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["row_id"].to_list() == [5, 6]
+
+class TestBin:
+    def test_buckets_values_with_labels(self):
+        node = Bin(name="bin", column="a", breaks=[10.0, 20.0], labels=["low", "mid", "high"])
+        plan = _plan({"a": [1, 15, 25]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a_bin"].to_list() == ["low", "mid", "high"]
+
+    def test_rejects_mismatched_label_count(self):
+        with pytest.raises(ValueError):
+            Bin(name="bin", column="a", breaks=[10.0], labels=["low"])
+
+class TestExtractRegex:
+    def test_extracts_capture_group(self):
+        node = ExtractRegex(name="extract", column="s", pattern=r"id-(\d+)")
+        plan = _plan({"s": ["id-123", "no-match"]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["s_extracted"].to_list() == ["123", None]
+
+class TestParseDate:
+    def test_parses_string_into_date(self):
+        node = ParseDate(name="parse", columns=["d"], format="%Y-%m-%d")
+        plan = _plan({"d": ["2024-01-15"]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["d"].dtype == pl.Date
+
+class TestDatePart:
+    def test_extracts_year_from_date(self):
+        node = DatePart(name="part", column="d", part="year")
+        plan = Plan(handle=pl.LazyFrame({"d": ["2024-01-15"]}).with_columns(pl.col("d").str.to_date()))
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["d_year"].to_list() == [2024]
+
+    def test_rejects_unknown_part(self):
+        with pytest.raises(ValueError):
+            DatePart(name="part", column="d", part="bogus")
+
+class TestUnpivot:
+    def test_melts_value_columns_into_rows(self):
+        node = Unpivot(name="unpivot", index=["id"])
+        plan = _plan({"id": [1, 2], "x": [10, 20], "y": [100, 200]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect().sort(["variable", "id"])
+
+        assert collected["variable"].to_list() == ["x", "x", "y", "y"]
+        assert collected["value"].to_list() == [10, 20, 100, 200]
+
+class TestMapValues:
+    def test_replaces_mapped_values(self):
+        node = MapValues(name="map", column="a", mapping={"x": "X", "y": "Y"})
+        plan = _plan({"a": ["x", "y", "z"]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == ["X", "Y", "z"]
+
+    def test_uses_default_for_unmapped_values(self):
+        node = MapValues(name="map", column="a", mapping={"x": "X"}, default="OTHER")
+        plan = _plan({"a": ["x", "z"]})
+
+        result, _ = node.forward(plan)
+        collected = result.handle.collect()
+
+        assert collected["a"].to_list() == ["X", "OTHER"]
+
+    def test_rejects_empty_mapping(self):
+        with pytest.raises(ValueError):
+            MapValues(name="map", column="a", mapping={})
