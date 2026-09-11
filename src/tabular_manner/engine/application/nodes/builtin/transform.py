@@ -249,6 +249,281 @@ class Cast(Transform):
             pl.col(c).cast(getattr(pl, t)) for c, t in self.types.items()
         )
 
+@NodeRegistry.register("abs")
+class Abs(Transform):
+    label = "Absolute Value"
+    category = "transform"
+    required = {"columns": (list, str)}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(pl.col(c).abs() for c in self.columns)
+
+@NodeRegistry.register("round")
+class Round(Transform):
+    label = "Round"
+    category = "transform"
+    required = {"columns": (list, str)}
+    optional = {"decimals": (int, 0)}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(pl.col(c).round(self.decimals) for c in self.columns)
+
+@NodeRegistry.register("clip")
+class Clip(Transform):
+    label = "Clip Values"
+    category = "transform"
+    required = {"columns": (list, str)}
+    optional = {"lower": (float, None), "upper": (float, None)}
+
+    def validate(self):
+        super().validate()
+        if self.lower is None and self.upper is None:
+            raise ValueError("at least one of 'lower' or 'upper' must be set")
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(pl.col(c).clip(self.lower, self.upper) for c in self.columns)
+
+@NodeRegistry.register("sqrt")
+class Sqrt(Transform):
+    label = "Square Root"
+    category = "transform"
+    required = {"columns": (list, str)}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(pl.col(c).sqrt() for c in self.columns)
+
+@NodeRegistry.register("power")
+class Power(Transform):
+    label = "Power"
+    category = "transform"
+    required = {"columns": (list, str), "exponent": float}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(pl.col(c).pow(self.exponent) for c in self.columns)
+
+@NodeRegistry.register("fill_forward")
+class FillForward(Transform):
+    label = "Fill Missing (Forward)"
+    category = "transform"
+    required = {"columns": (list, str)}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(
+            pl.col(c).fill_null(strategy="forward") for c in self.columns
+        )
+
+@NodeRegistry.register("fill_backward")
+class FillBackward(Transform):
+    label = "Fill Missing (Backward)"
+    category = "transform"
+    required = {"columns": (list, str)}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(
+            pl.col(c).fill_null(strategy="backward") for c in self.columns
+        )
+
+@NodeRegistry.register("str_case")
+class StrCase(Transform):
+    label = "Change Text Case"
+    category = "transform"
+    required = {"columns": (list, str), "case": str}
+
+    def validate(self):
+        super().validate()
+        if self.case not in ("upper", "lower", "title"):
+            raise ValueError("'case' must be one of 'upper', 'lower', 'title'")
+
+    def _column_expr(self, c: str) -> pl.Expr:
+        if self.case == "upper":
+            return pl.col(c).str.to_uppercase()
+        if self.case == "lower":
+            return pl.col(c).str.to_lowercase()
+        return pl.col(c).str.to_titlecase()
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(self._column_expr(c) for c in self.columns)
+
+@NodeRegistry.register("str_strip")
+class StrStrip(Transform):
+    label = "Strip Whitespace"
+    category = "transform"
+    required = {"columns": (list, str)}
+    optional = {"characters": (str, None)}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(
+            pl.col(c).str.strip_chars(self.characters) for c in self.columns
+        )
+
+@NodeRegistry.register("str_replace")
+class StrReplace(Transform):
+    label = "Replace Text"
+    category = "transform"
+    required = {"columns": (list, str), "pattern": str, "value": str}
+    optional = {"literal": (bool, False)}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(
+            pl.col(c).str.replace_all(self.pattern, self.value, literal=self.literal)
+            for c in self.columns
+        )
+
+@NodeRegistry.register("rank")
+class Rank(Transform):
+    label = "Rank"
+    category = "transform"
+    required = {"columns": (list, str)}
+    optional = {"method": (str, "average"), "descending": (bool, False)}
+
+    _ALLOWED_METHODS = frozenset({"average", "min", "max", "dense", "ordinal", "random"})
+
+    def validate(self):
+        super().validate()
+        if self.method not in self._ALLOWED_METHODS:
+            raise ValueError(f"'method' must be one of {sorted(self._ALLOWED_METHODS)}")
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(
+            pl.col(c).rank(method=self.method, descending=self.descending) for c in self.columns
+        )
+
+@NodeRegistry.register("cumulative_sum")
+class CumulativeSum(Transform):
+    label = "Cumulative Sum"
+    category = "transform"
+    required = {"columns": (list, str)}
+    optional = {"reverse": (bool, False)}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(
+            pl.col(c).cum_sum(reverse=self.reverse) for c in self.columns
+        )
+
+@NodeRegistry.register("shift")
+class Shift(Transform):
+    label = "Shift (Lag/Lead)"
+    category = "transform"
+    required = {"columns": (list, str), "n": int}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(pl.col(c).shift(self.n) for c in self.columns)
+
+@NodeRegistry.register("add_row_index")
+class AddRowIndex(Transform):
+    label = "Add Row Index"
+    category = "transform"
+    optional = {"index_name": (str, "index"), "offset": (int, 0)}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_row_index(name=self.index_name, offset=self.offset)
+
+@NodeRegistry.register("bin")
+class Bin(Transform):
+    label = "Bin Into Ranges"
+    category = "transform"
+    required = {"column": str, "breaks": (list, float)}
+    optional = {"labels": ((list, str), None), "output_column": (str, None)}
+
+    def validate(self):
+        super().validate()
+        if not self.breaks:
+            raise ValueError("'breaks' must not be empty")
+        if self.labels is not None and len(self.labels) != len(self.breaks) + 1:
+            raise ValueError("'labels' must have exactly len(breaks) + 1 entries")
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        out_column = self.output_column or f"{self.column}_bin"
+        return lf.with_columns(
+            pl.col(self.column).cut(self.breaks, labels=self.labels).alias(out_column)
+        )
+
+@NodeRegistry.register("extract_regex")
+class ExtractRegex(Transform):
+    label = "Extract via Regex"
+    category = "transform"
+    required = {"column": str, "pattern": str}
+    optional = {"group": (int, 1), "output_column": (str, None)}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        out_column = self.output_column or f"{self.column}_extracted"
+        return lf.with_columns(
+            pl.col(self.column).str.extract(self.pattern, self.group).alias(out_column)
+        )
+
+@NodeRegistry.register("parse_date")
+class ParseDate(Transform):
+    label = "Parse Date"
+    category = "transform"
+    required = {"columns": (list, str)}
+    optional = {"format": (str, None)}
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(
+            pl.col(c).str.to_date(self.format) for c in self.columns
+        )
+
+@NodeRegistry.register("date_part")
+class DatePart(Transform):
+    label = "Extract Date Part"
+    category = "transform"
+    required = {"column": str, "part": str}
+    optional = {"output_column": (str, None)}
+
+    _ALLOWED_PARTS = frozenset({
+        "year", "quarter", "month", "week", "weekday", "day",
+        "ordinal_day", "hour", "minute", "second",
+    })
+
+    def validate(self):
+        super().validate()
+        if self.part not in self._ALLOWED_PARTS:
+            raise ValueError(f"'part' must be one of {sorted(self._ALLOWED_PARTS)}")
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        out_column = self.output_column or f"{self.column}_{self.part}"
+        return lf.with_columns(
+            getattr(pl.col(self.column).dt, self.part)().alias(out_column)
+        )
+
+@NodeRegistry.register("unpivot")
+class Unpivot(Transform):
+    label = "Unpivot (Melt)"
+    category = "transform"
+    optional = {
+        "index": ((list, str), None),
+        "on": ((list, str), None),
+        "variable_name": (str, None),
+        "value_name": (str, None),
+    }
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.unpivot(
+            index=self.index,
+            on=self.on,
+            variable_name=self.variable_name,
+            value_name=self.value_name,
+        )
+
+@NodeRegistry.register("map_values")
+class MapValues(Transform):
+    label = "Map Values"
+    category = "transform"
+    required = {"column": str, "mapping": dict}
+    optional = {"default": (object, None)}
+
+    def validate(self):
+        super().validate()
+        if not self.mapping:
+            raise ValueError("'mapping' must not be empty")
+
+    def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        if self.default is not None:
+            expr = pl.col(self.column).replace_strict(self.mapping, default=self.default)
+        else:
+            expr = pl.col(self.column).replace(self.mapping)
+        return lf.with_columns(expr)
+
 class _ExpressionTransform(Transform):
     required = {"expression": str}
     COMPILER = ExpressionCompiler()
