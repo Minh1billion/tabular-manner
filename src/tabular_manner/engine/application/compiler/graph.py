@@ -35,10 +35,27 @@ class Node:
         self._pending: dict[str, dict[str, Plan]] = {}
         self._pending_lock = threading.Lock()
 
-    def forward(self, source_id: str, plan: Plan) -> tuple[Plan, list[str]] | None:
+    def forward_streaming(self, source_id: str, plan: Plan) -> Iterator[dict]:
         if not self.operator.fan_in:
-            result_plan, port = self.operator.forward(plan)
-            return result_plan, self.out_ports.get(port, [])
+            if not self.operator.supports_progress:
+                result_plan, port = self.operator.forward(plan)
+                yield {"kind": "result", "plan": result_plan, "next_ids": self.out_ports.get(port, [])}
+                return
+
+            sub = self.operator.forward_streaming(plan)
+            try:
+                for item in sub:
+                    if item["kind"] == "progress":
+                        yield item
+                    else:
+                        yield {
+                            "kind": "result",
+                            "plan": item["plan"],
+                            "next_ids": self.out_ports.get(item["port"], []),
+                        }
+            finally:
+                sub.close()
+            return
 
         execution_id = plan.meta.get("execution_id", self.DEFAULT_EXECUTION_SCOPE)
 
@@ -46,7 +63,7 @@ class Node:
             bucket = self._pending.setdefault(execution_id, {})
             bucket[source_id] = plan
             if len(bucket) < self.in_degree:
-                return None
+                return
 
             if self.operator.in_ports is not None:
                 ordered_plans = [bucket[self.in_slot_map[slot]] for slot in self.operator.in_ports]
@@ -55,7 +72,7 @@ class Node:
             del self._pending[execution_id]
 
         result_plan, port = self.operator.forward_many(ordered_plans)
-        return result_plan, self.out_ports.get(port, [])
+        yield {"kind": "result", "plan": result_plan, "next_ids": self.out_ports.get(port, [])}
 
 class Graph:
     ENTRY_SOURCE = "__entry__"
@@ -63,10 +80,6 @@ class Graph:
     def __init__(self, nodes: dict[str, Node], entry_ids: tuple[str, ...]):
         self.nodes = nodes
         self.entry_ids = entry_ids
-
-    def step(self, node_id: str, source_id: str, plan: Plan) -> tuple[Plan, list[str]] | None:
-        node = self.nodes[node_id]
-        return node.forward(source_id, plan)
 
     def _default_max_steps(self) -> int:
         total_edges = sum(len(ids) for node in self.nodes.values() for ids in node.out_ports.values())
@@ -93,12 +106,21 @@ class Graph:
             node_id, source_id, current_plan = frontier.popleft()
             yield ("started", node_id, None)
 
+            node = self.nodes[node_id]
+            result: tuple[Plan, list[str]] | None = None
+            sub = node.forward_streaming(source_id, current_plan)
             try:
-                result = self.step(node_id, source_id, current_plan)
+                for item in sub:
+                    if item["kind"] == "progress":
+                        yield ("progress", node_id, item)
+                    else:
+                        result = (item["plan"], item["next_ids"])
             except NodeExecutionError:
                 raise
             except Exception as exc:
-                raise NodeExecutionError(node_id, self.nodes[node_id].operator.type, exc) from exc
+                raise NodeExecutionError(node_id, node.operator.type, exc) from exc
+            finally:
+                sub.close()
             steps += 1
 
             if result is None:

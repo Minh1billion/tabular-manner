@@ -1,6 +1,8 @@
 from typing import Protocol
 
 class ResourceStorageRepository(Protocol):
+    supports_streaming_write: bool = False
+
     @property
     def storage_options(self) -> dict[str, str] | None:
         ...

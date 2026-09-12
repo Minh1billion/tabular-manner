@@ -1,6 +1,6 @@
 from abc import ABC
 from enum import Enum
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Iterator
 
 from .plan import Plan
 from .schema import Schema
@@ -24,6 +24,7 @@ class Operator(ABC):
     label: ClassVar[str | None] = None
     category: ClassVar[str] = "custom"
     schema_strategy: ClassVar[SchemaStrategy] = SchemaStrategy.STRUCTURAL
+    supports_progress: ClassVar[bool] = False
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -80,6 +81,9 @@ class Operator(ABC):
 
     def forward(self, plan: Plan) -> tuple[Plan, str]:
         raise NotImplementedError(f"'{self.type}' does not support single-input forward()")
+
+    def forward_streaming(self, plan: Plan) -> Iterator[dict[str, Any]]:
+        raise NotImplementedError(f"'{self.type}' does not declare supports_progress=True")
 
     def forward_many(self, plans: list[Plan]) -> tuple[Plan, str]:
         raise NotImplementedError(f"'{self.type}' does not support multi-input forward_many()")

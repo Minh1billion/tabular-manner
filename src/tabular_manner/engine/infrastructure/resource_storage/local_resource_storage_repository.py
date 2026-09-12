@@ -3,6 +3,8 @@ from pathlib import Path
 from ...application.ports.resource_storage_repository import ResourceStorageRepository
 
 class LocalResourceStorageRepository(ResourceStorageRepository):
+    supports_streaming_write = True
+
     def __init__(self, root: str = ".tm", namespace: str = ""):
         self._root = Path(root).resolve()
         self._namespace = namespace.strip("/")
