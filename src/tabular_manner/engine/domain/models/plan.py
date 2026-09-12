@@ -1,10 +1,7 @@
-from __future__ import annotations
-
 from dataclasses import dataclass, field, replace
 from typing import Any
 
 import polars as pl
-
 
 @dataclass(frozen=True)
 class Plan:
