@@ -1,3 +1,7 @@
+import io
+
+import polars as pl
+import pyarrow.parquet as pq
 import pytest
 from botocore.stub import Stubber
 
@@ -15,6 +19,104 @@ def stubber(repository):
     stubber.activate()
     yield stubber
     stubber.deactivate()
+
+class _FakeS3Client:
+    def __init__(self):
+        self.objects: dict[str, bytes] = {}
+        self.calls: list[str] = []
+        self._uploads: dict[str, dict[int, bytes]] = {}
+        self._next_upload_id = 1
+
+    def create_multipart_upload(self, Bucket, Key):
+        self.calls.append("create_multipart_upload")
+        upload_id = f"upload-{self._next_upload_id}"
+        self._next_upload_id += 1
+        self._uploads[upload_id] = {}
+        return {"UploadId": upload_id}
+
+    def upload_part(self, Bucket, Key, UploadId, PartNumber, Body):
+        self.calls.append("upload_part")
+        self._uploads[UploadId][PartNumber] = Body
+        return {"ETag": f"etag-{UploadId}-{PartNumber}"}
+
+    def complete_multipart_upload(self, Bucket, Key, UploadId, MultipartUpload):
+        self.calls.append("complete_multipart_upload")
+        parts = sorted(MultipartUpload["Parts"], key=lambda p: p["PartNumber"])
+        data = b"".join(self._uploads[UploadId][p["PartNumber"]] for p in parts)
+        self.objects[Key] = data
+        del self._uploads[UploadId]
+
+    def abort_multipart_upload(self, Bucket, Key, UploadId):
+        self.calls.append("abort_multipart_upload")
+        self._uploads.pop(UploadId, None)
+
+@pytest.fixture
+def fake_client(repository):
+    fake = _FakeS3Client()
+    repository._client = fake
+    return fake
+
+class TestSaveStreaming:
+    def test_multiple_parts_uploaded_when_total_exceeds_threshold(self, repository, fake_client):
+        repository.MIN_PART_SIZE = 200
+
+        lf = pl.LazyFrame({"a": range(5_000)})
+        events = list(
+            repository.save_streaming(key="raw.parquet", lf=lf, total=5_000, chunk_size=500)
+        )
+
+        upload_part_calls = fake_client.calls.count("upload_part")
+        assert upload_part_calls > 1
+        assert fake_client.calls[0] == "create_multipart_upload"
+        assert fake_client.calls[-1] == "complete_multipart_upload"
+        assert events[-1] == {"processed": 5_000, "total": 5_000}
+
+    def test_round_trip_reads_back_correct_data(self, repository, fake_client):
+        repository.MIN_PART_SIZE = 200
+
+        lf = pl.LazyFrame({"a": range(5_000)})
+        list(repository.save_streaming(key="raw.parquet", lf=lf, total=5_000, chunk_size=500))
+
+        data = fake_client.objects["data/raw.parquet"]
+        table = pq.read_table(io.BytesIO(data))
+        assert table.num_rows == 5_000
+        assert table.column("a").to_pylist() == list(range(5_000))
+
+    def test_abort_called_when_write_is_cancelled_mid_stream(self, repository, fake_client, monkeypatch):
+        repository.MIN_PART_SIZE = 200
+
+        real_collect_batches = pl.LazyFrame.collect_batches
+
+        def _boom(self, *args, **kwargs):
+            for i, batch in enumerate(real_collect_batches(self, *args, **kwargs)):
+                if i == 2:
+                    raise RuntimeError("boom")
+                yield batch
+
+        monkeypatch.setattr(pl.LazyFrame, "collect_batches", _boom)
+
+        lf = pl.LazyFrame({"a": range(5_000)})
+        with pytest.raises(RuntimeError, match="boom"):
+            list(repository.save_streaming(key="raw.parquet", lf=lf, total=5_000, chunk_size=500))
+
+        assert "abort_multipart_upload" in fake_client.calls
+        assert "complete_multipart_upload" not in fake_client.calls
+        assert "data/raw.parquet" not in fake_client.objects
+
+    def test_empty_batches_fall_back_to_plain_save(self, repository, fake_client, monkeypatch):
+        called = {}
+
+        def fake_sink_parquet(self, path, storage_options=None, **kwargs):
+            called["path"] = path
+
+        monkeypatch.setattr(pl.LazyFrame, "sink_parquet", fake_sink_parquet)
+
+        lf = pl.LazyFrame({"a": pl.Series("a", [], dtype=pl.Int64)})
+        events = list(repository.save_streaming(key="raw.parquet", lf=lf, total=0, chunk_size=500))
+
+        assert events == []
+        assert fake_client.calls == []
+        assert called["path"] == "s3://my-bucket/data/raw.parquet"
 
 class TestResolveWritePath:
     def test_returns_s3_uri_with_prefix_and_bucket(self, repository):

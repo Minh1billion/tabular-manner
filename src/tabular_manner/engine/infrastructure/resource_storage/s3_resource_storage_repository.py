@@ -1,7 +1,52 @@
+from typing import Any, Iterator
+
+import polars as pl
+import pyarrow.parquet as pq
+
 from ...application.ports.resource_storage_repository import ResourceStorageRepository
 from ..s3.config import build_boto3_client, build_storage_options
 
+class _MultipartBuffer:
+    def __init__(self):
+        self._pending = bytearray()
+        self._pos = 0
+        self.closed = False
+
+    def write(self, data: bytes) -> int:
+        self._pending.extend(data)
+        self._pos += len(data)
+        return len(data)
+
+    def tell(self) -> int:
+        return self._pos
+
+    def writable(self) -> bool:
+        return True
+
+    def readable(self) -> bool:
+        return False
+
+    def seekable(self) -> bool:
+        return False
+
+    def flush(self) -> None:
+        pass
+
+    def close(self) -> None:
+        self.closed = True
+
+    def pending_size(self) -> int:
+        return len(self._pending)
+
+    def drain(self) -> bytes:
+        data = bytes(self._pending)
+        self._pending.clear()
+        return data
+
 class S3ResourceStorageRepository(ResourceStorageRepository):
+    supports_streaming_write = True
+    MIN_PART_SIZE = 5 * 1024 * 1024
+
     def __init__(
         self,
         bucket_name: str,
@@ -55,6 +100,77 @@ class S3ResourceStorageRepository(ResourceStorageRepository):
     def resolve_write_path(self, key: str, bucket: str | None = None) -> str:
         object_key = self._resolve_key(key, bucket)
         return f"s3://{self._bucket_name}/{object_key}"
+
+    def save_streaming(
+        self,
+        key: str,
+        lf: pl.LazyFrame,
+        total: int | None,
+        chunk_size: int,
+        bucket: str | None = None,
+    ) -> Iterator[dict[str, Any]]:
+        object_key = self._resolve_key(key, bucket)
+        buffer = _MultipartBuffer()
+        writer: pq.ParquetWriter | None = None
+        upload_id: str | None = None
+        parts: list[dict[str, Any]] = []
+        part_number = 1
+        processed = 0
+        wrote_any_batch = False
+
+        def flush_part(final: bool = False) -> None:
+            nonlocal part_number
+            if buffer.pending_size() == 0:
+                return
+            if not final and buffer.pending_size() < self.MIN_PART_SIZE:
+                return
+            data = buffer.drain()
+            response = self._client.upload_part(
+                Bucket=self._bucket_name,
+                Key=object_key,
+                UploadId=upload_id,
+                PartNumber=part_number,
+                Body=data,
+            )
+            parts.append({"ETag": response["ETag"], "PartNumber": part_number})
+            part_number += 1
+
+        try:
+            for batch in lf.collect_batches(chunk_size=chunk_size):
+                if not wrote_any_batch:
+                    wrote_any_batch = True
+                    upload = self._client.create_multipart_upload(Bucket=self._bucket_name, Key=object_key)
+                    upload_id = upload["UploadId"]
+                table = batch.to_arrow()
+                if writer is None:
+                    writer = pq.ParquetWriter(buffer, table.schema)
+                writer.write_table(table)
+                processed += batch.height
+                flush_part()
+                yield {"processed": processed, "total": total}
+        except BaseException:
+            if writer is not None:
+                writer.close()
+            if upload_id is not None:
+                self._client.abort_multipart_upload(
+                    Bucket=self._bucket_name, Key=object_key, UploadId=upload_id
+                )
+            raise
+        else:
+            if not wrote_any_batch:
+                lf.sink_parquet(
+                    self.resolve_write_path(key, bucket),
+                    storage_options=self.storage_options,
+                )
+                return
+            writer.close()
+            flush_part(final=True)
+            self._client.complete_multipart_upload(
+                Bucket=self._bucket_name,
+                Key=object_key,
+                UploadId=upload_id,
+                MultipartUpload={"Parts": parts},
+            )
 
     def get_object(self, key: str, bucket: str | None = None) -> str:
         object_key = self._resolve_key(key, bucket)
