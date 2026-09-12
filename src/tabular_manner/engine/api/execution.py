@@ -165,37 +165,41 @@ class Execution:
             initial_plan = Plan(handle=pl.LazyFrame(), meta={"execution_id": execution_id})
 
             yield _event("running", total_nodes=total)
-            for kind, node_id, step in graph.traverse(initial_plan):
-                if kind == "started":
-                    if cancel_check is not None and cancel_check():
-                        yield _event("cancelled", data={"execution_id": execution_id, "processed": processed, "total": total})
-                        self.discard(execution_id)
-                        return
+            traversal = graph.traverse(initial_plan)
+            try:
+                for kind, node_id, step in traversal:
+                    if kind == "started":
+                        if cancel_check is not None and cancel_check():
+                            yield _event("cancelled", data={"execution_id": execution_id, "processed": processed, "total": total})
+                            self.discard(execution_id)
+                            return
 
-                    yield _event("node_started", node_id=node_id)
-                    continue
+                        yield _event("node_started", node_id=node_id)
+                        continue
 
-                if kind == "progress":
-                    if cancel_check is not None and cancel_check():
-                        yield _event("cancelled", data={"execution_id": execution_id, "processed": processed, "total": total})
-                        self.discard(execution_id)
-                        return
+                    if kind == "progress":
+                        if cancel_check is not None and cancel_check():
+                            yield _event("cancelled", data={"execution_id": execution_id, "processed": processed, "total": total})
+                            self.discard(execution_id)
+                            return
 
-                    yield _event(
-                        "node_progress",
-                        node_id=node_id,
-                        rows_processed=step.get("processed"),
-                        rows_total=step.get("total"),
-                    )
-                    continue
+                        yield _event(
+                            "node_progress",
+                            node_id=node_id,
+                            rows_processed=step.get("processed"),
+                            rows_total=step.get("total"),
+                        )
+                        continue
 
-                processed += 1
-                yield _event("node_completed", node_id=step.node_id, processed=processed, total=total)
+                    processed += 1
+                    yield _event("node_completed", node_id=step.node_id, processed=processed, total=total)
 
-                if step.is_leaf:
-                    leaf = {"node_id": step.node_id, "history": list(step.plan.history), "columns": step.plan.handle.collect_schema().names()}
-                    leaves.append(leaf)
-                    yield _event("leaf_reached", **leaf)
+                    if step.is_leaf:
+                        leaf = {"node_id": step.node_id, "history": list(step.plan.history), "columns": step.plan.handle.collect_schema().names()}
+                        leaves.append(leaf)
+                        yield _event("leaf_reached", **leaf)
+            finally:
+                traversal.close()
 
             yield _event("completed", data={"execution_id": execution_id, "leaves": leaves})
         except Exception as exc:

@@ -37,8 +37,12 @@ class SinkIO(Operator):
         return plan, self.default_port
 
     def forward_streaming(self, plan: Plan) -> Iterator[dict[str, Any]]:
-        for progress in self._persist_streaming(plan.handle):
-            yield {"kind": "progress", **progress}
+        sub = self._persist_streaming(plan.handle)
+        try:
+            for progress in sub:
+                yield {"kind": "progress", **progress}
+        finally:
+            sub.close()
         yield {"kind": "result", "plan": plan, "port": self.default_port}
 
     def infer_schema(self, input_schema: Schema) -> Schema:
@@ -159,7 +163,11 @@ class PushInternal(SinkIO):
     label = "Export (Internal)"
     category = "io"
     required = {"key": str}
-    optional = {"bucket": (str, None), "chunk_rows": (int, 100_000)}
+    optional = {
+        "bucket": (str, None),
+        "chunk_rows": (int, 100_000),
+        "progress_threshold_rows": (int, 200_000),
+    }
     context = ("resource_storage",)
     supports_progress = True
 
@@ -167,14 +175,25 @@ class PushInternal(SinkIO):
         self.resource_storage.save(self.key, lf, bucket=self.bucket)
 
     def _persist_streaming(self, lf: pl.LazyFrame):
-        return self.resource_storage.save_streaming(self.key, lf, bucket=self.bucket, chunk_size=self.chunk_rows)
+        return self.resource_storage.save_streaming(
+            self.key,
+            lf,
+            bucket=self.bucket,
+            chunk_size=self.chunk_rows,
+            progress_threshold_rows=self.progress_threshold_rows,
+        )
 
 @NodeRegistry.register("push_csv")
 class PushCsv(SinkIO):
     label = "Export CSV"
     category = "io"
     required = {"path": str}
-    optional = {"separator": (str, ","), "include_header": (bool, True), "chunk_rows": (int, 100_000)}
+    optional = {
+        "separator": (str, ","),
+        "include_header": (bool, True),
+        "chunk_rows": (int, 100_000),
+        "progress_threshold_rows": (int, 500_000),
+    }
     context = ("writer_factory",)
     supports_progress = True
 
@@ -192,14 +211,16 @@ class PushCsv(SinkIO):
         adapter = self.writer_factory.create(
             "file", path=self.path, format="csv", separator=self.separator, include_header=self.include_header
         )
-        return adapter.execute_streaming(lf, chunk_size=self.chunk_rows)
+        return adapter.execute_streaming(
+            lf, chunk_size=self.chunk_rows, progress_threshold_rows=self.progress_threshold_rows
+        )
 
 @NodeRegistry.register("push_parquet")
 class PushParquet(SinkIO):
     label = "Export Parquet"
     category = "io"
     required = {"path": str}
-    optional = {"chunk_rows": (int, 100_000)}
+    optional = {"chunk_rows": (int, 100_000), "progress_threshold_rows": (int, 500_000)}
     context = ("writer_factory",)
     supports_progress = True
 
@@ -208,14 +229,16 @@ class PushParquet(SinkIO):
 
     def _persist_streaming(self, lf: pl.LazyFrame):
         adapter = self.writer_factory.create("file", path=self.path, format="parquet")
-        return adapter.execute_streaming(lf, chunk_size=self.chunk_rows)
+        return adapter.execute_streaming(
+            lf, chunk_size=self.chunk_rows, progress_threshold_rows=self.progress_threshold_rows
+        )
 
 @NodeRegistry.register("push_arrow")
 class PushArrow(SinkIO):
     label = "Export Arrow"
     category = "io"
     required = {"path": str}
-    optional = {"chunk_rows": (int, 100_000)}
+    optional = {"chunk_rows": (int, 100_000), "progress_threshold_rows": (int, 500_000)}
     context = ("writer_factory",)
     supports_progress = True
 
@@ -224,7 +247,9 @@ class PushArrow(SinkIO):
 
     def _persist_streaming(self, lf: pl.LazyFrame):
         adapter = self.writer_factory.create("file", path=self.path, format="arrow")
-        return adapter.execute_streaming(lf, chunk_size=self.chunk_rows)
+        return adapter.execute_streaming(
+            lf, chunk_size=self.chunk_rows, progress_threshold_rows=self.progress_threshold_rows
+        )
 
 @NodeRegistry.register("push_postgres")
 class PushPostgres(SinkIO):

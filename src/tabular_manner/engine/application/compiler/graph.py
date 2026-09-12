@@ -35,28 +35,6 @@ class Node:
         self._pending: dict[str, dict[str, Plan]] = {}
         self._pending_lock = threading.Lock()
 
-    def forward(self, source_id: str, plan: Plan) -> tuple[Plan, list[str]] | None:
-        if not self.operator.fan_in:
-            result_plan, port = self.operator.forward(plan)
-            return result_plan, self.out_ports.get(port, [])
-
-        execution_id = plan.meta.get("execution_id", self.DEFAULT_EXECUTION_SCOPE)
-
-        with self._pending_lock:
-            bucket = self._pending.setdefault(execution_id, {})
-            bucket[source_id] = plan
-            if len(bucket) < self.in_degree:
-                return None
-
-            if self.operator.in_ports is not None:
-                ordered_plans = [bucket[self.in_slot_map[slot]] for slot in self.operator.in_ports]
-            else:
-                ordered_plans = [bucket[key] for key in sorted(bucket)]
-            del self._pending[execution_id]
-
-        result_plan, port = self.operator.forward_many(ordered_plans)
-        return result_plan, self.out_ports.get(port, [])
-
     def forward_streaming(self, source_id: str, plan: Plan) -> Iterator[dict]:
         if not self.operator.fan_in:
             if not self.operator.supports_progress:
@@ -64,11 +42,19 @@ class Node:
                 yield {"kind": "result", "plan": result_plan, "next_ids": self.out_ports.get(port, [])}
                 return
 
-            for item in self.operator.forward_streaming(plan):
-                if item["kind"] == "progress":
-                    yield item
-                else:
-                    yield {"kind": "result", "plan": item["plan"], "next_ids": self.out_ports.get(item["port"], [])}
+            sub = self.operator.forward_streaming(plan)
+            try:
+                for item in sub:
+                    if item["kind"] == "progress":
+                        yield item
+                    else:
+                        yield {
+                            "kind": "result",
+                            "plan": item["plan"],
+                            "next_ids": self.out_ports.get(item["port"], []),
+                        }
+            finally:
+                sub.close()
             return
 
         execution_id = plan.meta.get("execution_id", self.DEFAULT_EXECUTION_SCOPE)
@@ -94,10 +80,6 @@ class Graph:
     def __init__(self, nodes: dict[str, Node], entry_ids: tuple[str, ...]):
         self.nodes = nodes
         self.entry_ids = entry_ids
-
-    def step(self, node_id: str, source_id: str, plan: Plan) -> tuple[Plan, list[str]] | None:
-        node = self.nodes[node_id]
-        return node.forward(source_id, plan)
 
     def _default_max_steps(self) -> int:
         total_edges = sum(len(ids) for node in self.nodes.values() for ids in node.out_ports.values())
@@ -126,8 +108,9 @@ class Graph:
 
             node = self.nodes[node_id]
             result: tuple[Plan, list[str]] | None = None
+            sub = node.forward_streaming(source_id, current_plan)
             try:
-                for item in node.forward_streaming(source_id, current_plan):
+                for item in sub:
                     if item["kind"] == "progress":
                         yield ("progress", node_id, item)
                     else:
@@ -136,6 +119,8 @@ class Graph:
                 raise
             except Exception as exc:
                 raise NodeExecutionError(node_id, node.operator.type, exc) from exc
+            finally:
+                sub.close()
             steps += 1
 
             if result is None:

@@ -9,5 +9,10 @@ class WriterAdapter(ABC):
     def execute(self, lf: pl.LazyFrame) -> None:
         ...
 
-    def execute_streaming(self, lf: pl.LazyFrame, chunk_size: int = 100_000) -> Iterator[dict[str, Any]] | None:
+    def execute_streaming(
+        self,
+        lf: pl.LazyFrame,
+        chunk_size: int = 100_000,
+        progress_threshold_rows: int | None = 500_000,
+    ) -> Iterator[dict[str, Any]] | None:
         return None

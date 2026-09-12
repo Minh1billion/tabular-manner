@@ -1,3 +1,5 @@
+import os
+import uuid
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -41,12 +43,19 @@ class FileWriterAdapter(WriterAdapter):
         else:  # pragma: no cover - guarded in __init__
             raise ValueError(f"Unsupported file format '{self.format}'.")
 
-    def execute_streaming(self, lf: pl.LazyFrame, chunk_size: int = 100_000) -> Iterator[dict[str, Any]] | None:
+    def execute_streaming(
+        self,
+        lf: pl.LazyFrame,
+        chunk_size: int = 100_000,
+        progress_threshold_rows: int | None = 200_000,
+    ) -> Iterator[dict[str, Any]] | None:
         if self.format not in self._STREAMABLE_FORMATS:
             return None
-        return self._execute_streaming(lf, chunk_size)
+        return self._execute_streaming(lf, chunk_size, progress_threshold_rows)
 
-    def _execute_streaming(self, lf: pl.LazyFrame, chunk_size: int) -> Iterator[dict[str, Any]]:
+    def _execute_streaming(
+        self, lf: pl.LazyFrame, chunk_size: int, progress_threshold_rows: int | None
+    ) -> Iterator[dict[str, Any]]:
         path = Path(self.path)
         path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -56,25 +65,32 @@ class FileWriterAdapter(WriterAdapter):
         except Exception:
             total = None
 
+        if total is not None and progress_threshold_rows is not None and total <= progress_threshold_rows:
+            self.execute(lf)
+            return
+
+        tmp_path = path.with_name(f"{path.name}.tmp-{uuid.uuid4().hex}")
         processed = 0
         parquet_writer: pq.ParquetWriter | None = None
         ipc_writer: ipc.RecordBatchFileWriter | None = None
         csv_file = None
+        wrote_any_batch = False
         try:
             for i, batch in enumerate(lf.collect_batches(chunk_size=chunk_size)):
+                wrote_any_batch = True
                 if self.format == "parquet":
                     table = batch.to_arrow()
                     if parquet_writer is None:
-                        parquet_writer = pq.ParquetWriter(str(path), table.schema)
+                        parquet_writer = pq.ParquetWriter(str(tmp_path), table.schema)
                     parquet_writer.write_table(table)
                 elif self.format == "arrow":
                     table = batch.to_arrow()
                     if ipc_writer is None:
-                        ipc_writer = ipc.new_file(str(path), table.schema)
+                        ipc_writer = ipc.new_file(str(tmp_path), table.schema)
                     ipc_writer.write_table(table)
                 else:
                     if csv_file is None:
-                        csv_file = open(path, "w", newline="")
+                        csv_file = open(tmp_path, "w", encoding="utf-8", newline="")
                     batch.write_csv(
                         csv_file,
                         separator=self.separator,
@@ -82,10 +98,23 @@ class FileWriterAdapter(WriterAdapter):
                     )
                 processed += batch.height
                 yield {"processed": processed, "total": total}
-        finally:
-            if parquet_writer is not None:
-                parquet_writer.close()
-            if ipc_writer is not None:
-                ipc_writer.close()
-            if csv_file is not None:
-                csv_file.close()
+        except BaseException:
+            self._close_writers(parquet_writer, ipc_writer, csv_file)
+            tmp_path.unlink(missing_ok=True)
+            raise
+        else:
+            self._close_writers(parquet_writer, ipc_writer, csv_file)
+            if not wrote_any_batch:
+                tmp_path.unlink(missing_ok=True)
+                self.execute(lf)
+            else:
+                os.replace(tmp_path, path)
+
+    @staticmethod
+    def _close_writers(parquet_writer, ipc_writer, csv_file) -> None:
+        if parquet_writer is not None:
+            parquet_writer.close()
+        if ipc_writer is not None:
+            ipc_writer.close()
+        if csv_file is not None:
+            csv_file.close()
