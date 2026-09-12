@@ -175,6 +175,20 @@ class Execution:
                     yield _event("node_started", node_id=node_id)
                     continue
 
+                if kind == "progress":
+                    if cancel_check is not None and cancel_check():
+                        yield _event("cancelled", data={"execution_id": execution_id, "processed": processed, "total": total})
+                        self.discard(execution_id)
+                        return
+
+                    yield _event(
+                        "node_progress",
+                        node_id=node_id,
+                        rows_processed=step.get("processed"),
+                        rows_total=step.get("total"),
+                    )
+                    continue
+
                 processed += 1
                 yield _event("node_completed", node_id=step.node_id, processed=processed, total=total)
 

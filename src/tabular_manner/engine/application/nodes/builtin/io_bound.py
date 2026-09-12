@@ -1,3 +1,5 @@
+from typing import Any, Iterator
+
 import polars as pl
 
 from ....domain.models.plan import Plan
@@ -27,9 +29,17 @@ class SinkIO(Operator):
     def _persist(self, lf: pl.LazyFrame) -> None:
         raise NotImplementedError("Not implemented yet.")
 
+    def _persist_streaming(self, lf: pl.LazyFrame) -> Iterator[dict[str, Any]]:
+        raise NotImplementedError(f"'{self.type}' does not declare supports_progress=True")
+
     def forward(self, plan: Plan) -> tuple[Plan, str]:
         self._persist(plan.handle)
         return plan, self.default_port
+
+    def forward_streaming(self, plan: Plan) -> Iterator[dict[str, Any]]:
+        for progress in self._persist_streaming(plan.handle):
+            yield {"kind": "progress", **progress}
+        yield {"kind": "result", "plan": plan, "port": self.default_port}
 
     def infer_schema(self, input_schema: Schema) -> Schema:
         return input_schema
@@ -149,19 +159,24 @@ class PushInternal(SinkIO):
     label = "Export (Internal)"
     category = "io"
     required = {"key": str}
-    optional = {"bucket": (str, None)}
+    optional = {"bucket": (str, None), "chunk_rows": (int, 100_000)}
     context = ("resource_storage",)
+    supports_progress = True
 
     def _persist(self, lf: pl.LazyFrame) -> None:
         self.resource_storage.save(self.key, lf, bucket=self.bucket)
+
+    def _persist_streaming(self, lf: pl.LazyFrame):
+        return self.resource_storage.save_streaming(self.key, lf, bucket=self.bucket, chunk_size=self.chunk_rows)
 
 @NodeRegistry.register("push_csv")
 class PushCsv(SinkIO):
     label = "Export CSV"
     category = "io"
     required = {"path": str}
-    optional = {"separator": (str, ","), "include_header": (bool, True)}
+    optional = {"separator": (str, ","), "include_header": (bool, True), "chunk_rows": (int, 100_000)}
     context = ("writer_factory",)
+    supports_progress = True
 
     def _persist(self, lf: pl.LazyFrame) -> None:
         self.writer_factory.write(
@@ -173,25 +188,43 @@ class PushCsv(SinkIO):
             include_header=self.include_header,
         )
 
+    def _persist_streaming(self, lf: pl.LazyFrame):
+        adapter = self.writer_factory.create(
+            "file", path=self.path, format="csv", separator=self.separator, include_header=self.include_header
+        )
+        return adapter.execute_streaming(lf, chunk_size=self.chunk_rows)
+
 @NodeRegistry.register("push_parquet")
 class PushParquet(SinkIO):
     label = "Export Parquet"
     category = "io"
     required = {"path": str}
+    optional = {"chunk_rows": (int, 100_000)}
     context = ("writer_factory",)
+    supports_progress = True
 
     def _persist(self, lf: pl.LazyFrame) -> None:
         self.writer_factory.write("file", lf, path=self.path, format="parquet")
+
+    def _persist_streaming(self, lf: pl.LazyFrame):
+        adapter = self.writer_factory.create("file", path=self.path, format="parquet")
+        return adapter.execute_streaming(lf, chunk_size=self.chunk_rows)
 
 @NodeRegistry.register("push_arrow")
 class PushArrow(SinkIO):
     label = "Export Arrow"
     category = "io"
     required = {"path": str}
+    optional = {"chunk_rows": (int, 100_000)}
     context = ("writer_factory",)
+    supports_progress = True
 
     def _persist(self, lf: pl.LazyFrame) -> None:
         self.writer_factory.write("file", lf, path=self.path, format="arrow")
+
+    def _persist_streaming(self, lf: pl.LazyFrame):
+        adapter = self.writer_factory.create("file", path=self.path, format="arrow")
+        return adapter.execute_streaming(lf, chunk_size=self.chunk_rows)
 
 @NodeRegistry.register("push_postgres")
 class PushPostgres(SinkIO):

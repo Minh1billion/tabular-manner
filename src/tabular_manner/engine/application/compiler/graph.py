@@ -57,6 +57,37 @@ class Node:
         result_plan, port = self.operator.forward_many(ordered_plans)
         return result_plan, self.out_ports.get(port, [])
 
+    def forward_streaming(self, source_id: str, plan: Plan) -> Iterator[dict]:
+        if not self.operator.fan_in:
+            if not self.operator.supports_progress:
+                result_plan, port = self.operator.forward(plan)
+                yield {"kind": "result", "plan": result_plan, "next_ids": self.out_ports.get(port, [])}
+                return
+
+            for item in self.operator.forward_streaming(plan):
+                if item["kind"] == "progress":
+                    yield item
+                else:
+                    yield {"kind": "result", "plan": item["plan"], "next_ids": self.out_ports.get(item["port"], [])}
+            return
+
+        execution_id = plan.meta.get("execution_id", self.DEFAULT_EXECUTION_SCOPE)
+
+        with self._pending_lock:
+            bucket = self._pending.setdefault(execution_id, {})
+            bucket[source_id] = plan
+            if len(bucket) < self.in_degree:
+                return
+
+            if self.operator.in_ports is not None:
+                ordered_plans = [bucket[self.in_slot_map[slot]] for slot in self.operator.in_ports]
+            else:
+                ordered_plans = [bucket[key] for key in sorted(bucket)]
+            del self._pending[execution_id]
+
+        result_plan, port = self.operator.forward_many(ordered_plans)
+        yield {"kind": "result", "plan": result_plan, "next_ids": self.out_ports.get(port, [])}
+
 class Graph:
     ENTRY_SOURCE = "__entry__"
 
@@ -93,12 +124,18 @@ class Graph:
             node_id, source_id, current_plan = frontier.popleft()
             yield ("started", node_id, None)
 
+            node = self.nodes[node_id]
+            result: tuple[Plan, list[str]] | None = None
             try:
-                result = self.step(node_id, source_id, current_plan)
+                for item in node.forward_streaming(source_id, current_plan):
+                    if item["kind"] == "progress":
+                        yield ("progress", node_id, item)
+                    else:
+                        result = (item["plan"], item["next_ids"])
             except NodeExecutionError:
                 raise
             except Exception as exc:
-                raise NodeExecutionError(node_id, self.nodes[node_id].operator.type, exc) from exc
+                raise NodeExecutionError(node_id, node.operator.type, exc) from exc
             steps += 1
 
             if result is None:

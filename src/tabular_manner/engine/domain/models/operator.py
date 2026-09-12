@@ -1,10 +1,16 @@
 from abc import ABC
-from typing import Any, ClassVar
+from enum import Enum
+from typing import Any, ClassVar, Iterator
 
 from .plan import Plan
 from .schema import Schema
 
 TypeSpec = type | tuple[type, type]
+
+class SchemaStrategy(str, Enum):
+    STRUCTURAL = "structural"
+    DECLARED = "declared"
+    SAMPLED = "sampled"
 
 class Operator(ABC):
     required: ClassVar[dict[str, TypeSpec]] = {}
@@ -17,6 +23,15 @@ class Operator(ABC):
     registry_key: ClassVar[str | None] = None
     label: ClassVar[str | None] = None
     category: ClassVar[str] = "custom"
+    schema_strategy: ClassVar[SchemaStrategy] = SchemaStrategy.STRUCTURAL
+    supports_progress: ClassVar[bool] = False
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if cls.schema_strategy is SchemaStrategy.DECLARED and cls.declared_schema is Operator.declared_schema:
+            raise TypeError(
+                f"'{cls.__name__}' sets schema_strategy=DECLARED but does not override declared_schema()"
+            )
 
     def valid_ports(self) -> tuple[str, ...]:
         return self.ports if self.ports is not None else (self.default_port,)
@@ -67,6 +82,9 @@ class Operator(ABC):
     def forward(self, plan: Plan) -> tuple[Plan, str]:
         raise NotImplementedError(f"'{self.type}' does not support single-input forward()")
 
+    def forward_streaming(self, plan: Plan) -> Iterator[dict[str, Any]]:
+        raise NotImplementedError(f"'{self.type}' does not declare supports_progress=True")
+
     def forward_many(self, plans: list[Plan]) -> tuple[Plan, str]:
         raise NotImplementedError(f"'{self.type}' does not support multi-input forward_many()")
 
@@ -75,3 +93,9 @@ class Operator(ABC):
 
     def infer_schema_many(self, input_schemas: list[Schema]) -> Schema:
         raise NotImplementedError(f"'{self.type}' does not support multi-input infer_schema_many()")
+
+    def declared_schema(self, input_schema: Schema) -> Schema:
+        raise NotImplementedError(f"'{self.type}' does not implement declared_schema()")
+
+    def declared_schema_many(self, input_schemas: list[Schema]) -> Schema:
+        raise NotImplementedError(f"'{self.type}' does not implement declared_schema_many()")

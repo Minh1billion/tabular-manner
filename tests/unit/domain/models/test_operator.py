@@ -1,6 +1,6 @@
 import pytest
 
-from tabular_manner.engine.domain.models.operator import Operator
+from tabular_manner.engine.domain.models.operator import Operator, SchemaStrategy
 from tabular_manner.engine.domain.models.plan import Plan
 
 class _Simple(Operator):
@@ -99,3 +99,31 @@ class TestOperatorForwardNotImplemented:
         op = _NoParams()
         with pytest.raises(NotImplementedError):
             op.forward_many([])
+
+class TestOperatorSchemaContract:
+    def test_declared_strategy_without_override_raises_at_class_definition(self):
+        with pytest.raises(TypeError, match="declared_schema"):
+            class _Bad(Operator):
+                schema_strategy = SchemaStrategy.DECLARED
+
+    def test_declared_strategy_with_override_defines_successfully(self):
+        class _Good(Operator):
+            schema_strategy = SchemaStrategy.DECLARED
+
+            def declared_schema(self, input_schema):
+                return input_schema
+
+        assert _Good.schema_strategy is SchemaStrategy.DECLARED
+
+    def test_structural_strategy_is_default(self):
+        assert _NoParams.schema_strategy is SchemaStrategy.STRUCTURAL
+
+    def test_declared_schema_raises_not_implemented_by_default(self):
+        op = _NoParams()
+        with pytest.raises(NotImplementedError):
+            op.declared_schema(None)
+
+    def test_declared_schema_many_raises_not_implemented_by_default(self):
+        op = _NoParams()
+        with pytest.raises(NotImplementedError):
+            op.declared_schema_many([])

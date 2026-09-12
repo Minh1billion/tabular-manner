@@ -9,6 +9,7 @@ dependencies = [
     "polars",
     "boto3",
     "numpy",
+    "pyarrow",
 ]
 
 [project.urls]
