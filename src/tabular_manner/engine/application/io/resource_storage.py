@@ -1,10 +1,6 @@
-import os
-import uuid
-from pathlib import Path
 from typing import Any, Iterator
 
 import polars as pl
-import pyarrow.parquet as pq
 
 from ..ports.resource_storage_repository import ResourceStorageRepository
 
@@ -48,36 +44,13 @@ class ResourceStorage:
             self.save(key, lf, bucket=bucket)
             return
 
-        path = self._repository.resolve_write_path(key=f"{key}.parquet", bucket=bucket or self._bucket)
-        path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        tmp_path = path.with_name(f"{path.name}.tmp-{uuid.uuid4().hex}")
-
-        processed = 0
-        writer: pq.ParquetWriter | None = None
-        wrote_any_batch = False
-        try:
-            for batch in lf.collect_batches(chunk_size=chunk_size):
-                wrote_any_batch = True
-                table = batch.to_arrow()
-                if writer is None:
-                    writer = pq.ParquetWriter(str(tmp_path), table.schema)
-                writer.write_table(table)
-                processed += batch.height
-                yield {"processed": processed, "total": total}
-        except BaseException:
-            if writer is not None:
-                writer.close()
-            tmp_path.unlink(missing_ok=True)
-            raise
-        else:
-            if writer is not None:
-                writer.close()
-            if not wrote_any_batch:
-                tmp_path.unlink(missing_ok=True)
-                self.save(key, lf, bucket=bucket)
-            else:
-                os.replace(tmp_path, path)
+        yield from self._repository.save_streaming(
+            key=f"{key}.parquet",
+            lf=lf,
+            total=total,
+            chunk_size=chunk_size,
+            bucket=bucket or self._bucket,
+        )
 
     def load(self, key: str, bucket: str | None = None) -> pl.LazyFrame:
         ref = self._repository.get_object(key=f"{key}.parquet", bucket=bucket or self._bucket)

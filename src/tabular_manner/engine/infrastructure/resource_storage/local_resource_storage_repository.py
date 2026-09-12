@@ -1,4 +1,10 @@
+import os
+import uuid
 from pathlib import Path
+from typing import Any, Iterator
+
+import polars as pl
+import pyarrow.parquet as pq
 
 from ...application.ports.resource_storage_repository import ResourceStorageRepository
 
@@ -38,6 +44,43 @@ class LocalResourceStorageRepository(ResourceStorageRepository):
         path = self._resolve_object_path(key, bucket)
         path.parent.mkdir(parents=True, exist_ok=True)
         return str(path)
+
+    def save_streaming(
+        self,
+        key: str,
+        lf: pl.LazyFrame,
+        total: int | None,
+        chunk_size: int,
+        bucket: str | None = None,
+    ) -> Iterator[dict[str, Any]]:
+        path = Path(self.resolve_write_path(key, bucket))
+        tmp_path = path.with_name(f"{path.name}.tmp-{uuid.uuid4().hex}")
+
+        processed = 0
+        writer: pq.ParquetWriter | None = None
+        wrote_any_batch = False
+        try:
+            for batch in lf.collect_batches(chunk_size=chunk_size):
+                wrote_any_batch = True
+                table = batch.to_arrow()
+                if writer is None:
+                    writer = pq.ParquetWriter(str(tmp_path), table.schema)
+                writer.write_table(table)
+                processed += batch.height
+                yield {"processed": processed, "total": total}
+        except BaseException:
+            if writer is not None:
+                writer.close()
+            tmp_path.unlink(missing_ok=True)
+            raise
+        else:
+            if writer is not None:
+                writer.close()
+            if not wrote_any_batch:
+                tmp_path.unlink(missing_ok=True)
+                lf.sink_parquet(str(path), mkdir=True)
+            else:
+                os.replace(tmp_path, path)
 
     def get_object(self, key: str, bucket: str | None = None) -> str:
         path = self._resolve_object_path(key, bucket)
