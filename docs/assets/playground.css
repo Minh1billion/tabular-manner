@@ -1,4 +1,4 @@
-/* Playground page — extends style.css's tokens (--paper, --ink, --forest, --sage, --border-w, ...) */
+/* Playground page - extends style.css's tokens (--paper, --ink, --forest, --sage, --border-w, ...) */
 
 .pg-intro{
   margin-bottom:28px;
@@ -11,6 +11,69 @@
   margin:0;
   font-size:15.5px;
 }
+
+/* ---------- phase banner ---------- */
+
+.pg-phase-banner{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  margin-bottom:18px;
+  padding:14px 16px;
+  border:var(--border-w) solid var(--ink);
+  border-radius:var(--radius);
+  background:var(--forest);
+}
+
+.pg-phase-banner.warn{ background:#7A2A1D; }
+
+.phase-badge{
+  flex:none;
+  padding:4px 10px;
+  border-radius:20px;
+  background:rgba(255,255,255,0.16);
+  color:#F5F5EF;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  white-space:nowrap;
+  margin-top:2px;
+}
+
+.phase-text{ min-width:0; }
+
+.phase-title{
+  margin:0 0 4px;
+  font-family:'Space Grotesk', sans-serif;
+  font-size:15px;
+  font-weight:600;
+  color:#F5F5EF;
+}
+
+.phase-note{
+  margin:0;
+  font-size:13px;
+  line-height:1.5;
+  color:#C9E0D2;
+}
+
+.pg-phase-banner.warn .phase-note{ color:#F2D3C9; }
+
+.pg-graph-caption{
+  margin:-4px 0 10px;
+  font-size:12px;
+  color:var(--ink-soft);
+  font-style:italic;
+}
+
+.pg-side-caption{
+  margin:0 0 8px;
+  font-size:11px;
+  color:var(--ink-soft);
+}
+.pg-side-caption-tight{ margin:10px 0 6px; }
 
 /* ---------- controls bar ---------- */
 
@@ -149,6 +212,13 @@
 .tok-node{ color:#C98A3E; font-weight:600; }
 .tok-graph{ color:#8A6BB1; font-weight:600; }
 .tok-plan{ color:#5FB89C; font-weight:600; }
+
+/* svg node category stripe, matches the badge colors used on the main reference page */
+.node-cat-stripe{ stroke:none; pointer-events:none; }
+.node-cat-stripe.node-cat-source{ fill:#123D2C; }
+.node-cat-stripe.node-cat-transform{ fill:#32664D; }
+.node-cat-stripe.node-cat-merge{ fill:#4B3B7A; }
+.node-cat-stripe.node-cat-sink{ fill:#7A4A21; }
 
 /* svg node states, tuned to docs palette */
 .node-box{ fill:var(--line-strong); stroke:var(--ink); stroke-width:2; }
@@ -337,6 +407,10 @@
 .legend-swatch.active{ background:var(--sage); border-color:var(--forest); }
 .legend-swatch.done{ background:var(--forest); }
 .legend-swatch.error{ background:#B1503C; }
+.legend-swatch.cat-source{ background:#123D2C; }
+.legend-swatch.cat-transform{ background:#32664D; }
+.legend-swatch.cat-merge{ background:#4B3B7A; }
+.legend-swatch.cat-sink{ background:#7A4A21; }
 
 .legend-swatch.edge-idle,
 .legend-swatch.edge-traversed,
