@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,14 +17,14 @@
     <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
-    <a class="brand" href="index.html#top" style="margin:0;">
+    <a class="brand" href="#top" style="margin:0;">
       <span class="brand-text">Tabular Manner</span>
     </a>
   </div>
   <div class="nav-scrim"></div>
   <nav class="sidebar">
     <button class="nav-close" aria-label="Close menu">&times;</button>
-    <a class="brand" href="index.html#top">
+    <a class="brand" href="#top">
       <svg width="30" height="30" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" width="240" height="240" rx="40" fill="#F5F5EF"/>
         <g stroke="#343A3C" stroke-width="14" stroke-linecap="round" fill="none">
@@ -52,42 +52,44 @@
     <div class="nav-group">
       <p class="nav-eyebrow">Start</p>
       <ul>
-        <li><a class="nav-link" href="index.html#overview"><span class="dot"></span>Overview</a></li>
-        <li><a class="nav-link" href="index.html#getting-started"><span class="dot"></span>Getting started</a></li>
+        <li><a class="nav-link" href="#overview"><span class="dot"></span>Overview</a></li>
+        <li><a class="nav-link" href="#getting-started"><span class="dot"></span>Getting started</a></li>
       </ul>
     </div>
 
     <div class="nav-group">
       <p class="nav-eyebrow">API reference</p>
       <ul>
-        <li><a class="nav-link" href="api-reference.html#api-execution"><span class="dot"></span>Execution</a></li>
-        <li><a class="nav-link" href="api-reference.html#api-data-resource"><span class="dot"></span>Data Resource</a></li>
-        <li><a class="nav-link" href="api-reference.html#api-node-library"><span class="dot"></span>Node Library</a></li>
+        <li><a class="nav-link" href="#api-execution"><span class="dot"></span>Execution</a></li>
+        <li><a class="nav-link" href="#api-data-resource"><span class="dot"></span>Data Resource</a></li>
+        <li><a class="nav-link" href="#api-node-library"><span class="dot"></span>Node Library</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">Core concepts</p>
+      <ul>
+        <li><a class="nav-link" href="#operator-parameters"><span class="dot"></span>Operator parameters</a></li>
+        <li><a class="nav-link" href="#sandbox"><span class="dot"></span>Sandbox</a></li>
+        <li><a class="nav-link" href="#polars-role"><span class="dot"></span>Role of Polars</a></li>
       </ul>
     </div>
 
     <div class="nav-group">
       <p class="nav-eyebrow">Default nodes</p>
       <ul>
-        <li><a class="nav-link" href="nodes/io.html#nodes-io"><span class="dot"></span>Source and sink</a></li>
-        <li><a class="nav-link" href="nodes/transform.html#nodes-transform"><span class="dot"></span>Transform</a></li>
-        <li><a class="nav-link" href="nodes/merge.html#nodes-merge"><span class="dot"></span>Merge</a></li>
+        <li><a class="nav-link" href="#nodes-io"><span class="dot"></span>Source and sink</a></li>
+        <li><a class="nav-link" href="#nodes-transform"><span class="dot"></span>Transform</a></li>
+        <li><a class="nav-link" href="#nodes-merge"><span class="dot"></span>Merge</a></li>
       </ul>
     </div>
 
     <div class="nav-group">
       <p class="nav-eyebrow">Writing a graph</p>
       <ul>
-        <li><a class="nav-link" href="writing-a-graph.html#graph-anatomy"><span class="dot"></span>Graph anatomy</a></li>
-        <li><a class="nav-link" href="writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and merging</a></li>
-        <li><a class="nav-link" href="writing-a-graph.html#graph-expressions"><span class="dot"></span>Expressions</a></li>
-        <li><a class="nav-link" href="writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
-      </ul>
-    </div>
-    <div class="nav-group">
-      <p class="nav-eyebrow">Try it</p>
-      <ul>
-        <li><a class="nav-link" href="playground.html#playground-top"><span class="dot"></span>Playground</a></li>
+        <li><a class="nav-link" href="#graph-anatomy"><span class="dot"></span>Graph anatomy</a></li>
+        <li><a class="nav-link" href="#graph-ports"><span class="dot"></span>Ports and merging</a></li>
+        <li><a class="nav-link" href="#graph-examples"><span class="dot"></span>Patterns</a></li>
       </ul>
     </div>
   </nav>
@@ -98,49 +100,103 @@
       <div class="hero">
         <p class="hero-eyebrow">Engine reference</p>
         <h1>Tabular Manner</h1>
-        <p class="lead">Tabular Manner is a graph-based engine for data processing workflows. A pipeline is described as a JSON graph of nodes and connections; the engine validates it, compiles it into an execution graph, and streams lifecycle events as it runs.</p>
+        <p class="lead">Tabular Manner is a graph-based engine for data processing workflows. A pipeline is described as a JSON graph of nodes and connections; the engine validates it, compiles it into an execution graph, and streams lifecycle events as it runs on top of Polars.</p>
 
         <div class="arch-diagram">
-          <svg viewBox="0 0 700 190" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 700 510" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" fill="#5E655F"/>
               </marker>
             </defs>
 
-            <rect x="16" y="60" width="120" height="64" rx="9" fill="#FBFBF8" stroke="#CFD3CB"/>
-            <text x="76" y="88" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#5E655F">JSON</text>
-            <text x="76" y="104" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#242927" font-weight="600">graph spec</text>
+            <!-- 1. spec in -->
+            <rect x="16" y="14" width="130" height="56" rx="9" fill="#FBFBF8" stroke="#CFD3CB"/>
+            <text x="81" y="38" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#5E655F">JSON</text>
+            <text x="81" y="54" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#242927" font-weight="600">graph spec</text>
 
-            <line x1="136" y1="92" x2="180" y2="92" stroke="#5E655F" stroke-width="1.5" marker-end="url(#arrow)"/>
+            <line x1="146" y1="42" x2="184" y2="42" stroke="#5E655F" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-            <rect x="180" y="52" width="130" height="80" rx="9" fill="#EDF2EC" stroke="#32664D"/>
-            <text x="245" y="82" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#32664D">Validator</text>
-            <text x="245" y="99" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#32664D">+ Parser</text>
-            <text x="245" y="119" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#5E655F">compiles graph</text>
+            <!-- 2. validator + parser -->
+            <rect x="188" y="6" width="190" height="72" rx="9" fill="#EDF2EC" stroke="#32664D"/>
+            <text x="283" y="34" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-size="13" fill="#32664D" font-weight="600">Validator + Parser</text>
+            <text x="283" y="52" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#5E655F">checks types, cycles, entry points</text>
 
-            <line x1="310" y1="92" x2="354" y2="92" stroke="#5E655F" stroke-width="1.5" marker-end="url(#arrow)"/>
+            <line x1="238" y1="78" x2="238" y2="84" stroke="#5E655F" stroke-width="1"/>
+            <rect x="196" y="84" width="84" height="22" rx="11" fill="#FBFBF8" stroke="#CFD3CB"/>
+            <text x="238" y="98" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#5E655F">node registry</text>
 
-            <rect x="354" y="44" width="140" height="96" rx="9" fill="#123D2C"/>
-            <text x="424" y="78" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-size="13" fill="#F5F5EF" font-weight="600">Execution</text>
-            <text x="424" y="96" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#8FC9A6">traverses nodes</text>
-            <text x="424" y="112" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#8FC9A6">streams events</text>
+            <line x1="328" y1="78" x2="328" y2="84" stroke="#5E655F" stroke-width="1"/>
+            <rect x="290" y="84" width="76" height="22" rx="11" fill="#FBFBF8" stroke="#CFD3CB"/>
+            <text x="328" y="98" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#5E655F">sandbox</text>
 
-            <line x1="494" y1="92" x2="538" y2="92" stroke="#5E655F" stroke-width="1.5" marker-end="url(#arrow)"/>
+            <line x1="283" y1="78" x2="283" y2="118" stroke="#5E655F" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-            <rect x="538" y="18" width="146" height="52" rx="9" fill="#FBFBF8" stroke="#CFD3CB"/>
-            <text x="611" y="40" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#242927" font-weight="600">node_completed</text>
-            <text x="611" y="56" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#5E655F">per node</text>
+            <!-- 3. compiled graph label + lazy band -->
+            <text x="16" y="131" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="0.06em" fill="#5E655F">COMPILED GRAPH</text>
 
-            <rect x="538" y="114" width="146" height="52" rx="9" fill="#FBFBF8" stroke="#CFD3CB"/>
-            <text x="611" y="136" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#242927" font-weight="600">leaf_reached</text>
-            <text x="611" y="152" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#5E655F">per output branch</text>
+            <rect x="10" y="140" width="660" height="170" rx="10" fill="#FBFBF8" fill-opacity="0.55" stroke="#CFD3CB" stroke-dasharray="4 4"/>
+            <text x="24" y="156" font-family="IBM Plex Mono, monospace" font-size="10" font-style="italic" fill="#5E655F">Polars LazyFrame plan - nothing computed yet</text>
 
-            <line x1="524" y1="80" x2="538" y2="46" stroke="#5E655F" stroke-width="1.2"/>
-            <line x1="524" y1="104" x2="538" y2="140" stroke="#5E655F" stroke-width="1.2"/>
+            <!-- nodes -->
+            <rect x="20" y="168" width="112" height="40" rx="8" fill="#E7F0EA" stroke="#123D2C"/>
+            <text x="76" y="184" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#123D2C">fetch_csv</text>
+            <text x="76" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" font-style="italic" fill="#5E655F">source</text>
+
+            <rect x="172" y="168" width="112" height="40" rx="8" fill="#EDF2EC" stroke="#32664D"/>
+            <text x="228" y="184" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#32664D">filter</text>
+            <text x="228" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" font-style="italic" fill="#5E655F">transform</text>
+
+            <rect x="326" y="222" width="112" height="40" rx="8" fill="#EAE6F2" stroke="#4B3B7A"/>
+            <text x="382" y="238" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#4B3B7A">join</text>
+            <text x="382" y="253" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" font-style="italic" fill="#5E655F">merge</text>
+
+            <rect x="478" y="222" width="112" height="40" rx="8" fill="#F2EAE0" stroke="#7A4A21"/>
+            <text x="534" y="238" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#7A4A21">push_parquet</text>
+            <text x="534" y="253" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" font-style="italic" fill="#5E655F">sink</text>
+
+            <rect x="20" y="276" width="112" height="40" rx="8" fill="#E7F0EA" stroke="#123D2C"/>
+            <text x="76" y="292" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#123D2C">fetch_postgres</text>
+            <text x="76" y="307" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" font-style="italic" fill="#5E655F">source</text>
+
+            <rect x="172" y="276" width="112" height="40" rx="8" fill="#EDF2EC" stroke="#32664D"/>
+            <text x="228" y="292" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#32664D">derive</text>
+            <text x="228" y="307" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" font-style="italic" fill="#5E655F">transform</text>
+
+            <!-- connections between nodes -->
+            <line x1="132" y1="188" x2="168" y2="188" stroke="#5E655F" stroke-width="1.3" marker-end="url(#arrow)"/>
+            <line x1="284" y1="200" x2="322" y2="230" stroke="#5E655F" stroke-width="1.3" marker-end="url(#arrow)"/>
+            <line x1="132" y1="296" x2="168" y2="296" stroke="#5E655F" stroke-width="1.3" marker-end="url(#arrow)"/>
+            <line x1="284" y1="290" x2="322" y2="254" stroke="#5E655F" stroke-width="1.3" marker-end="url(#arrow)"/>
+            <line x1="438" y1="242" x2="474" y2="242" stroke="#5E655F" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+            <!-- 4. execution runtime -->
+            <line x1="340" y1="310" x2="340" y2="328" stroke="#5E655F" stroke-width="1.5" marker-end="url(#arrow)"/>
+            <rect x="10" y="332" width="680" height="96" rx="9" fill="#123D2C"/>
+            <text x="30" y="356" font-family="Space Grotesk, sans-serif" font-size="13" font-weight="600" fill="#F5F5EF">Execution runtime</text>
+            <text x="30" y="374" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#8FC9A6">binds shared storage, reader, and writer context to every node</text>
+            <text x="30" y="391" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#8FC9A6">traverses nodes in ready order, wiring one plan into the next</text>
+            <text x="30" y="408" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#8FC9A6">batches large sink writes into row chunks instead of one pass</text>
+
+            <!-- 5. event stream -->
+            <line x1="120" y1="428" x2="120" y2="450" stroke="#5E655F" stroke-width="1.2" marker-end="url(#arrow)"/>
+            <line x1="350" y1="428" x2="334" y2="450" stroke="#5E655F" stroke-width="1.2" marker-end="url(#arrow)"/>
+            <line x1="580" y1="428" x2="564" y2="450" stroke="#5E655F" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+            <rect x="10" y="452" width="220" height="50" rx="8" fill="#FBFBF8" stroke="#CFD3CB"/>
+            <text x="30" y="470" font-family="Space Grotesk, sans-serif" font-size="11.5" font-weight="600" fill="#242927">Per-node events</text>
+            <text x="30" y="486" font-family="IBM Plex Mono, monospace" font-size="9" fill="#5E655F">started, progress, completed</text>
+
+            <rect x="254" y="452" width="160" height="50" rx="8" fill="#FBFBF8" stroke="#CFD3CB"/>
+            <text x="274" y="470" font-family="Space Grotesk, sans-serif" font-size="11.5" font-weight="600" fill="#242927">leaf_reached</text>
+            <text x="274" y="486" font-family="IBM Plex Mono, monospace" font-size="9" fill="#5E655F">once per output branch</text>
+
+            <rect x="438" y="452" width="252" height="50" rx="8" fill="#FBFBF8" stroke="#CFD3CB"/>
+            <text x="458" y="470" font-family="Space Grotesk, sans-serif" font-size="11.5" font-weight="600" fill="#242927">Terminal event</text>
+            <text x="458" y="486" font-family="IBM Plex Mono, monospace" font-size="9" fill="#5E655F">completed, cancelled, or failed</text>
           </svg>
         </div>
-        <p class="arch-caption">spec -&gt; validate -&gt; parse -&gt; execute -&gt; event stream</p>
+        <p class="arch-caption">spec -&gt; validate against the registry and sandbox -&gt; compiled node graph over Polars LazyFrames -&gt; execution runtime -&gt; event stream</p>
       </div>
 
       <section id="overview">
@@ -190,7 +246,7 @@ engine = build_engine()
               <tr><td><code>object_storage</code></td><td class="muted">none (builds a local <code>ObjectStorage</code>)</td><td>Where <code class="inline">fetch_internal</code>/<code class="inline">push_internal</code> resources and registered custom node definitions actually live. Pass a pre-built <code class="inline">ObjectStorage(backend="s3", s3_bucket_name=...)</code> to persist those in S3 instead of the local filesystem. This is unrelated to the <code class="inline">fetch_s3</code>/<code class="inline">fetch_postgres</code> nodes, which read arbitrary external sources regardless of where the engine's own storage lives.</td></tr>
               <tr><td><code>storage_root</code></td><td class="muted">".tm"</td><td>Root directory for the default local <code class="inline">ObjectStorage</code>. Ignored if <code class="inline">object_storage</code> is provided.</td></tr>
               <tr><td><code>reader_factory</code> / <code>writer_factory</code></td><td class="muted">none (built-in "file" and "database" adapters)</td><td>Pass a customized <code class="inline">ReaderFactory</code>/<code class="inline">WriterFactory</code> to add reader/writer kinds beyond "file" and "database" via their <code class="inline">.register(kind, adapter_cls)</code> method.</td></tr>
-              <tr><td><code>max_cached_graphs</code></td><td class="muted">128</td><td>How many compiled graphs <code class="inline">Execution</code> keeps in memory at once, keyed by <code class="inline">execution_id</code>. It's an LRU: once the limit is exceeded, the least-recently-used graph is dropped silently, and re-running its <code class="inline">execution_id</code> afterward fails with <code class="inline">Unknown execution_id</code> — the same as if <code class="inline">discard()</code> had been called on it.</td></tr>
+              <tr><td><code>max_cached_graphs</code></td><td class="muted">128</td><td>How many compiled graphs <code class="inline">Execution</code> keeps in memory at once, keyed by <code class="inline">execution_id</code>. It's an LRU: once the limit is exceeded, the least-recently-used graph is dropped silently, and re-running its <code class="inline">execution_id</code> afterward fails with <code class="inline">Unknown execution_id</code> - the same as if <code class="inline">discard()</code> had been called on it.</td></tr>
             </tbody>
           </table>
         </div>
@@ -203,7 +259,7 @@ engine = build_engine()
               <tr><td><code>execution</code></td><td>Execution</td><td>Validate and run pipeline graphs.</td></tr>
               <tr><td><code>data_resource</code></td><td>DataResource</td><td>Import, list, read, and remove named internal resources.</td></tr>
               <tr><td><code>node_library</code></td><td>NodeLibrary</td><td>Register and inspect custom node types.</td></tr>
-              <tr><td><code>registry_provider</code></td><td>NodeRegistryProvider</td><td>Resolves the per-bucket <code>NodeRegistry</code> the parser looks node types up in — built-in types plus whatever custom types were registered for that bucket.</td></tr>
+              <tr><td><code>registry_provider</code></td><td>NodeRegistryProvider</td><td>Resolves the per-bucket <code>NodeRegistry</code> the parser looks node types up in - built-in types plus whatever custom types were registered for that bucket.</td></tr>
               <tr><td><code>context_manager</code></td><td>ContextManager</td><td>Holds shared runtime services (storage, readers, writers) injected into nodes.</td></tr>
               <tr><td><code>object_storage</code></td><td>ObjectStorage</td><td>The backend (local filesystem or S3) backing <code>data_resource</code> and persisted custom node definitions.</td></tr>
               <tr><td><code>sandbox</code></td><td>Sandbox</td><td>Restricts what expressions are allowed to do.</td></tr>
@@ -217,9 +273,1018 @@ engine = build_engine()
 
       <div class="edge-divider"><span class="node"></span></div>
 
-      <footer>
-        <p>Tabular Manner engine reference. Node types, params, and event names reflect the built-in registry; custom node types added through <code class="inline">NodeLibrary</code> are usable the same way once registered.</p>
-      </footer>
+      <section id="api-execution">
+        <h2>Execution</h2>
+        <p class="section-desc">Compiles a graph spec and runs it, or re-runs a graph already compiled in a previous call. Accessible as <code class="inline">engine.execution</code>.</p>
+
+        <h3><span class="mono-title">execute</span>(execution_id=None, spec=None, bucket=None, cancel_check=None)</h3>
+        <div class="sig">Iterator[dict] execute(execution_id: str | None, spec: dict | None, bucket: str | None, cancel_check: Callable[[], bool] | None)</div>
+        <p>Provide <code class="inline">spec</code> to validate, parse, and run a new graph in one call, or pass a previously returned <code class="inline">execution_id</code> to re-run an already-compiled graph against a fresh context. Exactly one of the two is required. <code class="inline">bucket</code> is only used when compiling from <code class="inline">spec</code>; it is ignored when re-running via <code class="inline">execution_id</code>, since the graph was already compiled against whatever bucket was active at that time.</p>
+
+        <div class="callout">
+          <strong><code class="inline">bucket</code> does two things.</strong> First, it selects which node registry the parser resolves <code class="inline">type</code> against: custom node types registered through <code class="inline">NodeLibrary.register_transform(..., bucket=...)</code> are only visible to graphs compiled with that same <code class="inline">bucket</code> (omitting it uses the default registry). A <code class="inline">type</code> that exists in another bucket still fails validation as an unknown node type. Second, for any node whose type binds <code class="inline">resource_storage</code> from context and accepts an optional <code class="inline">bucket</code> param (<code class="inline">fetch_internal</code>, <code class="inline">push_internal</code>), <code class="inline">execute</code>'s <code class="inline">bucket</code> is copied into that node's own <code class="inline">params.bucket</code> whenever the spec didn't already set one. An explicit <code class="inline">bucket</code> in a node's <code class="inline">params</code> always wins over this default.
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Event</th><th>When</th></tr></thead>
+            <tbody>
+              <tr><td><code>validating</code></td><td class="muted">Spec structure and node params are being checked.</td></tr>
+              <tr><td><code>parsing</code></td><td class="muted">Nodes and connections are compiled into an execution graph.</td></tr>
+              <tr><td><code>compiled</code></td><td class="muted">Carries the new <code>execution_id</code>, entry node ids, and node count.</td></tr>
+              <tr><td><code>injecting_context</code></td><td class="muted">Shared services (storage, readers, writers) are bound to nodes.</td></tr>
+              <tr><td><code>running</code></td><td class="muted">Traversal starts; carries <code>total_nodes</code>.</td></tr>
+              <tr><td><code>node_started</code> / <code>node_completed</code></td><td class="muted">Emitted for every node visited, in traversal order.</td></tr>
+              <tr><td><code>node_progress</code></td><td class="muted">Emitted while a sink writes its output in row batches; carries how many rows have been written so far and the total when it's known.</td></tr>
+              <tr><td><code>leaf_reached</code></td><td class="muted">Emitted once per branch with no outgoing connection; carries the resulting column list and step history.</td></tr>
+              <tr><td><code>cancelled</code></td><td class="muted">Emitted instead of <code>completed</code> when <code>cancel_check</code> reports a cancellation; carries the <code>execution_id</code>, <code>processed</code> node count, and <code>total</code> node count.</td></tr>
+              <tr><td><code>completed</code></td><td class="muted">Final event; carries the <code>execution_id</code> and all reached leaves.</td></tr>
+              <tr><td><code>failed</code></td><td class="muted">Carries the error message, error type, and, for node failures, the offending <code>node_id</code> and <code>node_type</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>Cancelling a run</h4>
+        <p><code class="inline">cancel_check</code> is an optional zero-argument callable returning a bool. When provided, <code class="inline">execute</code> calls it once before traversal starts and again before every node in the graph, in order:</p>
+        <ul>
+          <li>Before injecting context, right after the graph is resolved (whether just compiled or recalled via <code class="inline">execution_id</code>). If it returns truthy here, no node ever runs.</li>
+          <li>Before each step of <code class="inline">graph.traverse(...)</code>, and again before every <code class="inline">node_progress</code> update reported by a batched sink, so a long-running export can be interrupted between row batches rather than only between whole nodes.</li>
+        </ul>
+        <p>The first truthy check yields a single <code class="inline">cancelled</code> event and returns, without yielding <code class="inline">completed</code>. Either way, a cancelled execution's compiled graph is dropped from the cache, so its <code class="inline">execution_id</code> can no longer be reused with <code class="inline">execute(execution_id=...)</code>.</p>
+
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyBlock(this)">copy</button>
+          <pre><span class="tok-com"># typical wiring: a threading.Event flipped by whatever cancels the job</span>
+cancel_event = threading.Event()
+
+<span class="tok-key">for</span> event <span class="tok-key">in</span> engine.execution.execute(spec=spec, cancel_check=cancel_event.is_set):
+    <span class="tok-key">if</span> event[<span class="tok-str">"event"</span>] == <span class="tok-str">"cancelled"</span>:
+        <span class="tok-key">break</span></pre>
+        </div>
+
+        <div class="callout">
+          <strong>No <code class="inline">cancel_check</code>, no cancellation.</strong> When it's omitted, <code class="inline">execute</code> runs straight through to <code class="inline">completed</code> or <code class="inline">failed</code>; the check is only ever consulted if you pass one in.
+        </div>
+
+        <h3><span class="mono-title">validate</span>(spec, bucket=None)</h3>
+        <div class="sig">Iterator[dict] validate(spec: dict, bucket: str | None)</div>
+        <p>Checks a spec against the registry and sandbox without compiling or running it. <code class="inline">bucket</code> scopes the node registry the same way it does for <code class="inline">execute</code>, so a graph using bucket-specific custom node types must be validated with that same <code class="inline">bucket</code> to resolve them. Yields <code class="inline">validating</code> followed by either <code class="inline">valid</code> or <code class="inline">failed</code>.</p>
+
+        <p>Unlike <code class="inline">execute</code>'s <code class="inline">failed</code> event, which only carries the single error that stopped compilation, <code class="inline">validate</code> walks the whole graph and, when the failure comes from node params, connection wiring, or schema inference, attaches an <code class="inline">errors</code> array to the <code class="inline">failed</code> event with one entry (<code class="inline">node_id</code>, <code class="inline">node_type</code>, <code class="inline">message</code>) per problem found, not just the first. Structural failures (unknown node type, bad connection reference, no entry point, a cycle) still short-circuit as a single error.</p>
+
+        <h3><span class="mono-title">discard</span>(execution_id)</h3>
+        <div class="sig">None discard(execution_id: str)</div>
+        <p>Drops a compiled graph from the cache so it can no longer be reused with <code class="inline">execute(execution_id=...)</code>. Called automatically on cancellation; can also be called directly to free a graph you know you won't re-run. Compiled graphs are also evicted automatically, oldest-used first, once more than <code class="inline">max_cached_graphs</code> (see <code class="inline">build_engine</code>, default 128) are held at once - so a long-idle <code class="inline">execution_id</code> can become invalid even without an explicit <code class="inline">discard</code>.</p>
+      </section>
+
+      <section id="api-data-resource">
+        <h2>Data Resource</h2>
+        <p class="section-desc">Manages the named internal resources that <code class="inline">fetch_internal</code> and <code class="inline">push_internal</code> nodes read from and write to. Accessible as <code class="inline">engine.data_resource</code>.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Method</th><th>Parameters</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>import_source</code></td><td class="muted">key, source_kind, source_params, bucket=None, overwrite=False</td><td>Reads from an external source (file, database, and so on) and saves the result under <code>key</code>.</td></tr>
+              <tr><td><code>list</code></td><td class="muted">bucket=None, prefix=None, limit=None, offset=0</td><td>Lists stored resource keys, optionally filtered by prefix and paged.</td></tr>
+              <tr><td><code>get</code></td><td class="muted">key, bucket=None, limit=100, offset=0</td><td>Returns schema, row count, and a page of rows for a stored resource.</td></tr>
+              <tr><td><code>export</code></td><td class="muted">key, dest_path, format="csv", bucket=None</td><td>Writes a stored resource out to <code>dest_path</code> in the given file format.</td></tr>
+              <tr><td><code>delete</code></td><td class="muted">key, bucket=None</td><td>Removes a stored resource.</td></tr>
+              <tr><td><code>exists</code></td><td class="muted">key, bucket=None</td><td>Returns a plain boolean, not an event stream.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Resources are scoped by an optional <code class="inline">bucket</code>, letting the same key coexist across separate namespaces.</p>
+        <div class="callout">
+          <strong>Storage format and <code class="inline">source_kind</code>.</strong> Whatever format a resource was imported from, it is always persisted internally as Parquet; <code class="inline">key</code> should not include a file extension. For <code class="inline">import_source</code>, <code class="inline">source_kind="file"</code> accepts a <code class="inline">source_params.format</code> of <code class="inline">"csv"</code>, <code class="inline">"parquet"</code>, <code class="inline">"arrow"</code>, or <code class="inline">"json"</code> (newline-delimited JSON) - the same reader used by <code class="inline">fetch_csv</code>/<code class="inline">fetch_parquet</code>/<code class="inline">fetch_arrow</code>, plus a <code class="inline">"json"</code> format that has no dedicated built-in fetch node. <code class="inline">source_kind="database"</code> takes the same <code class="inline">dsn</code>/<code class="inline">table</code>/<code class="inline">query</code>/<code class="inline">partition_on</code>/<code class="inline">partition_num</code> params as <code class="inline">fetch_postgres</code>. <code class="inline">export</code> accepts the same <code class="inline">format</code> values (<code class="inline">"csv"</code>, <code class="inline">"parquet"</code>, <code class="inline">"arrow"</code>, <code class="inline">"json"</code>) and writes to a plain filesystem <code class="inline">dest_path</code>.
+        </div>
+      </section>
+
+      <section id="api-node-library">
+        <h2>Node Library</h2>
+        <p class="section-desc">Registers custom node types on top of the built-in ones, so a graph can reference project-specific logic by name. Accessible as <code class="inline">engine.node_library</code>.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Method</th><th>Parameters</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>load_persisted</code></td><td class="muted">bucket=None</td><td>Loads previously registered custom types for a bucket into that bucket's live registry. <code class="inline">execute</code> and <code class="inline">validate</code> already call this internally before compiling, so it rarely needs to be called directly - mainly useful to warm a bucket's registry ahead of time.</td></tr>
+              <tr><td><code>register_transform</code></td><td class="muted">name, expression, description="", bucket=None</td><td>Registers a reusable sandboxed expression as a new transform node type.</td></tr>
+              <tr><td><code>unregister_node</code></td><td class="muted">name, bucket=None</td><td>Removes a previously registered custom node type. Built-in types cannot be unregistered.</td></tr>
+              <tr><td><code>get_node</code></td><td class="muted">name, bucket=None</td><td>Returns the definition of one custom node type.</td></tr>
+              <tr><td><code>describe_nodes</code></td><td class="muted">bucket=None</td><td>Returns a descriptive summary of every node type available to the parser.</td></tr>
+              <tr><td><code>list_nodes</code></td><td class="muted">bucket=None</td><td>Returns built-in type keys alongside full definitions of custom types.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Custom node types are looked up by the parser the same way built-in ones are, so once registered they can be used as any other <code class="inline">type</code> value in a graph spec - provided that graph is compiled with the same <code class="inline">bucket</code> the type was registered under (default bucket if omitted on both sides). A name is global to its bucket: it cannot collide with a built-in type or with another custom type in the same bucket, but the same name can be reused independently in a different bucket.</p>
+
+        <p>A node type produced by <code class="inline">register_transform</code> is not called with zero configuration: at graph-build time it still requires a <code class="inline">columns</code> param (list of column names), and applies <code class="inline">expression</code> to each of those columns independently, with the target column's own value bound to the identifier <code class="inline">value</code> (in place of the whole-row <code class="inline">df</code> used by <code class="inline">filter</code>/<code class="inline">derive</code>). See Sandbox for what an expression is allowed to contain.</p>
+      </section>
+
+      <div class="edge-divider"><span class="node"></span></div>
+
+      <section id="operator-parameters">
+        <h2>Operator parameters</h2>
+        <p class="section-desc">Every node in a graph spec configures itself through a flat <code class="inline">params</code> object. The node's type decides which keys make sense, and the engine checks them before anything runs, using the same handful of rules everywhere.</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Required vs optional</h4>
+            <p style="margin:0;">A required param must be present and correctly formed, or the graph fails validation before it runs. An optional param falls back to a fixed default when it's left out, so most nodes can be configured with only a handful of keys even though they support more.</p>
+          </div>
+          <div class="card">
+            <h4>Typed, not just present</h4>
+            <p style="margin:0;">Every param has an expected shape: a plain type such as string, integer, or boolean, or a typed list such as a list of strings. A value of the wrong shape fails validation the same way a missing required value does.</p>
+          </div>
+        </div>
+
+        <p>Beyond that, a handful of param shapes recur across many node types and mean roughly the same thing wherever they show up:</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Shape</th><th>Typical meaning</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">Which column or columns a transform reads or rewrites. Most numeric, text, and missing-data transforms take this.</td></tr>
+              <tr><td><code>by</code> / <code>on</code></td><td class="muted">Which columns define grouping, sorting, or a join key.</td></tr>
+              <tr><td>a mode string, such as <code>how</code>, <code>keep</code>, <code>method</code>, or <code>if_table_exists</code></td><td class="muted">Picks one strategy out of a short, fixed set of names; an unrecognized value fails validation instead of silently falling back to a default behavior.</td></tr>
+              <tr><td>a mapping object, such as <code>types</code>, <code>mapping</code>, or <code>aggregations</code></td><td class="muted">Pairs a column name with a per-column instruction: a target dtype, a replacement value, or an aggregation function.</td></tr>
+              <tr><td>a row count, such as <code>n</code></td><td class="muted">Bounds how many rows a node keeps or reads; always a non-negative integer.</td></tr>
+              <tr><td>a numeric bound, such as <code>lower</code>/<code>upper</code> or <code>breaks</code></td><td class="muted">Defines a range, clamp, or set of cut points a value is measured against.</td></tr>
+              <tr><td><code>expression</code></td><td class="muted">A sandboxed formula rather than a fixed value; see Sandbox.</td></tr>
+              <tr><td><code>output_column</code></td><td class="muted">Where a derived result is written; when it's left out, the node falls back to a name built from the input column.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>Some params exist to control the engine's own behavior rather than the shape of the data, such as <code class="inline">schema</code> on source nodes (see Source and sink nodes) or <code class="inline">chunk_rows</code> and <code class="inline">progress_threshold_rows</code> on sinks that can batch their output.</p>
+      </section>
+
+      <section id="sandbox">
+        <h2>Sandbox</h2>
+        <p class="section-desc">Two node types, <code class="inline">filter</code> and <code class="inline">derive</code>, take a string <code class="inline">expression</code> instead of a fixed set of params. So does a transform type registered through <code class="inline">register_transform</code>. None of them run that string as ordinary Python; each one is parsed and checked against a fixed grammar before it's allowed anywhere near a graph.</p>
+
+        <p>The check runs when a graph is parsed or validated, not while it's running, so a disallowed expression is rejected before any node executes rather than partway through a pipeline. Three rules do the actual gatekeeping:</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Only two names exist</h4>
+            <p style="margin:0;">A <code class="inline">filter</code> or <code class="inline">derive</code> expression can only reference <code class="inline">df</code> (the whole row) and <code class="inline">pl</code> (Polars). A registered transform uses <code class="inline">value</code> in place of <code class="inline">df</code>, since it runs per target column rather than against the whole row. Any other identifier is rejected.</p>
+          </div>
+          <div class="card">
+            <h4>Attribute access is an allow-list</h4>
+            <p style="margin:0;">Calling something off <code class="inline">pl</code> only works for a small set of column-building helpers. Chaining a method off a column expression only works for a small set of aggregation and conditional helpers. Anything starting with an underscore is rejected outright, and so is anything not on either list.</p>
+          </div>
+        </div>
+
+        <p>The grammar itself is narrow: arithmetic, comparisons, boolean operators, conditionals, and method calls made through attribute access are allowed; assignments, imports, loops, comprehensions, lambdas, and bare function calls are not.</p>
+
+        <h4>What's allowed in practice</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Allowed</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr><td>Column reference</td><td><code>df.amount</code></td></tr>
+              <tr><td>Column functions</td><td><code>pl.col("amount")</code>, <code>pl.lit(1)</code></td></tr>
+              <tr><td>Conditional expression</td><td><code>pl.when(df.amount &gt;= 150).then(pl.lit("high")).otherwise(pl.lit("low"))</code></td></tr>
+              <tr><td>Arithmetic</td><td><code>df.amount * df.quantity</code></td></tr>
+              <tr><td>Comparisons</td><td><code>df.amount &gt;= 100</code></td></tr>
+              <tr><td>Method calls on columns</td><td><code>df.amount.mean()</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>Anything outside this set - imports, arbitrary function calls, attribute access on anything other than <code class="inline">df</code>/<code class="inline">value</code> or the narrow set of <code class="inline">pl</code> helpers - is rejected before the graph ever runs.</p>
+
+        <div class="callout">
+          <strong><code class="inline">and</code> / <code class="inline">or</code> pass the grammar check but don't combine column conditions.</strong> The grammar lets <code class="inline">and</code>, <code class="inline">or</code>, and <code class="inline">not</code> through, but each side of a comparison like <code class="inline">df.amount &gt; 0</code> evaluates to a Polars <code class="inline">Expr</code>, and Polars raises <code class="inline">TypeError: the truth value of an Expr is ambiguous</code> as soon as such a value is used in a boolean context - which is exactly what evaluating <code class="inline">and</code>/<code class="inline">or</code>/<code class="inline">not</code> does. A <code class="inline">filter</code> or <code class="inline">derive</code> expression that combines two column conditions this way (for example <code class="inline">df.amount &gt; 0 and df.quantity &gt; 0</code>) passes validation but fails at execution time with that error. The bitwise equivalents Polars normally recommends for combining expressions (<code class="inline">&amp;</code>, <code class="inline">|</code>) are not in the allowed grammar either, so there is currently no working way to AND/OR two column-based conditions in a single <code class="inline">expression</code>. <code class="inline">and</code>/<code class="inline">or</code>/<code class="inline">not</code> only work here on non-<code class="inline">Expr</code> values, such as plain Python constants.
+        </div>
+
+        <p><code class="inline">register_transform</code> (see Node Library) reuses this same sandbox, with a <code class="inline">value</code> identifier standing in for the target column's own value in place of the whole-row <code class="inline">df</code>.</p>
+      </section>
+
+      <section id="polars-role">
+        <h2>The role of Polars</h2>
+        <p class="section-desc">Every node ultimately reads or rewrites a Polars <code class="inline">LazyFrame</code>. The engine supplies the graph, the wiring, the validation, and the event stream; Polars supplies the table engine underneath all of it.</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Lazy by default</h4>
+            <p style="margin:0;">A source node opens a lazy scan rather than reading data immediately. Every transform and merge node adds another step to that lazy plan without touching real data. Nothing is actually computed until a sink collects the result, or the compiler needs to peek at a schema.</p>
+          </div>
+          <div class="card">
+            <h4>Schema without materializing data</h4>
+            <p style="margin:0;">Validation infers the columns and types flowing out of a node by asking Polars for the lazy plan's schema, which resolves names and dtypes without running the plan. A source can skip this and declare its <code class="inline">schema</code> up front instead, for cases where sampling the real source isn't possible or worth the cost.</p>
+          </div>
+          <div class="card">
+            <h4>Dtypes are Polars dtypes</h4>
+            <p style="margin:0;">Wherever a graph names a type, in <code class="inline">cast</code>'s <code class="inline">types</code> or a source's <code class="inline">schema</code>, it's naming a Polars dtype directly, such as <code class="inline">Int64</code> or <code class="inline">Float64</code>. There is no separate type system to translate between.</p>
+          </div>
+          <div class="card">
+            <h4>Batched collection for large sinks</h4>
+            <p style="margin:0;">A sink that supports progress reporting can ask Polars to hand back the result in row batches instead of one collected table, which is what makes it possible to write a large export incrementally and report progress as it goes.</p>
+          </div>
+        </div>
+
+        <p>Because every node speaks the same LazyFrame, chaining nodes together costs nothing beyond building the plan: a ten-node graph and a one-node graph both do zero actual work until something forces a collection.</p>
+      </section>
+
+      <div class="edge-divider"><span class="node"></span></div>
+
+      <section id="nodes-io">
+        <h2>Source and sink nodes<span class="badge source">source</span><span class="badge sink">sink</span></h2>
+        <p class="section-desc">Sources start a branch by reading data in; sinks end a branch by writing data out. Both types read and write lazily.</p>
+
+        <div class="callout">
+          <strong><code class="inline">schema</code>.</strong> Every source node except <code class="inline">fetch_internal</code> accepts an optional <code class="inline">schema</code> param: an object mapping column name to Polars dtype name (the same format as <code class="inline">cast</code>'s <code class="inline">types</code>, for example <code class="inline">{"amount": "Float64"}</code>). When set, it is used as-is for schema inference and validation instead of sampling the actual source, which is useful when the source isn't reachable yet at validation time or when inference would be expensive. It does not cast or affect the data read at execution time - only the schema the compiler assumes for downstream nodes.
+          <br><br>
+          <code class="inline">fetch_internal</code> is the one exception, and not by accident: it reads a resource the engine itself already wrote (via <code class="inline">push_internal</code> or <code class="inline">import_source</code>), stored internally as Parquet - a format that carries its own schema, so there's nothing to declare and nothing to sample remotely. The other five sources read something outside the engine's control (a file that may not exist yet, a bucket, a live database) where the schema either isn't knowable in advance or is expensive/impossible to check during <code class="inline">validate</code>, which is exactly what <code class="inline">schema</code> is for.
+        </div>
+
+        <nav class="onpage-toc" aria-label="Nodes on this page">
+          <p class="onpage-toc-group">Sources</p>
+          <ul>
+            <li><a href="#fetch_internal">fetch_internal</a></li>
+            <li><a href="#fetch_csv">fetch_csv</a></li>
+            <li><a href="#fetch_parquet">fetch_parquet</a></li>
+            <li><a href="#fetch_arrow">fetch_arrow</a></li>
+            <li><a href="#fetch_s3">fetch_s3</a></li>
+            <li><a href="#fetch_postgres">fetch_postgres</a></li>
+          </ul>
+          <p class="onpage-toc-group">Sinks</p>
+          <ul>
+            <li><a href="#push_internal">push_internal</a></li>
+            <li><a href="#push_csv">push_csv</a></li>
+            <li><a href="#push_parquet">push_parquet</a></li>
+            <li><a href="#push_arrow">push_arrow</a></li>
+            <li><a href="#push_postgres">push_postgres</a></li>
+          </ul>
+        </nav>
+
+        <h3 id="fetch_internal"><span class="mono-title">fetch_internal</span><span class="badge source">source</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>key</code></td><td class="muted">string</td><td class="muted">required</td><td>Resource key previously saved via <code>push_internal</code> or <code>import_source</code>.</td></tr>
+              <tr><td><code>bucket</code></td><td class="muted">string</td><td class="muted">none</td><td>Optional storage namespace.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="fetch_csv"><span class="mono-title">fetch_csv</span><span class="badge source">source</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>separator</code></td><td class="muted">string</td><td class="muted">","</td></tr>
+              <tr><td><code>has_header</code></td><td class="muted">bool</td><td class="muted">true</td></tr>
+              <tr><td><code>encoding</code></td><td class="muted">string</td><td class="muted">"utf8"</td></tr>
+              <tr><td><code>schema</code></td><td class="muted">object of string to string</td><td class="muted">none (inferred)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="fetch_parquet"><span class="mono-title">fetch_parquet</span><span class="badge source">source</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">none (all columns)</td></tr>
+              <tr><td><code>n_rows</code></td><td class="muted">integer</td><td class="muted">none (all rows)</td></tr>
+              <tr><td><code>schema</code></td><td class="muted">object of string to string</td><td class="muted">none (inferred)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="fetch_arrow"><span class="mono-title">fetch_arrow</span><span class="badge source">source</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>schema</code></td><td class="muted">object of string to string</td><td class="muted">none (inferred)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="fetch_s3"><span class="mono-title">fetch_s3</span><span class="badge source">source</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>bucket</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>key</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>format</code></td><td class="muted">string</td><td class="muted">"parquet" (or "csv")</td></tr>
+              <tr><td><code>region</code></td><td class="muted">string</td><td class="muted">none</td></tr>
+              <tr><td><code>storage_options</code></td><td class="muted">object</td><td class="muted">none</td></tr>
+              <tr><td><code>schema</code></td><td class="muted">object of string to string</td><td class="muted">none (inferred)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="fetch_postgres"><span class="mono-title">fetch_postgres</span><span class="badge source">source</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>dsn</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>table</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>query</code></td><td class="muted">string</td><td class="muted">none (reads whole table)</td></tr>
+              <tr><td><code>partition_on</code></td><td class="muted">string</td><td class="muted">none</td></tr>
+              <tr><td><code>partition_num</code></td><td class="muted">integer</td><td class="muted">none</td></tr>
+              <tr><td><code>schema</code></td><td class="muted">object of string to string</td><td class="muted">none (inferred)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout">
+          <strong>Batched exports and <code class="inline">node_progress</code>.</strong> <code class="inline">push_internal</code>, <code class="inline">push_csv</code>, <code class="inline">push_parquet</code>, and <code class="inline">push_arrow</code> can write their output in row batches instead of one call. <code class="inline">chunk_rows</code> sets how many rows go into each batch. <code class="inline">progress_threshold_rows</code> sets the row count at or below which the sink skips batching entirely and writes the whole result in a single pass, since progress reporting isn't worth the overhead for a small result. Batching only applies when the destination supports being written incrementally; when it doesn't, the whole result is written in one pass regardless of size. Whenever a sink does batch its output, the engine reports a <code class="inline">node_progress</code> event after each batch with the rows written so far. When the destination is S3, batches are uploaded incrementally as a multipart upload, so progress advances steadily instead of jumping straight to 100% at the end. If a batched export is interrupted partway through, for example by cancellation, the partial output is discarded rather than left behind as a corrupt file.
+        </div>
+
+        <h3 id="push_internal"><span class="mono-title">push_internal</span><span class="badge sink">sink</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>key</code></td><td class="muted">string</td><td class="muted">required</td><td></td></tr>
+              <tr><td><code>bucket</code></td><td class="muted">string</td><td class="muted">none</td><td>Optional storage namespace.</td></tr>
+              <tr><td><code>chunk_rows</code></td><td class="muted">integer</td><td class="muted">100000</td><td>Rows written per batch when the export is large enough to batch.</td></tr>
+              <tr><td><code>progress_threshold_rows</code></td><td class="muted">integer</td><td class="muted">200000</td><td>Row count at or below which the export skips batching and writes in one pass.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="push_csv"><span class="mono-title">push_csv</span><span class="badge sink">sink</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>separator</code></td><td class="muted">string</td><td class="muted">","</td></tr>
+              <tr><td><code>include_header</code></td><td class="muted">bool</td><td class="muted">true</td></tr>
+              <tr><td><code>chunk_rows</code></td><td class="muted">integer</td><td class="muted">100000</td></tr>
+              <tr><td><code>progress_threshold_rows</code></td><td class="muted">integer</td><td class="muted">500000</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="push_parquet"><span class="mono-title">push_parquet</span><span class="badge sink">sink</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>chunk_rows</code></td><td class="muted">integer</td><td class="muted">100000</td></tr>
+              <tr><td><code>progress_threshold_rows</code></td><td class="muted">integer</td><td class="muted">500000</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="push_arrow"><span class="mono-title">push_arrow</span><span class="badge sink">sink</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr><td><code>path</code></td><td class="muted">string</td><td class="muted">required</td></tr>
+              <tr><td><code>chunk_rows</code></td><td class="muted">integer</td><td class="muted">100000</td></tr>
+              <tr><td><code>progress_threshold_rows</code></td><td class="muted">integer</td><td class="muted">500000</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="push_postgres"><span class="mono-title">push_postgres</span><span class="badge sink">sink</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>dsn</code></td><td class="muted">string</td><td class="muted">required</td><td>Does not support batched progress; the write always happens in a single pass.</td></tr>
+              <tr><td><code>table</code></td><td class="muted">string</td><td class="muted">required</td><td></td></tr>
+              <tr><td><code>if_table_exists</code></td><td class="muted">string</td><td class="muted">"append"</td><td>One of <code>"append"</code>, <code>"replace"</code>, <code>"fail"</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="nodes-transform">
+        <h2>Transform nodes<span class="badge transform">transform</span></h2>
+        <p class="section-desc">Single-input, single-output nodes that reshape the data passing through a branch. Each takes one input and produces one output.</p>
+
+        <nav class="onpage-toc" aria-label="Transform nodes on this page">
+          <p class="onpage-toc-group">Selection and shape</p>
+          <ul>
+            <li><a href="#select">select</a></li>
+            <li><a href="#drop">drop</a></li>
+            <li><a href="#limit">limit</a></li>
+            <li><a href="#head">head</a></li>
+            <li><a href="#tail">tail</a></li>
+            <li><a href="#explode">explode</a></li>
+            <li><a href="#group_by">group_by</a></li>
+            <li><a href="#rename">rename</a></li>
+            <li><a href="#sort">sort</a></li>
+            <li><a href="#cast">cast</a></li>
+            <li><a href="#add_row_index">add_row_index</a></li>
+            <li><a href="#unpivot">unpivot</a></li>
+          </ul>
+          <p class="onpage-toc-group">Missing and duplicate data</p>
+          <ul>
+            <li><a href="#fill_mean">fill_mean</a></li>
+            <li><a href="#fill_null">fill_null</a></li>
+            <li><a href="#fill_forward">fill_forward</a></li>
+            <li><a href="#fill_backward">fill_backward</a></li>
+            <li><a href="#drop_nulls">drop_nulls</a></li>
+            <li><a href="#drop_duplicates">drop_duplicates</a></li>
+            <li><a href="#map_values">map_values</a></li>
+          </ul>
+          <p class="onpage-toc-group">Numeric</p>
+          <ul>
+            <li><a href="#log">log</a></li>
+            <li><a href="#zscore_normalize">zscore_normalize</a></li>
+            <li><a href="#minmax_normalize">minmax_normalize</a></li>
+            <li><a href="#abs">abs</a></li>
+            <li><a href="#round">round</a></li>
+            <li><a href="#clip">clip</a></li>
+            <li><a href="#sqrt">sqrt</a></li>
+            <li><a href="#power">power</a></li>
+            <li><a href="#rank">rank</a></li>
+            <li><a href="#cumulative_sum">cumulative_sum</a></li>
+            <li><a href="#shift">shift</a></li>
+            <li><a href="#bin">bin</a></li>
+          </ul>
+          <p class="onpage-toc-group">Text</p>
+          <ul>
+            <li><a href="#str_case">str_case</a></li>
+            <li><a href="#str_strip">str_strip</a></li>
+            <li><a href="#str_replace">str_replace</a></li>
+            <li><a href="#extract_regex">extract_regex</a></li>
+          </ul>
+          <p class="onpage-toc-group">Datetime</p>
+          <ul>
+            <li><a href="#parse_date">parse_date</a></li>
+            <li><a href="#date_part">date_part</a></li>
+          </ul>
+          <p class="onpage-toc-group">Expression-based</p>
+          <ul>
+            <li><a href="#filter">filter</a></li>
+            <li><a href="#derive">derive</a></li>
+          </ul>
+        </nav>
+
+        <h3 id="select"><span class="mono-title">select</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Keeps only the given columns, in order.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="drop"><span class="mono-title">drop</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Removes the given columns.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="limit"><span class="mono-title">limit</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>n</code></td><td class="muted">integer</td><td class="muted">required</td><td>Keeps at most the first <code>n</code> rows.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="head"><span class="mono-title">head</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>n</code></td><td class="muted">integer</td><td class="muted">required</td><td>Keeps the first <code>n</code> rows.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="tail"><span class="mono-title">tail</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>n</code></td><td class="muted">integer</td><td class="muted">required</td><td>Keeps the last <code>n</code> rows.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="explode"><span class="mono-title">explode</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Explodes list-typed columns into multiple rows, one per element.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="group_by"><span class="mono-title">group_by</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>by</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Columns to group rows by.</td></tr>
+              <tr><td><code>aggregations</code></td><td class="muted">object of string to string</td><td class="muted">required</td><td>Maps a column to one of <code>sum</code>, <code>mean</code>, <code>min</code>, <code>max</code>, <code>count</code>, <code>median</code>, <code>std</code>, <code>first</code>, <code>last</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="rename"><span class="mono-title">rename</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>mapping</code></td><td class="muted">object of string to string</td><td class="muted">required</td><td>Renames columns from old name to new name.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="sort"><span class="mono-title">sort</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>by</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Columns to sort rows by.</td></tr>
+              <tr><td><code>descending</code></td><td class="muted">bool</td><td class="muted">false</td><td>Sorts in descending order when true.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="cast"><span class="mono-title">cast</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>types</code></td><td class="muted">object of string to string</td><td class="muted">required</td><td>Casts columns to the named Polars dtype, for example <code>Int64</code> or <code>Float64</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="add_row_index"><span class="mono-title">add_row_index</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>index_name</code></td><td class="muted">string</td><td class="muted">"index"</td><td>Name of the new column.</td></tr>
+              <tr><td><code>offset</code></td><td class="muted">integer</td><td class="muted">0</td><td>Value assigned to the first row.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="unpivot"><span class="mono-title">unpivot</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>index</code></td><td class="muted">list of string</td><td class="muted">none (no id columns)</td><td>Columns to keep as-is, repeated for each unpivoted row.</td></tr>
+              <tr><td><code>on</code></td><td class="muted">list of string</td><td class="muted">none (all remaining columns)</td><td>Columns to unpivot into name/value pairs.</td></tr>
+              <tr><td><code>variable_name</code></td><td class="muted">string</td><td class="muted">none (Polars default)</td><td>Name of the output column holding the original column name.</td></tr>
+              <tr><td><code>value_name</code></td><td class="muted">string</td><td class="muted">none (Polars default)</td><td>Name of the output column holding the value.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Reshapes wide columns into long name/value pairs, the same operation often called a melt.</p>
+
+        <h3 id="fill_mean"><span class="mono-title">fill_mean</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Fills nulls in the given columns with each column's mean.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="fill_null"><span class="mono-title">fill_null</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Columns to fill.</td></tr>
+              <tr><td><code>value</code></td><td class="muted">any</td><td class="muted">required</td><td>Fixed value used to fill nulls in the given columns.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="fill_forward"><span class="mono-title">fill_forward</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Fills nulls by carrying the last non-null value forward.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="fill_backward"><span class="mono-title">fill_backward</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Fills nulls using the next non-null value.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="drop_nulls"><span class="mono-title">drop_nulls</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">none (any column)</td><td>Drops rows with a null in any of the given columns, or any column if omitted.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="drop_duplicates"><span class="mono-title">drop_duplicates</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>subset</code></td><td class="muted">list of string</td><td class="muted">none (all columns)</td><td>Scopes duplicate detection to a subset of columns.</td></tr>
+              <tr><td><code>keep</code></td><td class="muted">string</td><td class="muted">"first"</td><td>One of <code>"first"</code>, <code>"last"</code>, <code>"any"</code>, <code>"none"</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="map_values"><span class="mono-title">map_values</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>column</code></td><td class="muted">string</td><td class="muted">required</td><td>Column whose values are being remapped.</td></tr>
+              <tr><td><code>mapping</code></td><td class="muted">object</td><td class="muted">required</td><td>Maps an existing value to a replacement value.</td></tr>
+              <tr><td><code>default</code></td><td class="muted">any</td><td class="muted">none</td><td>When set, any value not found in <code>mapping</code> is replaced with <code>default</code>. When left out, values not found in <code>mapping</code> are left unchanged.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="log"><span class="mono-title">log</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Columns to apply a logarithm to.</td></tr>
+              <tr><td><code>base</code></td><td class="muted">float</td><td class="muted">none (natural log)</td><td>Log base. Uses the natural log if omitted.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="zscore_normalize"><span class="mono-title">zscore_normalize</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Rescales the given columns to zero mean and unit standard deviation.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="minmax_normalize"><span class="mono-title">minmax_normalize</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Rescales the given columns to the [0, 1] range based on their min and max.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="abs"><span class="mono-title">abs</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Replaces each column with its absolute value.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="round"><span class="mono-title">round</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Columns to round.</td></tr>
+              <tr><td><code>decimals</code></td><td class="muted">integer</td><td class="muted">0</td><td>Number of decimal places to round to.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="clip"><span class="mono-title">clip</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Columns to clamp.</td></tr>
+              <tr><td><code>lower</code></td><td class="muted">float</td><td class="muted">none</td><td>Lower bound. At least one of <code>lower</code>/<code>upper</code> must be set.</td></tr>
+              <tr><td><code>upper</code></td><td class="muted">float</td><td class="muted">none</td><td>Upper bound.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="sqrt"><span class="mono-title">sqrt</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Replaces each column with its square root.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="power"><span class="mono-title">power</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Columns to raise to a power.</td></tr>
+              <tr><td><code>exponent</code></td><td class="muted">float</td><td class="muted">required</td><td>Exponent applied to each column.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="rank"><span class="mono-title">rank</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Columns to rank, independently of one another.</td></tr>
+              <tr><td><code>method</code></td><td class="muted">string</td><td class="muted">"average"</td><td>One of <code>"average"</code>, <code>"min"</code>, <code>"max"</code>, <code>"dense"</code>, <code>"ordinal"</code>, <code>"random"</code>; controls how ties are broken.</td></tr>
+              <tr><td><code>descending</code></td><td class="muted">bool</td><td class="muted">false</td><td>Ranks in descending order when true.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="cumulative_sum"><span class="mono-title">cumulative_sum</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Replaces each column with its running total.</td></tr>
+              <tr><td><code>reverse</code></td><td class="muted">bool</td><td class="muted">false</td><td>Accumulates from the last row to the first when true.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="shift"><span class="mono-title">shift</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Columns to shift.</td></tr>
+              <tr><td><code>n</code></td><td class="muted">integer</td><td class="muted">required</td><td>Shifts values down by <code>n</code> rows, or up when negative, leaving nulls behind.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="bin"><span class="mono-title">bin</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>column</code></td><td class="muted">string</td><td class="muted">required</td><td>Numeric column to bucket.</td></tr>
+              <tr><td><code>breaks</code></td><td class="muted">list of float</td><td class="muted">required</td><td>Cut points defining the bucket boundaries.</td></tr>
+              <tr><td><code>labels</code></td><td class="muted">list of string</td><td class="muted">none (numbered buckets)</td><td>Must have exactly one more entry than <code>breaks</code> when set.</td></tr>
+              <tr><td><code>output_column</code></td><td class="muted">string</td><td class="muted">none (<code>&lt;column&gt;_bin</code>)</td><td>Name of the new column.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="str_case"><span class="mono-title">str_case</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Text columns to rewrite.</td></tr>
+              <tr><td><code>case</code></td><td class="muted">string</td><td class="muted">required</td><td>One of <code>"upper"</code>, <code>"lower"</code>, <code>"title"</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="str_strip"><span class="mono-title">str_strip</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Text columns to strip.</td></tr>
+              <tr><td><code>characters</code></td><td class="muted">string</td><td class="muted">none (whitespace)</td><td>Characters to strip from both ends. Strips whitespace when omitted.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="str_replace"><span class="mono-title">str_replace</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Text columns to rewrite.</td></tr>
+              <tr><td><code>pattern</code></td><td class="muted">string</td><td class="muted">required</td><td>Text or regular expression to match.</td></tr>
+              <tr><td><code>value</code></td><td class="muted">string</td><td class="muted">required</td><td>Replacement text.</td></tr>
+              <tr><td><code>literal</code></td><td class="muted">bool</td><td class="muted">false</td><td>Treats <code>pattern</code> as plain text instead of a regular expression when true.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="extract_regex"><span class="mono-title">extract_regex</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>column</code></td><td class="muted">string</td><td class="muted">required</td><td>Text column to match against.</td></tr>
+              <tr><td><code>pattern</code></td><td class="muted">string</td><td class="muted">required</td><td>Regular expression with at least one capture group.</td></tr>
+              <tr><td><code>group</code></td><td class="muted">integer</td><td class="muted">1</td><td>Which capture group to extract.</td></tr>
+              <tr><td><code>output_column</code></td><td class="muted">string</td><td class="muted">none (<code>&lt;column&gt;_extracted</code>)</td><td>Name of the new column.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="parse_date"><span class="mono-title">parse_date</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>columns</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Text columns to parse into dates.</td></tr>
+              <tr><td><code>format</code></td><td class="muted">string</td><td class="muted">none (inferred)</td><td>A strftime-style pattern; format is inferred automatically when omitted.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="date_part"><span class="mono-title">date_part</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>column</code></td><td class="muted">string</td><td class="muted">required</td><td>Date/datetime column to read from.</td></tr>
+              <tr><td><code>part</code></td><td class="muted">string</td><td class="muted">required</td><td>One of <code>"year"</code>, <code>"quarter"</code>, <code>"month"</code>, <code>"week"</code>, <code>"weekday"</code>, <code>"day"</code>, <code>"ordinal_day"</code>, <code>"hour"</code>, <code>"minute"</code>, <code>"second"</code>.</td></tr>
+              <tr><td><code>output_column</code></td><td class="muted">string</td><td class="muted">none (<code>&lt;column&gt;_&lt;part&gt;</code>)</td><td>Name of the new column.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="filter"><span class="mono-title">filter</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>expression</code></td><td class="muted">string</td><td class="muted">required</td><td>Keeps rows where the sandboxed expression evaluates to true.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="derive"><span class="mono-title">derive</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>expression</code></td><td class="muted">string</td><td class="muted">required</td><td>Sandboxed expression producing the column's value.</td></tr>
+              <tr><td><code>column</code></td><td class="muted">string</td><td class="muted">required</td><td>Adds or replaces this column with the result of <code>expression</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>See <strong>Sandbox</strong> for what <code class="inline">filter</code> and <code class="inline">derive</code> accept in <code class="inline">expression</code>.</p>
+      </section>
+
+      <section id="nodes-merge">
+        <h2>Merge nodes<span class="badge merge">merge</span></h2>
+        <p class="section-desc">Fan-in nodes that wait for every incoming branch before producing a single output.</p>
+
+        <h3><span class="mono-title">union</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>how</code></td><td class="muted">string</td><td class="muted">"vertical_relaxed"</td><td>Stacks any number of incoming branches on the default port.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><span class="mono-title">join</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>on</code></td><td class="muted">list of string</td><td class="muted">required</td><td>Join key columns.</td></tr>
+              <tr><td><code>how</code></td><td class="muted">string</td><td class="muted">"inner"</td><td>Accepts exactly two inputs, tagged <code>left</code> and <code>right</code> via each connection's <code>into</code> field.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="edge-divider"><span class="node"></span></div>
+
+      <section id="graph-anatomy">
+        <h2>Writing a graph</h2>
+        <p class="section-desc">A graph spec has a name, a flat list of nodes, and a flat list of connections between them.</p>
+
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyBlock(this)">copy</button>
+          <pre>{
+  <span class="tok-key">"name"</span>: <span class="tok-str">"Basic Clean Pipeline"</span>,
+  <span class="tok-key">"nodes"</span>: [
+    {
+      <span class="tok-key">"id"</span>: <span class="tok-str">"1"</span>,
+      <span class="tok-key">"type"</span>: <span class="tok-str">"fetch_internal"</span>,
+      <span class="tok-key">"name"</span>: <span class="tok-str">"Fetch Data"</span>,
+      <span class="tok-key">"params"</span>: { <span class="tok-key">"key"</span>: <span class="tok-str">"raw"</span> }
+    },
+    {
+      <span class="tok-key">"id"</span>: <span class="tok-str">"2"</span>,
+      <span class="tok-key">"type"</span>: <span class="tok-str">"select"</span>,
+      <span class="tok-key">"name"</span>: <span class="tok-str">"Select Columns"</span>,
+      <span class="tok-key">"params"</span>: { <span class="tok-key">"columns"</span>: [<span class="tok-str">"customer"</span>, <span class="tok-str">"amount"</span>] }
+    },
+    {
+      <span class="tok-key">"id"</span>: <span class="tok-str">"3"</span>,
+      <span class="tok-key">"type"</span>: <span class="tok-str">"push_internal"</span>,
+      <span class="tok-key">"name"</span>: <span class="tok-str">"Export Result"</span>,
+      <span class="tok-key">"params"</span>: { <span class="tok-key">"key"</span>: <span class="tok-str">"cleaned"</span> }
+    }
+  ],
+  <span class="tok-key">"connections"</span>: [
+    { <span class="tok-key">"from"</span>: <span class="tok-str">"1"</span>, <span class="tok-key">"to"</span>: <span class="tok-str">"2"</span> },
+    { <span class="tok-key">"from"</span>: <span class="tok-str">"2"</span>, <span class="tok-key">"to"</span>: <span class="tok-str">"3"</span> }
+  ]
+}</pre>
+        </div>
+
+        <h4>Node fields</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Field</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>id</code></td><td>Unique string id, referenced by connections.</td></tr>
+              <tr><td><code>type</code></td><td>Key of a registered node type, built-in or custom.</td></tr>
+              <tr><td><code>name</code></td><td>Display label, recorded in each branch's step history.</td></tr>
+              <tr><td><code>params</code></td><td>Node-specific configuration object, validated against that node type's required and optional fields (see Operator parameters).</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>Connection fields</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Field</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>from</code> / <code>to</code></td><td>Node ids being connected.</td></tr>
+              <tr><td><code>into</code></td><td>Input slot to fill on the target node. Required for fan-in nodes with named inputs, such as <code>join</code>'s <code>left</code> and <code>right</code>.</td></tr>
+              <tr><td><code>on</code></td><td>Which output port of the <code>from</code> node to read. Defaults to <code>"out"</code>, the only port any built-in node exposes, so it can be omitted for every node type documented here; it exists for custom node types that declare more than one output port.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout">
+          <strong>Entry points, and no cycles.</strong> Any node with no incoming connection starts a branch when the graph runs. A graph must have at least one; a graph with none fails validation. Validation also walks the connection graph for cycles independently of the entry-point check, so a loop anywhere - even one that still leaves other nodes reachable from a valid entry point - fails validation with the offending cycle's node path in the error message.
+        </div>
+      </section>
+
+      <section id="graph-ports">
+        <h2>Ports and merging</h2>
+        <p class="section-desc">Every built-in node has a single output port, so connections never need to pick a port on the way out. A node's output can still feed more than one connection - that's how a branch fans out to several downstream nodes.</p>
+
+        <p>Fan-in nodes work the other way: instead of choosing an output port, incoming connections choose an input slot. <code class="inline">union</code> accepts any number of branches on the default port and concatenates them. <code class="inline">join</code> requires exactly two, matched to its <code class="inline">left</code> and <code class="inline">right</code> input slots via each connection's <code class="inline">into</code> field.</p>
+      </section>
+
+      <section id="graph-examples">
+        <h2>Common patterns</h2>
+        <p class="section-desc">A few small shapes cover most graphs: a straight line, a fan-out, and a merge.</p>
+
+        <h3>Fan-out to two sinks</h3>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyBlock(this)">copy</button>
+          <pre><span class="tok-com">// a node's output can feed more than one connection</span>
+{ <span class="tok-key">"from"</span>: <span class="tok-str">"3"</span>, <span class="tok-key">"to"</span>: <span class="tok-str">"4"</span> }
+{ <span class="tok-key">"from"</span>: <span class="tok-str">"3"</span>, <span class="tok-key">"to"</span>: <span class="tok-str">"5"</span> }</pre>
+        </div>
+
+        <h3>Joining two branches</h3>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyBlock(this)">copy</button>
+          <pre>{
+  <span class="tok-key">"id"</span>: <span class="tok-str">"3"</span>, <span class="tok-key">"type"</span>: <span class="tok-str">"join"</span>, <span class="tok-key">"name"</span>: <span class="tok-str">"Join Customers With Amounts"</span>,
+  <span class="tok-key">"params"</span>: { <span class="tok-key">"on"</span>: [<span class="tok-str">"customer"</span>], <span class="tok-key">"how"</span>: <span class="tok-str">"inner"</span> }
+}
+
+<span class="tok-com">// connections tag each side via "into"</span>
+{ <span class="tok-key">"from"</span>: <span class="tok-str">"1"</span>, <span class="tok-key">"to"</span>: <span class="tok-str">"3"</span>, <span class="tok-key">"into"</span>: <span class="tok-str">"left"</span> }
+{ <span class="tok-key">"from"</span>: <span class="tok-str">"2"</span>, <span class="tok-key">"to"</span>: <span class="tok-str">"3"</span>, <span class="tok-key">"into"</span>: <span class="tok-str">"right"</span> }</pre>
+        </div>
+      </section>
 
     </div>
   </main>
