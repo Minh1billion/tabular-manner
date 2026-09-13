@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -61,28 +61,36 @@
     <div class="nav-group">
       <p class="nav-eyebrow">API reference</p>
       <ul>
-        <li><a class="nav-link" href="api-reference.html#api-execution"><span class="dot"></span>Execution</a></li>
-        <li><a class="nav-link" href="api-reference.html#api-data-resource"><span class="dot"></span>Data Resource</a></li>
-        <li><a class="nav-link" href="api-reference.html#api-node-library"><span class="dot"></span>Node Library</a></li>
+        <li><a class="nav-link" href="index.html#api-execution"><span class="dot"></span>Execution</a></li>
+        <li><a class="nav-link" href="index.html#api-data-resource"><span class="dot"></span>Data Resource</a></li>
+        <li><a class="nav-link" href="index.html#api-node-library"><span class="dot"></span>Node Library</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <p class="nav-eyebrow">Core concepts</p>
+      <ul>
+        <li><a class="nav-link" href="index.html#operator-parameters"><span class="dot"></span>Operator parameters</a></li>
+        <li><a class="nav-link" href="index.html#sandbox"><span class="dot"></span>Sandbox</a></li>
+        <li><a class="nav-link" href="index.html#polars-role"><span class="dot"></span>Role of Polars</a></li>
       </ul>
     </div>
 
     <div class="nav-group">
       <p class="nav-eyebrow">Default nodes</p>
       <ul>
-        <li><a class="nav-link" href="nodes/io.html#nodes-io"><span class="dot"></span>Source and sink</a></li>
-        <li><a class="nav-link" href="nodes/transform.html#nodes-transform"><span class="dot"></span>Transform</a></li>
-        <li><a class="nav-link" href="nodes/merge.html#nodes-merge"><span class="dot"></span>Merge</a></li>
+        <li><a class="nav-link" href="index.html#nodes-io"><span class="dot"></span>Source and sink</a></li>
+        <li><a class="nav-link" href="index.html#nodes-transform"><span class="dot"></span>Transform</a></li>
+        <li><a class="nav-link" href="index.html#nodes-merge"><span class="dot"></span>Merge</a></li>
       </ul>
     </div>
 
     <div class="nav-group">
       <p class="nav-eyebrow">Writing a graph</p>
       <ul>
-        <li><a class="nav-link" href="writing-a-graph.html#graph-anatomy"><span class="dot"></span>Graph anatomy</a></li>
-        <li><a class="nav-link" href="writing-a-graph.html#graph-ports"><span class="dot"></span>Ports and merging</a></li>
-        <li><a class="nav-link" href="writing-a-graph.html#graph-expressions"><span class="dot"></span>Expressions</a></li>
-        <li><a class="nav-link" href="writing-a-graph.html#graph-examples"><span class="dot"></span>Patterns</a></li>
+        <li><a class="nav-link" href="index.html#graph-anatomy"><span class="dot"></span>Graph anatomy</a></li>
+        <li><a class="nav-link" href="index.html#graph-ports"><span class="dot"></span>Ports and merging</a></li>
+        <li><a class="nav-link" href="index.html#graph-examples"><span class="dot"></span>Patterns</a></li>
       </ul>
     </div>
     <div class="nav-group">
@@ -99,11 +107,19 @@
       <div class="pg-intro">
         <p class="hero-eyebrow">Interactive</p>
         <h1>Playground</h1>
-        <p class="lead">Paste a graph spec (or edit the default one) and step through exactly what the engine does: a structural check that walks the graph looking for cycles, then, if the graph is valid, the ready-queue traversal that decides execution order. Use <strong>Play</strong> to animate it, or <strong>Prev</strong> / <strong>Next</strong> to step by hand.</p>
+        <p class="lead">Every run happens in two separate phases: first the graph is checked for mistakes, then - only if it's valid - it actually runs. Pick a shape below, then use <strong>Play</strong> or step through by hand with <strong>Prev</strong> / <strong>Next</strong> to watch each phase happen one decision at a time.</p>
       </div>
 
       <div class="callout" style="margin-bottom:24px;">
         <strong>What you're watching.</strong> Each node only knows how to process its own data - it has no idea what's upstream or downstream. The graph never processes data itself; it just knows the wiring, and decides which node runs next. As you step through below, the graph is doing exactly that: checking a node is ready, handing it off, then reading the result to pick where to go next.
+      </div>
+
+      <div class="pg-phase-banner" id="pgPhaseBanner">
+        <span class="phase-badge" id="phaseBadge">Phase 1 of 2</span>
+        <div class="phase-text">
+          <p class="phase-title" id="phaseTitle">Checking the graph</p>
+          <p class="phase-note" id="phaseNote">All nodes start unvisited.</p>
+        </div>
       </div>
 
       <div class="pg-controls">
@@ -126,6 +142,7 @@
       <div class="pg-grid">
         <div class="pg-panel">
           <h3>Graph</h3>
+          <p class="pg-graph-caption" id="graphCaption">Two branches are combined by a join, which waits for both sides before continuing.</p>
           <svg id="graphCanvas" viewBox="0 0 520 300">
             <defs>
               <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -135,7 +152,7 @@
           </svg>
         </div>
         <div class="pg-panel">
-          <h3>Pseudocode</h3>
+          <h3 id="pseudocodeTitle">Pseudocode - checking the graph</h3>
           <pre id="pseudocode"></pre>
         </div>
       </div>
@@ -144,12 +161,12 @@
         <div class="pg-panel">
           <h3>Graph input (JSON)</h3>
           <div class="pg-preset-row">
-            <button class="preset-btn" data-preset="chain">Straight line</button>
-            <button class="preset-btn" data-preset="fanout">Fan-out</button>
-            <button class="preset-btn active" data-preset="join">Fan-out + join</button>
-            <button class="preset-btn" data-preset="union3">3-way merge</button>
-            <button class="preset-btn" data-preset="chained">Chained joins</button>
-            <button class="preset-btn" data-preset="cycle">Cycle (invalid)</button>
+            <button class="preset-btn" data-preset="chain" title="Source -> transform -> sink, nothing more.">Straight line</button>
+            <button class="preset-btn" data-preset="fanout" title="One source feeds two independent branches, each writing its own output.">Fan-out</button>
+            <button class="preset-btn active" data-preset="join" title="Two branches are combined by a join, which waits for both sides.">Fan-out + join</button>
+            <button class="preset-btn" data-preset="union3" title="Three sources are stacked together by a union, then written to one sink.">3-way merge</button>
+            <button class="preset-btn" data-preset="chained" title="Two joins in a row - a common shape once a pipeline branches more than once.">Chained joins</button>
+            <button class="preset-btn" data-preset="cycle" title="Deliberately invalid: a connection loops back on itself.">Cycle (invalid)</button>
           </div>
           <textarea id="graphInput" spellcheck="false"></textarea>
           <div id="inputError"></div>
@@ -157,8 +174,10 @@
 
         <div class="pg-panel pg-side">
           <div class="sub">
-            <h3>Queue / stack</h3>
+            <h3 id="queueTitle">Stack (depth-first)</h3>
+            <p class="pg-side-caption" id="queueCaption">The node added most recently is visited next.</p>
             <div class="queue-row" id="queueRow"></div>
+            <p class="pg-side-caption pg-side-caption-tight" id="visitedCaption">Finished:</p>
             <div class="visited-row" id="visitedRow"></div>
           </div>
           <div class="sub">
@@ -168,11 +187,18 @@
         </div>
       </div>
 
-      <div class="pg-legend collapsed" id="pgLegend">
-        <button class="pg-legend-toggle" id="pgLegendToggle" aria-expanded="false" aria-controls="pgLegendBody">Legend</button>
+      <div class="pg-legend" id="pgLegend">
+        <button class="pg-legend-toggle" id="pgLegendToggle" aria-expanded="true" aria-controls="pgLegendBody">Legend</button>
         <div class="pg-legend-body" id="pgLegendBody">
           <div class="pg-legend-group">
-            <p class="pg-legend-title">Node color</p>
+            <p class="pg-legend-title">Node category (left stripe)</p>
+            <div class="pg-legend-row"><span class="legend-swatch cat-source"></span>Source - reads data in</div>
+            <div class="pg-legend-row"><span class="legend-swatch cat-transform"></span>Transform - reshapes one branch</div>
+            <div class="pg-legend-row"><span class="legend-swatch cat-merge"></span>Merge - waits on multiple branches</div>
+            <div class="pg-legend-row"><span class="legend-swatch cat-sink"></span>Sink - writes data out</div>
+          </div>
+          <div class="pg-legend-group">
+            <p class="pg-legend-title">Node color (fill)</p>
             <div class="pg-legend-row"><span class="legend-swatch idle"></span>Idle - not visited yet</div>
             <div class="pg-legend-row"><span class="legend-swatch queue"></span>Queued - waiting its turn</div>
             <div class="pg-legend-row"><span class="legend-swatch wait"></span>Waiting - fan-in buffer incomplete</div>

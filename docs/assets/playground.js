@@ -102,42 +102,83 @@ const GRAPH_PRESETS = {
   }
 };
 
-const COMBINED_CODE = [
-  "function validate(graph):",
+// Phase 1: a depth-first walk that only checks structure - no node runs yet.
+const VALIDATE_CODE = [
+  "function check_graph(graph):",
   "  check_node_types(graph)",
   "  check_connections(graph)",
-  "  check_entry_exists(graph)",
-  "  color = {node: WHITE for node in graph}",
-  "  color[node] = BLACK   # fully explored, backtrack",
-  "  color[node] = GRAY   # entered, now on this path",
-  "  visit(child)   # step into each unvisited child",
-  "  # every reachable node visited, no repeats -> valid",
-  "  if color[child] == GRAY: raise CycleError",
+  "  check_entry_point_exists(graph)",
+  "  color = {node: WHITE for node in graph}   # WHITE = not visited yet",
+  "",
+  "function visit(node):",
+  "  color[node] = GRAY   # entered, still on this path",
+  "  for child in children(node):",
+  "    if color[child] == WHITE: visit(child)   # descend into it",
+  "    if color[child] == GRAY: raise CycleError   # loops back onto this path",
+  "  color[node] = BLACK   # fully explored, safe to backtrack",
+  "",
+  "# every reachable node reaches BLACK with no CycleError -> structure is valid",
+  "",
+  "function validate_params(graph):",
   "  for node in graph.nodes:",
-  "    node.operator.validate()   # Operator checks its own params",
+  "    node.operator.validate()   # checks its own required/optional params",
   "    check_ports(node, node.operator.valid_ports())",
-  "",
-  "function run_node(node, source, plan):",
-  "  if node.fan_in == false:",
-  "    return node.operator.forward(plan)   # hand off to the Operator",
-  "  node.buffer[source] = plan",
-  "  if len(node.buffer) < node.in_degree:",
-  "    return NONE   # still waiting on another branch",
-  "  return node.operator.forward_many(node.buffer)   # every branch arrived",
-  "",
-  "function execute(graph):",
-  "  queue = [(n, NONE, initial_plan) for n in entry_nodes(graph)]",
-  "  while queue:",
-  "    (node, source, plan) = queue.pop_left()",
-  "    result = run_node(node, source, plan)",
-  "    if result == NONE:",
-  "      continue",
-  "    (new_plan, next_nodes) = result   # the Operator's output",
-  "    for next in graph.children(node):",
-  "      queue.append((next, node, new_plan))",
 ];
 
+// Phase 2: only reached once check_graph() and validate_params() both pass.
+const EXECUTE_CODE = [
+  "function run(graph):",
+  "  queue = [entry nodes]   # nodes with no incoming connection",
+  "  while queue is not empty:",
+  "    (node, source) = queue.pop_first()",
+  "    result = run_node(node, source)",
+  "    if result == NONE:",
+  "      continue   # a fan-in node is still waiting on another branch",
+  "    for next in children(node):",
+  "      queue.append((next, node))",
+  "  # queue empty -> every branch reached a node with no output -> done",
+  "",
+  "function run_node(node, source):",
+  "  if node does not wait for multiple inputs:",
+  "    return node.operator.forward(plan)   # runs immediately",
+  "  node.buffer[source] = plan   # record which branch just arrived",
+  "  if len(node.buffer) < node.inputs_required:",
+  "    return NONE   # still waiting on another branch",
+  "  return node.operator.forward_many(node.buffer)   # every branch has arrived",
+  "",
+  "# a non-NONE result means the node ran and produced its output",
+];
+
+const PHASES = {
+  validate: {
+    label: "Phase 1 of 2",
+    title: "Checking the graph",
+    codeTitle: "Pseudocode - checking the graph",
+    queueTitle: "Stack (depth-first)",
+    queueCaption: "The node added most recently is visited next.",
+  },
+  execute: {
+    label: "Phase 2 of 2",
+    title: "Running the graph",
+    codeTitle: "Pseudocode - running the graph",
+    queueTitle: "Queue (ready to run)",
+    queueCaption: "The node waiting longest runs next.",
+  },
+};
+
 const FAN_IN_TYPES = ["join", "union", "merge"];
+
+const NODE_CATEGORIES = {
+  source: ["fetch_internal", "fetch_csv", "fetch_parquet", "fetch_arrow", "fetch_s3", "fetch_postgres"],
+  sink: ["push_internal", "push_csv", "push_parquet", "push_arrow", "push_postgres"],
+  merge: ["union", "join"],
+};
+function categoryOf(type) {
+  for (const [cat, types] of Object.entries(NODE_CATEGORIES)) {
+    if (types.includes(type)) return cat;
+  }
+  return "transform";
+}
 
 function parseGraph(text) {
   let spec;
@@ -249,7 +290,7 @@ function genSteps(graph) {
     ids.forEach(id => nodeStates[id] = colorToState(color[id]));
     if (activeId) nodeStates[activeId] = "active";
     steps.push({
-      line, note, activeId,
+      phase: "validate", line, note, activeId,
       nodeStates: { ...nodeStates },
       edgeStates: { ...edgeStates },
       queue: [...stack],
@@ -259,7 +300,7 @@ function genSteps(graph) {
     });
   };
 
-  push1(4, "All nodes start WHITE.");
+  push1(4, "All nodes start unvisited (WHITE).");
   let cycleResult = null;
   for (const start of ids) {
     if (cycleResult) break;
@@ -270,24 +311,25 @@ function genSteps(graph) {
       const node = stack[stack.length - 1];
       if (color[node] === "WHITE") {
         color[node] = "GRAY";
-        push1(6, "'" + node + "' -> GRAY (on the current path).", node);
+        push1(7, "'" + node + "' -> GRAY, entered and still on the current path.", node);
       }
       let advanced = false;
       for (const next of children(graph, node)) {
         if (color[next] === "WHITE") {
           edgeStates[edgeKey(node, next)] = "traversed";
           stack.push(next);
-          push1(7, "Descend into '" + next + "' (WHITE).", next);
+          push1(9, "Descend into '" + next + "', not visited yet.", next);
           advanced = true;
           break;
         }
         if (color[next] === "GRAY") {
           edgeStates[edgeKey(node, next)] = "cycle";
           const path = [...stack, next];
-          push1(9, "'" + next + "' is GRAY and still on the stack.", node, path);
+          push1(10, "'" + next + "' is GRAY and still on this path.", node, path);
           steps.push({
-            line: 9,
-            note: "Cycle detected: " + path.join(" -> ") + ". Graph is invalid, execution order is not computed.",
+            phase: "validate",
+            line: 10,
+            note: "Cycle detected: " + path.join(" -> ") + ". The graph is invalid, so no execution order is computed.",
             warn: true,
             activeId: node,
             nodeStates: { ...nodeStates },
@@ -305,16 +347,16 @@ function genSteps(graph) {
       if (cycleResult) break;
       if (advanced) continue outer;
       color[node] = "BLACK";
-      push1(5, "'" + node + "' has no unvisited children -> BLACK.", node);
+      push1(11, "'" + node + "' has no unvisited children -> BLACK, backtrack.", node);
       stack.pop();
     }
   }
-  if (cycleResult) return { code: COMBINED_CODE, steps };
+  if (cycleResult) return { steps };
 
-  push1(8, "No cycle found. Graph structure is valid.");
+  push1(13, "No cycle found anywhere. The graph's structure is valid.");
   for (const id of ids) {
-    push1(11, "'" + id + "'.operator.validate() checks its required/optional params.", id);
-    push1(12, "'" + id + "'.operator.valid_ports() checked against its outgoing connections.", id);
+    push1(17, "'" + id + "'.operator.validate() checks its required/optional params.", id);
+    push1(18, "'" + id + "'.operator.valid_ports() checked against its outgoing connections.", id);
   }
 
   let queue = ids.filter(id => parents(graph, id).length === 0).map(id => [id, null]);
@@ -325,7 +367,7 @@ function genSteps(graph) {
   const push2 = (line, note, activeId) => {
     queue.forEach(([id]) => { if (nodeStates[id] !== "done") nodeStates[id] = "in-queue"; });
     steps.push({
-      line, note, activeId,
+      phase: "execute", line, note, activeId,
       nodeStates: { ...nodeStates },
       edgeStates: { ...edgeStates },
       queue: queue.map(q => q[0]),
@@ -335,42 +377,42 @@ function genSteps(graph) {
         type: graph.nodes[activeId].type,
         fan_in: graph.nodes[activeId].fanIn,
         in_degree: graph.nodes[activeId].inDegree,
-        buffer: Object.keys(buffer[activeId]).join(",") || "-",
+        buffer: Object.keys(buffer[activeId]).join(", ") || "-",
       } : null,
     });
   };
 
-  push2(23, "Entry nodes go straight into the queue.");
+  push2(1, "Entry nodes (no incoming connection) go straight into the queue.");
   while (queue.length > 0) {
     const [node, source] = queue.shift();
     nodeStates[node] = "active";
-    push2(25, "Pop '" + node + "' from the queue.", node);
-    push2(26, "call run_node('" + node + "').", node);
+    push2(3, "Pop '" + node + "' from the front of the queue.", node);
+    push2(4, "call run_node('" + node + "').", node);
 
     if (graph.nodes[node].fanIn) {
       buffer[node][source] = true;
       if (Object.keys(buffer[node]).length < graph.nodes[node].inDegree) {
         nodeStates[node] = "waiting";
-        push2(19, "'" + node + "' buffer incomplete -> return NONE, wait for more input.", node);
+        push2(16, "'" + node + "' is still missing an input -> return NONE and wait.", node);
         continue;
       }
-      push2(20, "'" + node + "' buffer full -> operator.forward_many() runs.", node);
+      push2(17, "'" + node + "' has every input now -> operator.forward_many() runs.", node);
     } else {
-      push2(16, "'" + node + "' -> operator.forward() runs.", node);
+      push2(13, "'" + node + "' -> operator.forward() runs right away.", node);
     }
 
     completed.add(node);
     nodeStates[node] = "done";
-    push2(29, "'" + node + "' forwarded, result ready.", node);
+    push2(19, "'" + node + "' forwarded its result.", node);
 
     for (const next of children(graph, node)) {
       edgeStates[edgeKey(node, next)] = "traversed";
       queue.push([next, node]);
-      push2(31, "Queue '" + next + "', source='" + node + "'.", node);
+      push2(8, "Queue '" + next + "', arriving from '" + node + "'.", node);
     }
   }
-  push2(24, "Queue empty -> execution complete.");
-  return { code: COMBINED_CODE, steps };
+  push2(9, "Queue empty -> every branch is done, execution complete.");
+  return { steps };
 }
 
 let currentGraph = null;
@@ -381,7 +423,7 @@ let playing = false;
 let timer = null;
 
 function renderGraph(svg, graph, layout, step) {
-  svg.querySelectorAll(".edge-line, .node-box, .node-label").forEach(el => el.remove());
+  svg.querySelectorAll(".edge-line, .node-box, .node-cat-stripe, .node-label").forEach(el => el.remove());
   svg.setAttribute("viewBox", "0 0 " + layout.viewW + " " + layout.viewH);
   const ns = svg.namespaceURI;
 
@@ -425,6 +467,15 @@ function renderGraph(svg, graph, layout, step) {
     rect.setAttribute("rx", 8);
     rect.setAttribute("class", "node-box" + (state !== "idle" ? " " + state : ""));
     svg.appendChild(rect);
+
+    const stripe = document.createElementNS(ns, "rect");
+    stripe.setAttribute("x", n.x + 3);
+    stripe.setAttribute("y", n.y + 5);
+    stripe.setAttribute("width", 4);
+    stripe.setAttribute("height", NODE_H - 10);
+    stripe.setAttribute("rx", 2);
+    stripe.setAttribute("class", "node-cat-stripe node-cat-" + categoryOf(graph.nodes[id].type));
+    svg.appendChild(stripe);
 
     const label = document.createElementNS(ns, "text");
     label.setAttribute("x", n.x + NODE_W / 2);
@@ -511,6 +562,20 @@ function renderQueueWidget(step) {
   });
 }
 
+const FIELD_LABELS = {
+  id: "Node",
+  type: "Node type",
+  color: "DFS marker",
+  fan_in: "Waits for multiple inputs",
+  in_degree: "Inputs required",
+  buffer: "Inputs received so far",
+};
+
+function formatFieldValue(k, v) {
+  if (typeof v === "boolean") return v ? "Yes" : "No";
+  return v;
+}
+
 function renderInspector(step) {
   const body = document.getElementById("inspectorBody");
   body.innerHTML = "";
@@ -518,7 +583,8 @@ function renderInspector(step) {
     Object.entries(step.inspector).forEach(([k, v]) => {
       const div = document.createElement("div");
       div.className = "inspector-field";
-      div.innerHTML = "<span class=\"k\">" + k + "</span><span class=\"v\">" + v + "</span>";
+      const label = FIELD_LABELS[k] || k;
+      div.innerHTML = "<span class=\"k\">" + label + "</span><span class=\"v\">" + formatFieldValue(k, v) + "</span>";
       body.appendChild(div);
     });
   } else {
@@ -541,18 +607,26 @@ function renderInspector(step) {
     });
     body.appendChild(trace);
   }
-  if (step.note) {
-    const note = document.createElement("div");
-    note.className = "note-box" + (step.warn ? " warn" : "");
-    note.textContent = step.note;
-    body.appendChild(note);
-  }
+}
+
+function renderPhaseBanner(step) {
+  const info = PHASES[step.phase];
+  const banner = document.getElementById("pgPhaseBanner");
+  banner.classList.toggle("warn", !!step.warn);
+  document.getElementById("phaseBadge").textContent = info.label;
+  document.getElementById("phaseTitle").textContent = info.title;
+  document.getElementById("phaseNote").textContent = step.note || "";
+  document.getElementById("pseudocodeTitle").textContent = info.codeTitle;
+  document.getElementById("queueTitle").textContent = info.queueTitle;
+  document.getElementById("queueCaption").textContent = info.queueCaption;
 }
 
 function renderStep() {
   const step = currentSteps[stepIndex];
+  const code = step.phase === "execute" ? EXECUTE_CODE : VALIDATE_CODE;
   renderGraph(document.getElementById("graphCanvas"), currentGraph, currentLayout, step);
-  renderCode(document.getElementById("pseudocode"), COMBINED_CODE, step.line);
+  renderPhaseBanner(step);
+  renderCode(document.getElementById("pseudocode"), code, step.line);
   renderQueueWidget(step);
   renderInspector(step);
   document.getElementById("stepLabel").textContent = "Step " + (stepIndex + 1) + " / " + currentSteps.length;
@@ -631,21 +705,34 @@ document.getElementById("graphInput").addEventListener("input", runGraph);
 document.getElementById("speed").addEventListener("input", updateSpeedLabel);
 updateSpeedLabel();
 
+const PRESET_DESCRIPTIONS = {
+  chain: "Source -> transform -> sink, nothing more. The simplest possible graph.",
+  fanout: "One source feeds two independent branches, each writing its own output.",
+  join: "Two branches are combined by a join, which waits for both sides before continuing.",
+  union3: "Three sources are stacked together by a union, then written to one sink.",
+  chained: "Two joins in a row - a common shape once a pipeline branches more than once.",
+  cycle: "Deliberately invalid: a connection loops back on itself, which phase 1 must catch.",
+};
+
 document.querySelectorAll(".preset-btn").forEach(btn => {
   btn.addEventListener("click", () => {
-    const preset = GRAPH_PRESETS[btn.getAttribute("data-preset")];
+    const key = btn.getAttribute("data-preset");
+    const preset = GRAPH_PRESETS[key];
     if (!preset) return;
     document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     document.getElementById("graphInput").value = JSON.stringify(preset, null, 2);
+    document.getElementById("graphCaption").textContent = PRESET_DESCRIPTIONS[key] || "";
     runGraph();
   });
 });
 document.getElementById("graphInput").addEventListener("input", () => {
   document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("graphCaption").textContent = "Custom graph, edited by hand.";
 });
 
 document.getElementById("graphInput").value = JSON.stringify(DEFAULT_GRAPH, null, 2);
+document.getElementById("graphCaption").textContent = PRESET_DESCRIPTIONS.join;
 runGraph();
 
 const pgLegend = document.getElementById("pgLegend");
