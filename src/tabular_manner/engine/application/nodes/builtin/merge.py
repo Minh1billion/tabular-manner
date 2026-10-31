@@ -1,5 +1,6 @@
 import polars as pl
 
+from ....domain.models import param_meta as pm
 from ....domain.models.plan import Plan
 from ....domain.models.operator import Operator
 from ....domain.models.schema import Schema
@@ -33,6 +34,7 @@ class Union(Merge):
     label = "Union"
     category = "merge"
     optional = {"how": (str, "vertical_relaxed")}
+    param_meta = {"how": pm.enum(("vertical", "vertical_relaxed", "diagonal", "diagonal_relaxed"))}
 
     def _combine(self, lfs: list[pl.LazyFrame]) -> pl.LazyFrame:
         return pl.concat(lfs, how=self.how)
@@ -43,6 +45,10 @@ class Join(Merge):
     category = "merge"
     required = {"on": (list, str)}
     optional = {"how": (str, "inner")}
+    param_meta = {
+        "on": pm.columns(scope="common"),
+        "how": pm.enum(("inner", "left", "right", "full", "semi", "anti")),
+    }
     in_ports = ("left", "right")
 
     def _combine(self, lfs: list[pl.LazyFrame]) -> pl.LazyFrame:

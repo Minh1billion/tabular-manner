@@ -1,0 +1,416 @@
+From 990cbb205525f701383ee36ed3b48a9599860d5c Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 31 Oct 2026 00:58:06 +0000
+Subject: [PATCH 2/3] feat(nodes): declare param_meta for builtin nodes
+
+---
+ .../application/nodes/builtin/io_bound.py     |  3 +
+ .../engine/application/nodes/builtin/merge.py |  6 ++
+ .../application/nodes/builtin/transform.py    | 59 ++++++++++++++++---
+ 3 files changed, 60 insertions(+), 8 deletions(-)
+
+diff --git a/src/tabular_manner/engine/application/nodes/builtin/io_bound.py b/src/tabular_manner/engine/application/nodes/builtin/io_bound.py
+index 7f07a1a..b5ae365 100644
+--- a/src/tabular_manner/engine/application/nodes/builtin/io_bound.py
++++ b/src/tabular_manner/engine/application/nodes/builtin/io_bound.py
+@@ -2,6 +2,7 @@ from typing import Any, Iterator
+ 
+ import polars as pl
+ 
++from ....domain.models import param_meta as pm
+ from ....domain.models.plan import Plan
+ from ....domain.models.operator import Operator
+ from ....domain.models.schema import Schema
+@@ -9,6 +10,7 @@ from ..registry import NodeRegistry
+ 
+ class SourceIO(Operator):
+     optional = {"schema": (dict, None)}
++    param_meta = {"schema": pm.mapping(pm.text(), pm.enum(pm.DTYPE_NAMES))}
+ 
+     def _stream(self) -> pl.LazyFrame:
+         raise NotImplementedError("Not implemented yet.")
+@@ -54,6 +56,7 @@ class FetchInternal(SourceIO):
+     category = "io"
+     required = {"key": str}
+     optional = {"bucket": (str, None)}
++    param_meta = {"key": pm.resource()}
+     context = ("resource_storage",)
+ 
+     def _stream(self) -> pl.LazyFrame:
+diff --git a/src/tabular_manner/engine/application/nodes/builtin/merge.py b/src/tabular_manner/engine/application/nodes/builtin/merge.py
+index 7f42925..15f9aba 100644
+--- a/src/tabular_manner/engine/application/nodes/builtin/merge.py
++++ b/src/tabular_manner/engine/application/nodes/builtin/merge.py
+@@ -1,5 +1,6 @@
+ import polars as pl
+ 
++from ....domain.models import param_meta as pm
+ from ....domain.models.plan import Plan
+ from ....domain.models.operator import Operator
+ from ....domain.models.schema import Schema
+@@ -33,6 +34,7 @@ class Union(Merge):
+     label = "Union"
+     category = "merge"
+     optional = {"how": (str, "vertical_relaxed")}
++    param_meta = {"how": pm.enum(("vertical", "vertical_relaxed", "diagonal", "diagonal_relaxed"))}
+ 
+     def _combine(self, lfs: list[pl.LazyFrame]) -> pl.LazyFrame:
+         return pl.concat(lfs, how=self.how)
+@@ -43,6 +45,10 @@ class Join(Merge):
+     category = "merge"
+     required = {"on": (list, str)}
+     optional = {"how": (str, "inner")}
++    param_meta = {
++        "on": pm.columns(scope="common"),
++        "how": pm.enum(("inner", "left", "right", "full", "semi", "anti")),
++    }
+     in_ports = ("left", "right")
+ 
+     def _combine(self, lfs: list[pl.LazyFrame]) -> pl.LazyFrame:
+diff --git a/src/tabular_manner/engine/application/nodes/builtin/transform.py b/src/tabular_manner/engine/application/nodes/builtin/transform.py
+index 689a05f..00f892f 100644
+--- a/src/tabular_manner/engine/application/nodes/builtin/transform.py
++++ b/src/tabular_manner/engine/application/nodes/builtin/transform.py
+@@ -1,5 +1,6 @@
+ import polars as pl
+ 
++from ....domain.models import param_meta as pm
+ from ....domain.models.plan import Plan
+ from ....domain.models.operator import Operator, SchemaStrategy
+ from ....domain.models.schema import Schema
+@@ -7,6 +8,15 @@ from ..registry import NodeRegistry
+ from ...runtime.expression_compiler import ExpressionCompiler
+ from ...runtime.sandbox import Sandbox
+ 
++AGG_FUNCS = ("sum", "mean", "min", "max", "count", "median", "std", "first", "last")
++KEEP_MODES = ("first", "last", "any", "none")
++CASE_MODES = ("upper", "lower", "title")
++RANK_METHODS = ("average", "min", "max", "dense", "ordinal", "random")
++DATE_PARTS = (
++    "year", "quarter", "month", "week", "weekday", "day",
++    "ordinal_day", "hour", "minute", "second",
++)
++
+ class _ColumnProxy:
+     def __getattr__(self, name: str) -> pl.Expr:
+         return pl.col(name)
+@@ -29,6 +39,7 @@ class Transform(Operator):
+ class Select(Transform):
+     label = "Select Columns"
+     category = "transform"
++    param_meta = {"columns": pm.columns()}
+     required = {"columns": (list, str)}
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -38,6 +49,7 @@ class Select(Transform):
+ class Drop(Transform):
+     label = "Drop Columns"
+     category = "transform"
++    param_meta = {"columns": pm.columns()}
+     required = {"columns": (list, str)}
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -47,6 +59,7 @@ class Drop(Transform):
+ class Limit(Transform):
+     label = "Limit Rows"
+     category = "transform"
++    param_meta = {"n": pm.number(0)}
+     required = {"n": int}
+ 
+     def validate(self):
+@@ -61,6 +74,7 @@ class Limit(Transform):
+ class Head(Transform):
+     label = "Head Rows"
+     category = "transform"
++    param_meta = {"n": pm.number(0)}
+     required = {"n": int}
+ 
+     def validate(self):
+@@ -75,6 +89,7 @@ class Head(Transform):
+ class Tail(Transform):
+     label = "Tail Rows"
+     category = "transform"
++    param_meta = {"n": pm.number(0)}
+     required = {"n": int}
+ 
+     def validate(self):
+@@ -89,6 +104,7 @@ class Tail(Transform):
+ class Explode(Transform):
+     label = "Explode Columns"
+     category = "transform"
++    param_meta = {"columns": pm.columns()}
+     required = {"columns": (list, str)}
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -98,9 +114,10 @@ class Explode(Transform):
+ class GroupBy(Transform):
+     label = "Group By"
+     category = "transform"
++    param_meta = {"by": pm.columns(), "aggregations": pm.mapping(pm.column(), pm.enum(AGG_FUNCS))}
+     required = {"by": (list, str), "aggregations": dict}
+ 
+-    _ALLOWED_AGGS = frozenset({"sum", "mean", "min", "max", "count", "median", "std", "first", "last"})
++    _ALLOWED_AGGS = frozenset(AGG_FUNCS)
+ 
+     def validate(self):
+         super().validate()
+@@ -121,6 +138,7 @@ class GroupBy(Transform):
+ class Log(Transform):
+     label = "Log Transform"
+     category = "transform"
++    param_meta = {"columns": pm.columns("numeric")}
+     required = {"columns": (list, str)}
+     optional = {"base": (float, None)}
+ 
+@@ -139,6 +157,7 @@ class Log(Transform):
+ class ZScoreNormalize(Transform):
+     label = "Z-Score Normalize"
+     category = "transform"
++    param_meta = {"columns": pm.columns("numeric")}
+     required = {"columns": (list, str)}
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -150,6 +169,7 @@ class ZScoreNormalize(Transform):
+ class MinMaxNormalize(Transform):
+     label = "Min-Max Normalize"
+     category = "transform"
++    param_meta = {"columns": pm.columns("numeric")}
+     required = {"columns": (list, str)}
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -162,6 +182,7 @@ class MinMaxNormalize(Transform):
+ class FillMean(Transform):
+     label = "Fill Missing (Mean)"
+     category = "transform"
++    param_meta = {"columns": pm.columns("numeric")}
+     required = {"columns": (list, str)}
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -173,6 +194,7 @@ class FillMean(Transform):
+ class FillNull(Transform):
+     label = "Fill Missing (Value)"
+     category = "transform"
++    param_meta = {"columns": pm.columns(), "value": pm.value_like("columns")}
+     required = {"columns": (list, str), "value": object}
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -184,6 +206,7 @@ class FillNull(Transform):
+ class DropNulls(Transform):
+     label = "Drop Null Rows"
+     category = "transform"
++    param_meta = {"columns": pm.columns()}
+     optional = {"columns": ((list, str), None)}
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -193,11 +216,12 @@ class DropNulls(Transform):
+ class DropDuplicates(Transform):
+     label = "Drop Duplicate Rows"
+     category = "transform"
++    param_meta = {"subset": pm.columns(), "keep": pm.enum(KEEP_MODES)}
+     optional = {"subset": ((list, str), None), "keep": (str, "first")}
+ 
+     def validate(self):
+         super().validate()
+-        if self.keep not in ("first", "last", "any", "none"):
++        if self.keep not in KEEP_MODES:
+             raise ValueError("'keep' must be one of 'first', 'last', 'any', 'none'")
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -207,6 +231,7 @@ class DropDuplicates(Transform):
+ class Rename(Transform):
+     label = "Rename Columns"
+     category = "transform"
++    param_meta = {"mapping": pm.mapping(pm.column(), pm.text())}
+     required = {"mapping": dict}
+ 
+     def validate(self):
+@@ -223,6 +248,7 @@ class Rename(Transform):
+ class Sort(Transform):
+     label = "Sort Rows"
+     category = "transform"
++    param_meta = {"by": pm.columns()}
+     required = {"by": (list, str)}
+     optional = {"descending": (bool, False)}
+ 
+@@ -233,6 +259,7 @@ class Sort(Transform):
+ class Cast(Transform):
+     label = "Cast Column Type"
+     category = "transform"
++    param_meta = {"types": pm.mapping(pm.column(), pm.enum(pm.DTYPE_NAMES))}
+     required = {"types": dict}
+ 
+     def validate(self):
+@@ -255,6 +282,7 @@ class Cast(Transform):
+ class Abs(Transform):
+     label = "Absolute Value"
+     category = "transform"
++    param_meta = {"columns": pm.columns("numeric")}
+     required = {"columns": (list, str)}
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -264,6 +292,7 @@ class Abs(Transform):
+ class Round(Transform):
+     label = "Round"
+     category = "transform"
++    param_meta = {"columns": pm.columns("numeric")}
+     required = {"columns": (list, str)}
+     optional = {"decimals": (int, 0)}
+ 
+@@ -274,6 +303,7 @@ class Round(Transform):
+ class Clip(Transform):
+     label = "Clip Values"
+     category = "transform"
++    param_meta = {"columns": pm.columns("numeric")}
+     required = {"columns": (list, str)}
+     optional = {"lower": (float, None), "upper": (float, None)}
+ 
+@@ -289,6 +319,7 @@ class Clip(Transform):
+ class Sqrt(Transform):
+     label = "Square Root"
+     category = "transform"
++    param_meta = {"columns": pm.columns("numeric")}
+     required = {"columns": (list, str)}
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -298,6 +329,7 @@ class Sqrt(Transform):
+ class Power(Transform):
+     label = "Power"
+     category = "transform"
++    param_meta = {"columns": pm.columns("numeric")}
+     required = {"columns": (list, str), "exponent": float}
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -307,6 +339,7 @@ class Power(Transform):
+ class FillForward(Transform):
+     label = "Fill Missing (Forward)"
+     category = "transform"
++    param_meta = {"columns": pm.columns()}
+     required = {"columns": (list, str)}
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -318,6 +351,7 @@ class FillForward(Transform):
+ class FillBackward(Transform):
+     label = "Fill Missing (Backward)"
+     category = "transform"
++    param_meta = {"columns": pm.columns()}
+     required = {"columns": (list, str)}
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -329,11 +363,12 @@ class FillBackward(Transform):
+ class StrCase(Transform):
+     label = "Change Text Case"
+     category = "transform"
++    param_meta = {"columns": pm.columns("string"), "case": pm.enum(CASE_MODES)}
+     required = {"columns": (list, str), "case": str}
+ 
+     def validate(self):
+         super().validate()
+-        if self.case not in ("upper", "lower", "title"):
++        if self.case not in CASE_MODES:
+             raise ValueError("'case' must be one of 'upper', 'lower', 'title'")
+ 
+     def _column_expr(self, c: str) -> pl.Expr:
+@@ -350,6 +385,7 @@ class StrCase(Transform):
+ class StrStrip(Transform):
+     label = "Strip Whitespace"
+     category = "transform"
++    param_meta = {"columns": pm.columns("string")}
+     required = {"columns": (list, str)}
+     optional = {"characters": (str, None)}
+ 
+@@ -362,6 +398,7 @@ class StrStrip(Transform):
+ class StrReplace(Transform):
+     label = "Replace Text"
+     category = "transform"
++    param_meta = {"columns": pm.columns("string")}
+     required = {"columns": (list, str), "pattern": str, "value": str}
+     optional = {"literal": (bool, False)}
+ 
+@@ -375,10 +412,11 @@ class StrReplace(Transform):
+ class Rank(Transform):
+     label = "Rank"
+     category = "transform"
++    param_meta = {"columns": pm.columns(), "method": pm.enum(RANK_METHODS)}
+     required = {"columns": (list, str)}
+     optional = {"method": (str, "average"), "descending": (bool, False)}
+ 
+-    _ALLOWED_METHODS = frozenset({"average", "min", "max", "dense", "ordinal", "random"})
++    _ALLOWED_METHODS = frozenset(RANK_METHODS)
+ 
+     def validate(self):
+         super().validate()
+@@ -394,6 +432,7 @@ class Rank(Transform):
+ class CumulativeSum(Transform):
+     label = "Cumulative Sum"
+     category = "transform"
++    param_meta = {"columns": pm.columns("numeric")}
+     required = {"columns": (list, str)}
+     optional = {"reverse": (bool, False)}
+ 
+@@ -406,6 +445,7 @@ class CumulativeSum(Transform):
+ class Shift(Transform):
+     label = "Shift (Lag/Lead)"
+     category = "transform"
++    param_meta = {"columns": pm.columns()}
+     required = {"columns": (list, str), "n": int}
+ 
+     def _apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+@@ -424,6 +464,7 @@ class AddRowIndex(Transform):
+ class Bin(Transform):
+     label = "Bin Into Ranges"
+     category = "transform"
++    param_meta = {"column": pm.column("numeric")}
+     required = {"column": str, "breaks": (list, float)}
+     optional = {"labels": ((list, str), None), "output_column": (str, None)}
+ 
+@@ -444,6 +485,7 @@ class Bin(Transform):
+ class ExtractRegex(Transform):
+     label = "Extract via Regex"
+     category = "transform"
++    param_meta = {"column": pm.column("string")}
+     required = {"column": str, "pattern": str}
+     optional = {"group": (int, 1), "output_column": (str, None)}
+ 
+@@ -457,6 +499,7 @@ class ExtractRegex(Transform):
+ class ParseDate(Transform):
+     label = "Parse Date"
+     category = "transform"
++    param_meta = {"columns": pm.columns("string")}
+     required = {"columns": (list, str)}
+     optional = {"format": (str, None)}
+ 
+@@ -469,13 +512,11 @@ class ParseDate(Transform):
+ class DatePart(Transform):
+     label = "Extract Date Part"
+     category = "transform"
++    param_meta = {"column": pm.column("temporal"), "part": pm.enum(DATE_PARTS)}
+     required = {"column": str, "part": str}
+     optional = {"output_column": (str, None)}
+ 
+-    _ALLOWED_PARTS = frozenset({
+-        "year", "quarter", "month", "week", "weekday", "day",
+-        "ordinal_day", "hour", "minute", "second",
+-    })
++    _ALLOWED_PARTS = frozenset(DATE_PARTS)
+ 
+     def validate(self):
+         super().validate()
+@@ -492,6 +533,7 @@ class DatePart(Transform):
+ class Unpivot(Transform):
+     label = "Unpivot (Melt)"
+     category = "transform"
++    param_meta = {"index": pm.columns(), "on": pm.columns()}
+     optional = {
+         "index": ((list, str), None),
+         "on": ((list, str), None),
+@@ -511,6 +553,7 @@ class Unpivot(Transform):
+ class MapValues(Transform):
+     label = "Map Values"
+     category = "transform"
++    param_meta = {"column": pm.column(), "mapping": pm.mapping(pm.value_like("column"), pm.value_like("column")), "default": pm.value_like("column")}
+     required = {"column": str, "mapping": dict}
+     optional = {"default": (object, None)}
+ 
+-- 
+2.43.0
+

@@ -2,6 +2,7 @@ from typing import Any, Iterator
 
 import polars as pl
 
+from ....domain.models import param_meta as pm
 from ....domain.models.plan import Plan
 from ....domain.models.operator import Operator
 from ....domain.models.schema import Schema
@@ -9,6 +10,7 @@ from ..registry import NodeRegistry
 
 class SourceIO(Operator):
     optional = {"schema": (dict, None)}
+    param_meta = {"schema": pm.mapping(pm.text(), pm.enum(pm.DTYPE_NAMES))}
 
     def _stream(self) -> pl.LazyFrame:
         raise NotImplementedError("Not implemented yet.")
@@ -54,6 +56,7 @@ class FetchInternal(SourceIO):
     category = "io"
     required = {"key": str}
     optional = {"bucket": (str, None)}
+    param_meta = {"key": pm.resource()}
     context = ("resource_storage",)
 
     def _stream(self) -> pl.LazyFrame:
