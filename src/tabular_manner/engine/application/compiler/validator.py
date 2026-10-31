@@ -1,5 +1,7 @@
 from collections import deque
+from types import SimpleNamespace
 
+from ...domain.models.schema import Schema
 from ..nodes.registry import NodeRegistry
 from ..runtime.sandbox import Sandbox
 from .graph import Graph
@@ -67,6 +69,79 @@ class Validator:
         exc = surfaced[0]["exception"]
         exc.errors = errors
         raise exc
+
+    def trace_schemas(self, spec: dict) -> dict[str, dict]:
+        self._check_structure(spec)
+        self._check_node_types(spec)
+        self._check_connections(spec)
+        self._check_no_cycles(spec)
+
+        node_by_id = {n["id"]: n for n in spec["nodes"]}
+        incoming: dict[str, list[dict]] = {}
+        for c in spec["connections"]:
+            incoming.setdefault(c["to"], []).append(c)
+
+        outputs: dict[str, Schema] = {}
+        trace: dict[str, dict] = {}
+
+        for node_id in self._topological_order(spec):
+            node = node_by_id[node_id]
+            conns = incoming.get(node_id, [])
+            operator_cls = self.registry.get(node["type"])
+            inputs = self._collect_inputs(operator_cls, conns, outputs)
+            output = self._infer_output(node, operator_cls, inputs, bool(conns))
+            if output is not None:
+                outputs[node_id] = output
+            trace[node_id] = {
+                "inputs": {slot: schema.describe() for slot, schema in inputs.items()},
+                "output": output.describe() if output is not None else None,
+            }
+
+        return trace
+
+    def _collect_inputs(self, operator_cls, conns: list[dict], outputs: dict[str, Schema]) -> dict[str, Schema]:
+        inputs: dict[str, Schema] = {}
+        if operator_cls.fan_in:
+            for conn in conns:
+                schema = outputs.get(conn["from"])
+                if schema is None:
+                    continue
+                slot = conn.get("into") if operator_cls.in_ports is not None else conn["from"]
+                if slot is not None:
+                    inputs[slot] = schema
+            return inputs
+        if len(conns) == 1:
+            schema = outputs.get(conns[0]["from"])
+            if schema is not None:
+                inputs["in"] = schema
+        return inputs
+
+    def _infer_output(self, node: dict, operator_cls, inputs: dict[str, Schema], has_incoming: bool) -> Schema | None:
+        try:
+            operator = operator_cls(name=node.get("name"), sandbox=self.sandbox, **node.get("params", {}))
+            if self.context_manager is not None:
+                self.context_manager.inject({node["id"]: SimpleNamespace(operator=operator)})
+
+            if operator.fan_in:
+                if operator.in_ports is not None:
+                    if any(slot not in inputs for slot in operator.in_ports):
+                        return None
+                    ordered = [inputs[slot] for slot in operator.in_ports]
+                else:
+                    if len(inputs) < 2:
+                        return None
+                    ordered = [inputs[key] for key in sorted(inputs)]
+                return operator.infer_schema_many(ordered)
+
+            if not has_incoming:
+                return operator.infer_schema()
+
+            schema = inputs.get("in")
+            if schema is None:
+                return None
+            return operator.infer_schema(schema)
+        except Exception:
+            return None
 
     def _topological_order(self, spec: dict) -> list[str]:
         in_degree: dict[str, int] = {n["id"]: 0 for n in spec["nodes"]}

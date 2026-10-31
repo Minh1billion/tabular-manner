@@ -127,6 +127,15 @@ class Execution:
                 event["errors"] = errors
             yield event
 
+    def infer_schemas(self, spec: dict[str, Any], bucket: str | None = None) -> Iterator[dict[str, Any]]:
+        try:
+            registry, spec = self._prepare(spec, bucket)
+            yield _event("inferring")
+            nodes = Validator(registry, self._sandbox, self._context_manager).trace_schemas(spec)
+            yield _event("completed", data={"nodes": nodes})
+        except Exception as exc:
+            yield _event("failed", error=str(exc), error_type=type(exc).__name__)
+
     def execute(
         self,
         execution_id: str | None = None,
