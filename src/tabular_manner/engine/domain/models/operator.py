@@ -25,6 +25,7 @@ class Operator(ABC):
     category: ClassVar[str] = "custom"
     schema_strategy: ClassVar[SchemaStrategy] = SchemaStrategy.STRUCTURAL
     supports_progress: ClassVar[bool] = False
+    param_meta: ClassVar[dict[str, dict[str, Any]]] = {}
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)

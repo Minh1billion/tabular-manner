@@ -2,6 +2,17 @@ from dataclasses import dataclass
 
 import polars as pl
 
+def dtype_group(dtype: pl.DataType) -> str:
+    if dtype.is_numeric():
+        return "numeric"
+    if dtype == pl.Boolean:
+        return "boolean"
+    if dtype == pl.String:
+        return "string"
+    if dtype.is_temporal():
+        return "temporal"
+    return "other"
+
 @dataclass(frozen=True)
 class Schema:
     fields: dict[str, pl.DataType]
@@ -17,6 +28,12 @@ class Schema:
 
     def as_str_dict(self) -> dict[str, str]:
         return {k: str(v) for k, v in self.fields.items()}
+
+    def describe(self) -> list[dict[str, str]]:
+        return [
+            {"name": name, "dtype": str(dtype), "group": dtype_group(dtype)}
+            for name, dtype in self.fields.items()
+        ]
 
     @classmethod
     def from_polars(cls, schema: pl.Schema) -> "Schema":
